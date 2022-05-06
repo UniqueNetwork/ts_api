@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "skipLibCheck": true,
+    "moduleResolution": "Node",
     "resolveJsonModule": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -24,6 +25,6 @@
       "@polkadot/types/lookup": ["node_modules/@unique-nft/types/types-lookup"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "rollup.config.ts"],
   "exclude": ["node_modules", "dist", "test"]
 }
