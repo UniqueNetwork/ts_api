@@ -1,0 +1,9 @@
+node_modules
+*.log
+.idea
+.vscode
+.DS_Store
+lib
+.rollup.cache
+.env
+!.env.example

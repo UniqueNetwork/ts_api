@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "incremental": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "lib/dts",
+    "outDir": "lib",
+    "baseUrl": ".",
+    "rootDir": ".",
+    "paths": {
+      "@polkadot/types/lookup": ["node_modules/@unique-nft/types/types-lookup"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "test"]
+}
