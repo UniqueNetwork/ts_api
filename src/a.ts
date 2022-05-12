@@ -1,7 +1,9 @@
-import Web3 from "web3";
+import {getWeb3} from "./libs";
 
 export const collectionIdToEthAddress = (collectionId: number | string): string => {
   const cid = typeof collectionId === 'string' ? parseInt(collectionId, 10) : collectionId
+
+  const Web3 = getWeb3()
 
   return Web3.utils.toChecksumAddress(
     '0x17c4e6453cc49aaaaeaca894e6d9683e' +

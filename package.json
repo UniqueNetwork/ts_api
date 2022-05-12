@@ -3,14 +3,9 @@
   "version": "0.0.1",
   "sideEffects": false,
   "license": "SEE LICENSE IN License",
-  "exports": {
-    ".": {
-      "import": "./lib/bundle.js",
-      "require": "./lib/bundle.cjs"
-    }
-  },
   "main": "./lib/bundle.cjs",
   "module": "./lib/bundle.js",
+  "browser": "./lib/bundle.iife.min.js",
   "source": "./src/index.ts",
   "types": "./lib/bundle.d.ts",
   "files": [
@@ -35,9 +30,9 @@
   },
   "dependencies": {
     "@polkadot/api": "8.3.1",
-    "@polkadot/util-crypto": "9.1.1",
     "@polkadot/util": "9.1.1",
-    "@unique-nft/types": "0.4.0",
+    "@polkadot/util-crypto": "9.1.1",
+    "@unique-nft/types": "^0.5.1",
     "web3": "^1.7.3"
   }
 }

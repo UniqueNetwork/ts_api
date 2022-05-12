@@ -735,10 +735,10 @@
   dependencies:
     "@types/node" "*"
 
-"@unique-nft/types@0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@unique-nft/types/-/types-0.4.0.tgz#329ba744e9627bc18103e6fd8c1b52f62d6565a3"
-  integrity sha512-jV86adraPBUDStOaJWdXGrM++53/yrS6ygnlU/zhA/z9vvUf/qExA7SuddAUbkOQUATdUKZDSocX8YFpyAMzPA==
+"@unique-nft/types@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@unique-nft/types/-/types-0.5.1.tgz#7cf6ee5f5361285fde7ca320092f15701b6efc5f"
+  integrity sha512-egxiRE2oI6FslBs18lBiyG1LaSZWPg0XzLrDTCXp3r9CDD/G8SiJqVYwAqgS9HiNvhHOGevlAaQ9Yej+p6bRQg==
 
 "@wessberg/stringutil@^1.0.19":
   version "1.0.19"

@@ -1,20 +1,24 @@
 import '@unique-nft/types/augment-api'
 
-import {decodeAddress, encodeAddress, addressToEvm, evmToAddress} from '@polkadot/util-crypto'
-
-import Web3 from 'web3'
+import {getPolkadotUtilCrypto, getWeb3} from './libs'
+export * from './libs'
 
 
 export const normalizeAddress = (address: string, prefix: number = 42) => {
+  const {encodeAddress, decodeAddress} = getPolkadotUtilCrypto()
   return encodeAddress(decodeAddress(address), prefix)
 }
 
 export const subToEvmMirror = (address: string) => {
+  const Web3 = getWeb3()
+  const {addressToEvm} = getPolkadotUtilCrypto()
+
   return Web3.utils.toChecksumAddress('0x' + Buffer.from(
     addressToEvm(address)).toString('hex')
   )
 }
 export const evmToSubMirror = (address: string) => {
+  const {evmToAddress} = getPolkadotUtilCrypto()
   return evmToAddress(address)
 }
 
