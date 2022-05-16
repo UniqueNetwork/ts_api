@@ -1,38 +1,70 @@
+import '@unique-nft/types/augment-api'
+
 import type Web3ClassType from "web3";
-type Web3Type = typeof Web3ClassType
-
 import type PolkadotApiObjType from '@polkadot/api'
-type PolkadotApi = typeof PolkadotApiObjType
-
 import type PolkadotUtilCryptoObjType from '@polkadot/util-crypto'
-type PolkadotUtilCrypto = typeof PolkadotUtilCryptoObjType
-
+import type PolkadotExtensionDappType from '@polkadot/extension-dapp'
 import {unique as uniqueRpcDefinitions} from '@unique-nft/types/definitions'
+import {getKeys} from "./util";
+
+type Web3Type = typeof Web3ClassType
+type PolkadotApi = typeof PolkadotApiObjType
+type PolkadotUtilCrypto = typeof PolkadotUtilCryptoObjType
+type PolkadotExtensionDapp = typeof PolkadotExtensionDappType
+
 export {uniqueRpcDefinitions}
 
 let Web3: Web3Type | null = null
-let polkadotApi: PolkadotApi | null = null
-let polkadotUtilCrypto: PolkadotUtilCrypto | null = null
 
-export interface InitOptions{
-  Web3?: Web3Type
-  dontLoadPolkadotApi?: boolean
-  dontLoadPolkadotUtilCrypto?: boolean
+interface PolkadotLibs {
+  api: PolkadotApi | null
+  utilCrypto: PolkadotUtilCrypto | null
+  extensionDapp: PolkadotExtensionDapp | null
 }
 
-export async function init(options: InitOptions) {
-  if (options.Web3) {
-    Web3 = options.Web3
-    globalThis.Web3 = options.Web3
-  }
+const polkadotLibs: PolkadotLibs = {
+  api: null,
+  utilCrypto: null,
+  extensionDapp: null,
+}
 
-  const [tmpPolkadotApi, tmpPolkadotUtilCrypto] = await Promise.all([
-    options.dontLoadPolkadotApi ? console.log('no api') : import('@polkadot/api'),
-    options.dontLoadPolkadotUtilCrypto ? console.log('no util crypto') : import('@polkadot/util-crypto'),
+export interface InitOptions {
+  initPolkadotLibs?: { [k in keyof PolkadotLibs]?: boolean }
+}
+
+const defaultInitOptions: InitOptions = {}
+
+type Web3Imported = {default: Web3Type} | Web3Type
+
+export async function initWithWeb3(Web3Promise: Promise<Web3Imported> | Web3Imported | null, options: InitOptions = defaultInitOptions) {
+  const inNode = typeof window === 'undefined'
+
+  const libRequest = options.initPolkadotLibs
+
+  const tmpPolkadotLibs: PolkadotLibs = getKeys(polkadotLibs)
+    .reduce((acc, key) => {
+      acc[key] = null;
+      return acc;
+    }, {} as PolkadotLibs)
+
+  let tmpWeb3: Web3Imported | null = null
+
+  ;[tmpWeb3, tmpPolkadotLibs.api, tmpPolkadotLibs.utilCrypto, tmpPolkadotLibs.extensionDapp] = await Promise.all([
+    !Web3Promise ? null : await Web3Promise,
+    libRequest && !libRequest?.api ? null : import('@polkadot/api'),
+    libRequest && !libRequest?.utilCrypto ? null : import('@polkadot/util-crypto'),
+    inNode || (libRequest && !libRequest?.api) ? null : import('@polkadot/extension-dapp'),
   ])
 
-  if (tmpPolkadotApi) polkadotApi = tmpPolkadotApi
-  if (tmpPolkadotUtilCrypto) polkadotUtilCrypto = tmpPolkadotUtilCrypto
+  if (tmpWeb3) {
+    //@ts-ignore
+    globalThis.Web3 = Web3 = tmpWeb3.default ? tmpWeb3.default : tmpWeb3
+  }
+
+  for (const key of getKeys(tmpPolkadotLibs)) {
+    //@ts-ignore
+    if (tmpPolkadotLibs[key]) polkadotLibs[key] = tmpPolkadotLibs[key]
+  }
 }
 
 export function getWeb3(): Web3Type {
@@ -50,36 +82,14 @@ const checkModuleExists = <T>(moduleVar: T | null, moduleName: string): T => {
   return moduleVar
 }
 
-export function getPolkadotApi(): PolkadotApi {
-  return checkModuleExists(polkadotApi, `@polkadot/api`)
+export function getPolkadotApi() {
+  return checkModuleExists(polkadotLibs.api, `@polkadot/api`)
 }
 
-export function getPolkadotUtilCrypto(): PolkadotUtilCrypto {
-  return checkModuleExists(polkadotUtilCrypto, `@polkadot/util-crypto`)
+export function getPolkadotUtilCrypto() {
+  return checkModuleExists(polkadotLibs.utilCrypto, `@polkadot/util-crypto`)
 }
 
-export function checkLibs() {
-  return {
-    Web3: !!Web3,
-    polkadotApi: !!polkadotApi,
-    polkadotUtilCrypto: !!polkadotUtilCrypto,
-    uniqueRpcDefinitions: !!uniqueRpcDefinitions,
-  }
+export function getPolkadotExtensionDapp() {
+  return checkModuleExists(polkadotLibs.extensionDapp, `@polkadot/extension-dapp`)
 }
-
-export function getLibs() {
-  return {
-    Web3: getWeb3(),
-    polkadotApi: getPolkadotApi(),
-    polkadotUtilCrypto: getPolkadotUtilCrypto(),
-    uniqueRpcDefinitions
-  }
-}
-
-
-
-const libs = new Proxy({}, {
-  get(target, prop) {
-
-  }
-})

@@ -4,7 +4,6 @@ import dts from 'rollup-plugin-dts'
 import {RollupOptions} from 'rollup'
 import del from 'rollup-plugin-delete'
 
-
 // "source": "./src/index.ts",
 
 const config: RollupOptions[] = [
@@ -19,9 +18,9 @@ const config: RollupOptions[] = [
         format: "iife",
         plugins: [terser()],
         globals: {
-          '@polkadot/util-crypto': 'polkadotUtilCrypto',
-          '@polkadot/api': 'polkadotApi',
-          'web3': 'Web3',
+          // '@polkadot/util-crypto': 'polkadotUtilCrypto',
+          // '@polkadot/api': 'polkadotApi',
+          // 'web3': 'Web3',
         },
         sourcemap: true,
       },
@@ -32,7 +31,7 @@ const config: RollupOptions[] = [
         useTsconfigDeclarationDir: true
       })
     ],
-    external: ['@polkadot/util-crypto', 'web3']
+    external: ['@polkadot/util-crypto', '@polkadot/api', 'web3']
   },
   {
     input: "./lib/dts/src/index.d.ts",
