@@ -13,14 +13,18 @@ const config: RollupOptions[] = [
       {file: "lib/bundle.cjs", format: "cjs", sourcemap: true},
       {file: "lib/bundle.js", format: "es", sourcemap: true},
       {
-        file: "lib/bundle.iife.min.js",
+        file: "lib/bundle.umd.min.js",
         name: "unique",
-        format: "iife",
-        plugins: [terser()],
+        format: "umd",
+        plugins: [
+          // terser()
+        ],
         globals: {
-          // '@polkadot/util-crypto': 'polkadotUtilCrypto',
-          // '@polkadot/api': 'polkadotApi',
-          // 'web3': 'Web3',
+          '@polkadot/util': 'polkadotUtil',
+          '@polkadot/util-crypto': 'polkadotUtilCrypto',
+          '@polkadot/extension-dapp': 'polkadotExtensionDapp',
+          '@polkadot/api': 'polkadotApi',
+          'web3': 'Web3',
         },
         sourcemap: true,
       },
@@ -31,7 +35,8 @@ const config: RollupOptions[] = [
         useTsconfigDeclarationDir: true
       })
     ],
-    external: ['@polkadot/util-crypto', '@polkadot/api', 'web3']
+    // external: ['@polkadot/util-crypto', '@polkadot/api']
+
   },
   {
     input: "./lib/dts/src/index.d.ts",

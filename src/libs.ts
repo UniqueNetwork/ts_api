@@ -1,95 +1,104 @@
 import '@unique-nft/types/augment-api'
 
-import type Web3ClassType from "web3";
-import type PolkadotApiObjType from '@polkadot/api'
-import type PolkadotUtilCryptoObjType from '@polkadot/util-crypto'
-import type PolkadotExtensionDappType from '@polkadot/extension-dapp'
+import type * as PolkadotApiObjType from '@polkadot/api'
+import type * as PolkadotKeyringObjType from '@polkadot/keyring'
+import type * as PolkadotUtilCryptoObjType from '@polkadot/util-crypto'
+import type * as PolkadotExtensionDappType from '@polkadot/extension-dapp'
 import {unique as uniqueRpcDefinitions} from '@unique-nft/types/definitions'
-import {getKeys} from "./util";
+import {getKeys} from './tsUtils'
+import type * as EthersType from 'ethers'
 
-type Web3Type = typeof Web3ClassType
 type PolkadotApi = typeof PolkadotApiObjType
+type PolkadotKeyring = typeof PolkadotKeyringObjType
 type PolkadotUtilCrypto = typeof PolkadotUtilCryptoObjType
 type PolkadotExtensionDapp = typeof PolkadotExtensionDappType
+type Ethers = typeof EthersType
 
 export {uniqueRpcDefinitions}
 
-let Web3: Web3Type | null = null
-
-interface PolkadotLibs {
+interface Libs {
+  ethers: Ethers | null
   api: PolkadotApi | null
+  keyring: PolkadotKeyring | null
   utilCrypto: PolkadotUtilCrypto | null
   extensionDapp: PolkadotExtensionDapp | null
 }
 
-const polkadotLibs: PolkadotLibs = {
+const libs: Libs = {
+  ethers: null,
   api: null,
+  keyring: null,
   utilCrypto: null,
   extensionDapp: null,
 }
 
 export interface InitOptions {
-  initPolkadotLibs?: { [k in keyof PolkadotLibs]?: boolean }
+  initLibs?: { [k in keyof Omit<Libs, 'ethers'>]: boolean }
 }
 
 const defaultInitOptions: InitOptions = {}
 
-type Web3Imported = {default: Web3Type} | Web3Type
+export async function init(options: InitOptions = defaultInitOptions) {
+  const inBrowser = typeof window !== 'undefined'
 
-export async function initWithWeb3(Web3Promise: Promise<Web3Imported> | Web3Imported | null, options: InitOptions = defaultInitOptions) {
-  const inNode = typeof window === 'undefined'
+  const libRequest = options.initLibs
 
-  const libRequest = options.initPolkadotLibs
-
-  const tmpPolkadotLibs: PolkadotLibs = getKeys(polkadotLibs)
+  const tmpLibs: Libs = getKeys(libs)
     .reduce((acc, key) => {
       acc[key] = null;
       return acc;
-    }, {} as PolkadotLibs)
+    }, {} as Libs)
 
-  let tmpWeb3: Web3Imported | null = null
-
-  ;[tmpWeb3, tmpPolkadotLibs.api, tmpPolkadotLibs.utilCrypto, tmpPolkadotLibs.extensionDapp] = await Promise.all([
-    !Web3Promise ? null : await Web3Promise,
+  ;[
+    tmpLibs.ethers,
+    tmpLibs.api,
+    tmpLibs.keyring,
+    tmpLibs.utilCrypto,
+    tmpLibs.extensionDapp
+  ] = await Promise.all([
+    import('ethers'),
     libRequest && !libRequest?.api ? null : import('@polkadot/api'),
+    libRequest && !libRequest?.keyring ? null : import('@polkadot/keyring'),
     libRequest && !libRequest?.utilCrypto ? null : import('@polkadot/util-crypto'),
-    inNode || (libRequest && !libRequest?.api) ? null : import('@polkadot/extension-dapp'),
+    !inBrowser || (libRequest && !libRequest?.extensionDapp) ? null : import('@polkadot/extension-dapp'),
   ])
 
-  if (tmpWeb3) {
-    //@ts-ignore
-    globalThis.Web3 = Web3 = tmpWeb3.default ? tmpWeb3.default : tmpWeb3
-  }
+  // if (tmp) {
+  //   //@ts-ignore
+  //   globalThis.Web3 = Web3 = tmpWeb3.default ? tmpWeb3.default : tmpWeb3
+  // }
 
-  for (const key of getKeys(tmpPolkadotLibs)) {
+  for (const key of getKeys(tmpLibs)) {
     //@ts-ignore
-    if (tmpPolkadotLibs[key]) polkadotLibs[key] = tmpPolkadotLibs[key]
+    if (tmpLibs[key]) libs[key] = tmpLibs[key]
   }
 }
 
-export function getWeb3(): Web3Type {
-  if (!Web3 && !globalThis.Web3) {
-    throw new Error('No Web3 found. Please pass Web3 to `init` or provide window.Web3.')
-  } else {
-    return Web3 ? Web3 : globalThis.Web3
-  }
-}
+
 
 const checkModuleExists = <T>(moduleVar: T | null, moduleName: string): T => {
   if (!moduleVar) {
-    throw new Error(`No ${moduleName} found. Please call \`init()\`.`);
+    throw new Error(`No ${moduleName} found. Please call \`initWithWeb3()\`.`);
   }
   return moduleVar
 }
 
 export function getPolkadotApi() {
-  return checkModuleExists(polkadotLibs.api, `@polkadot/api`)
+  return checkModuleExists(libs.api, `@polkadot/api`)
+}
+
+export function getEthers(): Ethers {
+  return checkModuleExists(libs.ethers, `ethers`)
+}
+
+export function getPolkadotKeyring() {
+  return checkModuleExists(libs.keyring, `@polkadot/keyring`)
 }
 
 export function getPolkadotUtilCrypto() {
-  return checkModuleExists(polkadotLibs.utilCrypto, `@polkadot/util-crypto`)
+  return checkModuleExists(libs.utilCrypto, `@polkadot/util-crypto`)
 }
 
 export function getPolkadotExtensionDapp() {
-  return checkModuleExists(polkadotLibs.extensionDapp, `@polkadot/extension-dapp`)
+  return checkModuleExists(libs.extensionDapp, `@polkadot/extension-dapp`)
 }
