@@ -24,3 +24,16 @@ export const DWORDHexString = {
 export const UInt8ArrayToHexString = (array: Uint8Array): string => {
   return Array.from(array).map(el => el.toString(16).padStart(2, '0')).join('')
 }
+
+export const vec2str = (arr: Array<number | string>) => {
+  return arr
+    .map(x => String.fromCharCode(typeof x === 'number' ? x : parseInt(x)))
+    .join('')
+}
+
+export const str2vec = (str: string) => {
+  if (typeof str !== 'string') {
+    return str
+  }
+  return Array.from(str).map(x => x.charCodeAt(0))
+}

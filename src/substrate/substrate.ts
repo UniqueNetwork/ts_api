@@ -1,8 +1,8 @@
 import '@unique-nft/types/augment-api'
 
-import {getPolkadotApi, uniqueRpcDefinitions} from './libs'
+import {getPolkadotApi, uniqueRpcDefinitions} from '../libs'
 
-import type {Address, EthereumAddress, PolkadotSigner, SubstrateAddress, SubOrEthAddressObj} from './types';
+import type {Address, EthereumAddress, PolkadotSigner, SubstrateAddress, SubOrEthAddressObj} from '../types';
 import type {ApiPromise} from '@polkadot/api'
 
 export const addressToObject = ({address}: { address: Address | string }): SubOrEthAddressObj => {

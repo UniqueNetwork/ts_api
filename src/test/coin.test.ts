@@ -34,5 +34,6 @@ describe('coin', () => {
     expect(quartz.format(10n, 17)).toBe(`0.00000000000000001 QTZ`)
     expect(quartz.format(15n, 17)).toBe(`0.00000000000000002 QTZ`)
     expect(quartz.format(1n, 17)).toBe(`0 QTZ`)
+    expect(quartz.format(117535000000000000n, 9)).toBe(`0.117535 QTZ`)
   })
 })

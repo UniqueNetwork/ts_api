@@ -8,6 +8,7 @@ export type Nominal<OriginalType, TypeIdentifier> = OriginalType & INominal<Type
 
 import type {Signer as InjectedSigner} from '@polkadot/api/types'
 import type {KeyringPair} from '@polkadot/keyring/types'
+export type {KeypairType} from '@polkadot/util-crypto/types'
 
 export type SubstrateAddress = Nominal<string, 'SubstrateAddress'>
 export type EthereumAddress = Nominal<string, 'EthereumAddress'>
