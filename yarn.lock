@@ -1119,10 +1119,10 @@
   dependencies:
     "@types/node" "*"
 
-"@unique-nft/types@0.5.1":
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/@unique-nft/types/-/types-0.5.1.tgz#7cf6ee5f5361285fde7ca320092f15701b6efc5f"
-  integrity sha512-egxiRE2oI6FslBs18lBiyG1LaSZWPg0XzLrDTCXp3r9CDD/G8SiJqVYwAqgS9HiNvhHOGevlAaQ9Yej+p6bRQg==
+"@unique-nft/types@0.6.0-4":
+  version "0.6.0-4"
+  resolved "https://registry.yarnpkg.com/@unique-nft/types/-/types-0.6.0-4.tgz#9b1d820445bb985a82d1fb7e6e056de20b5141da"
+  integrity sha512-gNwJDPZboSI+eBCOt+/Q0ZqGB8DqkNRL+5Pnaj7EHqCIxzy57QVy4CHB7rPpourqhH2hAhxKA2LoeV6szwqb7Q==
 
 "@wessberg/stringutil@^1.0.19":
   version "1.0.19"

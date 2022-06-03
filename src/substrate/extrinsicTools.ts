@@ -7,10 +7,10 @@ import {
   ISubmittableResult,
   KeyringPair,
   SubmittableExtrinsic,
+  SubmittableResult
 } from '../types'
 import {getPolkadotExtensionDapp} from '../libs'
 import {utils} from '../utils'
-import {SubmittableResult} from "@polkadot/api";
 
 const signerIs = {
   keyring(signer: ISigner): signer is KeyringPair {
@@ -26,6 +26,19 @@ export const findEventDataBySectionAndMethod = (txResult: ISubmittableResult, se
   return txResult.events.find(event =>
     event.event.section === section && event.event.method === method
   )?.event.data
+}
+
+export class ExtrinsicError extends Error {
+  txResult: ISubmittableResult
+
+  constructor(txResult: SubmittableResult, errMessage: string, label?: string)  {
+    if (!label) {
+      const info = txResult.dispatchInfo?.toHuman()
+      label = `transaction ${info?.section}${info?.method}`
+    }
+    super(`Transaction failed: "${errMessage}"${label ? ' for' + label : ''}.`)
+    this.txResult = txResult
+  }
 }
 
 enum TransactionStatus {
@@ -96,9 +109,7 @@ export const sendTransaction = async <T extends SubmittableExtrinsic>(tx: T, lab
           errMessage = txResult.dispatchError?.toString() || 'Unknown error'
         }
 
-        const err = new Error(`Transaction failed: "${errMessage}" for ${label}.`)
-        ;(err as any).txResult = txResult
-        reject(err)
+        reject(new ExtrinsicError(txResult, errMessage, label))
         unsub()
       }
     });

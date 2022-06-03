@@ -14,17 +14,17 @@ export interface TransactionResult {
   extrinsicResultData: ExtrinsicResultData
 }
 
-export interface TransactionProcessorOptions {
+export interface TransactionOptions {
   getBlockNumber?: boolean
   //todo: era, header, etc...
 }
 
-export abstract class TransactionProcessor<P> {
+export abstract class Transaction<P, R extends TransactionResult = TransactionResult> {
   constructor(
     protected readonly api: ApiPromise,
     protected tx: SubmittableExtrinsic,
     protected readonly params: P,
-    protected readonly options: TransactionProcessorOptions = {}
+    protected readonly options: TransactionOptions = {}
   ) {
   }
 
@@ -73,12 +73,17 @@ export abstract class TransactionProcessor<P> {
     }
   }
 
-  protected async processResult(txResult: ISubmittableResult): Promise<TransactionResult> {
+  protected async processResult(txResult: ISubmittableResult): Promise<R> {
     return {
       isSuccess: true,
       txResult: txResult,
       extrinsicResultData: await this.extractExtrinsicResultDataFromTxResult(txResult)
-    }
+    } as R
   }
 }
 
+export class TransactionFromRawTx extends Transaction<SubmittableExtrinsic> {
+  constructor(api: ApiPromise, tx: SubmittableExtrinsic, options?: TransactionOptions) {
+    super(api, tx, tx, options);
+  }
+}

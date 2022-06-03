@@ -9,7 +9,7 @@ declare module 'vitest' {
   }
 }
 
-import {libs, init} from "../../lib/bundle";
+import {libs, init} from "../index";
 
 beforeAll(async(context) => {
   await init()
@@ -19,7 +19,7 @@ describe('init', function async (context) {
   test.concurrent('Ethers', () => {
     expect(libs.getEthers()).toBeTruthy()
   })
-  test.concurrent('@polkadot libs', () => {
+  test.concurrent('polkadot libs', () => {
     expect(libs.getPolkadotApi()).toBeTruthy()
     expect(libs.getPolkadotUtilCrypto()).toBeTruthy()
     expect(libs.getPolkadotKeyring()).toBeTruthy()

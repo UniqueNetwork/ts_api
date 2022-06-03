@@ -10,10 +10,10 @@ import {
   SubOrEthAddress,
   SubOrEthAddressObj,
   SubstrateAddress,
-  TokenId
-} from "../types";
-import {decodeAddress, evmToAddress, validateAddress} from "@polkadot/util-crypto";
-import {HexString} from "@polkadot/util/types";
+  TokenId,
+  HexString
+} from '../types'
+
 
 export const validateEthereumAddress = (address: string) => {
   const ethers = getEthers()

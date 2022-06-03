@@ -2,12 +2,13 @@ import '@unique-nft/types/augment-api'
 
 import type {KeyringPair} from '@polkadot/keyring/types'
 import type {KeypairType} from '@polkadot/util-crypto/types'
-import type {ApiPromise} from '@polkadot/api'
+import type {ApiPromise, SubmittableResult} from '@polkadot/api'
 import type {SubmittableExtrinsic} from '@polkadot/api/promise/types'
 import type {ISubmittableResult} from '@polkadot/types/types'
 import type {EventRecord} from '@polkadot/types/interfaces/system/types'
 import type {GenericEventData} from '@polkadot/types/generic/Event'
 import type {InjectedAccountWithMeta} from '@polkadot/extension-inject/types'
+import type {HexString} from '@polkadot/util/types'
 
 export type {
   KeyringPair,
@@ -15,9 +16,11 @@ export type {
   ApiPromise,
   SubmittableExtrinsic,
   ISubmittableResult,
+  SubmittableResult,
   EventRecord,
   GenericEventData,
-  InjectedAccountWithMeta
+  InjectedAccountWithMeta,
+  HexString
 }
 
 

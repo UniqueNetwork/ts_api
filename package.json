@@ -43,7 +43,7 @@
     "@polkadot/keyring": "9.3.1",
     "@polkadot/util": "9.3.1",
     "@polkadot/util-crypto": "9.3.1",
-    "@unique-nft/types": "0.5.1",
+    "@unique-nft/types": "0.6.0-4",
     "ethers": "5.6.8"
   }
 }

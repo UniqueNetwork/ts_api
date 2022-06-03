@@ -17,3 +17,4 @@ export {substrateTools}
 export const polkadotExtensionTools = substrateTools.extensionTools
 
 export * as coins from './coin'
+export {SubstrateMethodsParams} from './substrate/extrinsics/types'

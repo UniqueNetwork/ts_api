@@ -1,9 +1,16 @@
+import '@unique-nft/types/augment-api'
+
 import {ISigner, SubOrEthAddress, SubstrateAddress, ApiPromise} from "../types";
 import {getPolkadotApi, uniqueRpcDefinitions} from "../libs";
 import {utils} from "../utils";
 import {ExtrinsicTransferCoins, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
-import {TransactionProcessorOptions} from "./TransactionProcessor";
+import {TransactionFromRawTx, TransactionOptions} from "./Transaction";
 import {Coin} from "../coin";
+import {
+  ExtrinsicCreateCollection,
+  ExtrinsicCreateCollectionParams
+} from "./extrinsics/unique/ExtrinsicCreateCollection";
+import {SubmittableExtrinsic} from "@polkadot/api/promise/types";
 
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
@@ -61,10 +68,13 @@ export class Substrate {
 
       this.#ss58Prefix = this.#api.registry.chainSS58 || 42
     }
+
+    return this
   }
 
   async disconnect() {
     await this.#api?.disconnect()
+    return this
   }
 
 
@@ -77,8 +87,23 @@ export class Substrate {
     return this.#api?.isConnected || false
   }
 
-  transferCoins(params: ExtrinsicTransferCoinsParams, options?: TransactionProcessorOptions) {
+  transferCoins(params: ExtrinsicTransferCoinsParams, options?: TransactionOptions) {
     return new ExtrinsicTransferCoins(this.#apiSafe, params, options)
+  }
+
+  createCollection(params: ExtrinsicCreateCollectionParams, options?: TransactionOptions) {
+    return new ExtrinsicCreateCollection(this.#apiSafe, params, options)
+  }
+
+  createTransactionFromRawTx(tx: SubmittableExtrinsic, options?: TransactionOptions) {
+    return new TransactionFromRawTx(this.#apiSafe, tx, options)
+  }
+
+  getBalance = async (address: string) => {
+    const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
+
+    const result = (await this.#apiSafe.query.system.account(substrateAddress)).toHuman()
+    return result
   }
 
   getChainProperties = async () => {

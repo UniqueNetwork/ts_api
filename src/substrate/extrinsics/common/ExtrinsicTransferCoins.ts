@@ -1,21 +1,26 @@
-import {ISubmittableResult} from '../../../types'
+import {ISubmittableResult, ApiPromise} from '../../../types'
 import {utils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
-import {TransactionProcessor, TransactionProcessorOptions} from '../../TransactionProcessor'
-import {ApiPromise} from "@polkadot/api";
+import {Transaction, TransactionOptions} from '../../Transaction'
 
 export interface ExtrinsicTransferCoinsParams {
   toAddress: string
   amountInWei: bigint
 }
 
-export class ExtrinsicTransferCoins extends TransactionProcessor<ExtrinsicTransferCoinsParams> {
+export interface ExtrinsicTransferCoinsOptions extends TransactionOptions {
+  keepAccountAlive?: boolean
+}
+
+export class ExtrinsicTransferCoins extends Transaction<ExtrinsicTransferCoinsParams> {
   private readonly toAddress: string
 
-  constructor(api: ApiPromise, params: ExtrinsicTransferCoinsParams, options?: TransactionProcessorOptions) {
+  constructor(api: ApiPromise, params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
     const toAddress = utils.address.addressToAsIsOrSubstrateMirror(params.toAddress)
 
-    const tx = api.tx.balances.transfer(toAddress, params.amountInWei)
+    const method = options?.keepAccountAlive ? 'transferKeepAlive' : 'transfer'
+    const tx = api.tx.balances[method](toAddress, params.amountInWei)
+
     super(api, tx, params, options)
 
     this.toAddress = toAddress
@@ -23,7 +28,6 @@ export class ExtrinsicTransferCoins extends TransactionProcessor<ExtrinsicTransf
 
   protected async processResult(txResult: ISubmittableResult) {
     const data = findEventDataBySectionAndMethod(txResult, 'balances', 'Transfer')
-    console.log('data', data, data?.toHuman())
 
     const isSuccess = !!data &&
       utils.address.compareSubstrateAddresses(this.tx.signer.toString(), data[0].toString()) &&
