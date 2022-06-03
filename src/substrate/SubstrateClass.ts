@@ -3,6 +3,7 @@ import {getPolkadotApi, uniqueRpcDefinitions} from "../libs";
 import {utils} from "../utils";
 import {ExtrinsicTransferCoins, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
 import {TransactionProcessorOptions} from "./TransactionProcessor";
+import {Coin} from "../coin";
 
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
@@ -14,6 +15,8 @@ export interface ConnectToSubstrateOptions {
 
 export class Substrate {
   #api: ApiPromise | undefined
+  #ss58Prefix = 42
+  #coin = Coin.createUnknown18DecimalsCoin()
 
   get #apiSafe() {
     if (!this.#api || !this.#api.isConnected) {
@@ -21,6 +24,15 @@ export class Substrate {
     }
     return this.#api
   }
+
+  get ss58Prefix() {
+    return this.#ss58Prefix
+  }
+
+  get coin() {
+    return this.#coin
+  }
+
 
   async connect(wsEndpoint: string, options?: ConnectToSubstrateOptions) {
     try {
@@ -40,6 +52,14 @@ export class Substrate {
 
     if (!options?.dontAwaitApiIsReady) {
       await this.#api.isReady
+
+      this.#coin = new Coin({
+        symbol: this.#api.registry.chainTokens[0],
+        decimals: this.#api.registry.chainDecimals[0],
+        weiSymbol: 'wei'
+      })
+
+      this.#ss58Prefix = this.#api.registry.chainSS58 || 42
     }
   }
 

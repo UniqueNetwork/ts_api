@@ -1,6 +1,5 @@
 export interface CoinOptions {
   decimals: number
-  currency: string
   symbol: string
   weiSymbol: string
 }
@@ -16,15 +15,21 @@ const cutoffTrailingZerosAndPadStartWithZeros = (str: bigint | string, fullSize:
 
 export class Coin {
   private readonly decimals: number
-  private readonly currency: string
   private readonly symbol: string
   private readonly weiSymbol: string
 
   constructor(options: CoinOptions) {
     this.symbol = options.symbol
-    this.decimals = options.decimals
     this.weiSymbol = options.weiSymbol
-    this.currency = options.currency
+    this.decimals = options.decimals
+  }
+
+  static createUnknown18DecimalsCoin() {
+    return new Coin({
+      symbol: 'Unit',
+      weiSymbol: 'wei',
+      decimals: 18
+    })
   }
 
   getOptions() {
@@ -32,7 +37,6 @@ export class Coin {
       symbol: this.symbol,
       decimals: this.decimals,
       weiSymbol: this.weiSymbol,
-      currency: this.currency
     }
   }
 
