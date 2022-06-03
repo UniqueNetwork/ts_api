@@ -34,6 +34,7 @@ const libs: Libs = {
 
 export interface InitOptions {
   initLibs?: { [k in keyof Omit<Libs, 'ethers'>]: boolean }
+  initPolkadotExtensionWithName?: string
 }
 
 const defaultInitOptions: InitOptions = {}
@@ -72,13 +73,16 @@ export async function init(options: InitOptions = defaultInitOptions) {
     //@ts-ignore
     if (tmpLibs[key]) libs[key] = tmpLibs[key]
   }
-}
 
+  if (libs.extensionDapp && options.initPolkadotExtensionWithName && libs.extensionDapp.isWeb3Injected) {
+    await libs.extensionDapp.web3Enable(options.initPolkadotExtensionWithName)
+  }
+}
 
 
 const checkModuleExists = <T>(moduleVar: T | null, moduleName: string): T => {
   if (!moduleVar) {
-    throw new Error(`No ${moduleName} found. Please call \`initWithWeb3()\`.`);
+    throw new Error(`No ${moduleName} found. Please call \`init()\` first.`);
   }
   return moduleVar
 }

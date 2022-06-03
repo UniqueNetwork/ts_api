@@ -7,10 +7,13 @@ export const init = libs.init
 export * from './types'
 
 export * as constants from './constants'
-export * as utils from './utils'
+export {utils} from './utils'
 
 
-export * as Ethereum from './ethereum'
-export * as Substrate from './substrate'
+export * as ethereum from './ethereum'
+import * as substrateTools from './substrate'
+export {Substrate} from "./substrate";
+export {substrateTools}
+export const polkadotExtensionTools = substrateTools.extensionTools
 
 export * as coins from './coin'

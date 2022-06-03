@@ -10,6 +10,19 @@ describe('addresses', async () => {
   const ethMirror = '0x2E61479A581F023808AAa5f2EC90bE6c2b250102'
   const doubleMirror = '5HikVEnsQT3U9LyTh5X9Bewud1wv4WkS7ovxrHRMCT2DFZPY'
 
+  const ethAddress = '0x1B7AAcb25894D792601BBE4Ed34E07Ed14Fd31eB'
+  const subMirrorOfEthAddress = '5EctGy9Wyoa8XT8fV8hrJHL6ywaSb2ui29vs47Ybe8jfMYHR'
+
+  test.concurrent('is', () => {
+    expect(utils.address.is.substrateAddress(opal)).toBe(true)
+    expect(utils.address.is.substrateAddress(ethAddress)).toBe(false)
+    expect(utils.address.is.substrateAddress('123')).toBe(false)
+
+    expect(utils.address.is.ethereumAddress(opal)).toBe(false)
+    expect(utils.address.is.ethereumAddress(ethAddress)).toBe(true)
+    expect(utils.address.is.ethereumAddress('123')).toBe(false)
+  })
+
   test.concurrent('subToEthMirror', () => {
     expect(utils.address.subToEthMirror(opal)).toBe(ethMirror)
     expect(() => {
@@ -19,16 +32,24 @@ describe('addresses', async () => {
 
   test.concurrent('ethToSubMirror', () => {
     expect(utils.address.ethToSubMirror(ethMirror)).toBe(doubleMirror)
+    expect(utils.address.ethToSubMirror(ethAddress)).toBe(subMirrorOfEthAddress)
     expect(() => {
       utils.address.ethToSubMirror('123')
     }).toThrowError()
   })
 
-  test.concurrent('normalizeAddress', () => {
-    expect(utils.address.normalizeAddress(quartz)).toBe(opal)
-    expect(utils.address.normalizeAddress(quartz, 7391)).toBe(unique)
+  test.concurrent('normalizeSubstrateAddress', () => {
+    expect(utils.address.normalizeSubstrateAddress(quartz)).toBe(opal)
+    expect(utils.address.normalizeSubstrateAddress(quartz, 7391)).toBe(unique)
     expect(() => {
-      utils.address.normalizeAddress('123')
+      utils.address.normalizeSubstrateAddress('123')
+    }).toThrowError()
+  })
+
+  test.concurrent('normalizeEthereumAddress', () => {
+    expect(utils.address.normalizeEthereumAddress(ethMirror.toLowerCase())).toBe(ethMirror)
+    expect(() => {
+      utils.address.normalizeEthereumAddress('123')
     }).toThrowError()
   })
 
@@ -49,44 +70,44 @@ describe('addresses', async () => {
   })
 
   test.concurrent('Nesting address', () => {
-    expect(utils.address.nestingAddressToCollectionIdAndTokenNumber('0xF8238cCfFf8Ed887463Fd5E00000000000000000'))
-      .toEqual({collectionId: 0, tokenNumber: 0})
+    expect(utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238cCfFf8Ed887463Fd5E00000000000000000'))
+      .toEqual({collectionId: 0, tokenId: 0})
 
-    expect(utils.address.nestingAddressToCollectionIdAndTokenNumber('0xF8238CCFfF8ed887463fd5E0000000fE0000007F'))
-      .toEqual({collectionId: 254, tokenNumber: 127})
+    expect(utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238CCFfF8ed887463fd5E0000000fE0000007F'))
+      .toEqual({collectionId: 254, tokenId: 127})
 
-    expect(utils.address.nestingAddressToCollectionIdAndTokenNumber('0xF8238CcFFF8ed887463fD5E0fffffFFFFFfFFffF'))
-      .toEqual({collectionId: 2 ** 32 - 1, tokenNumber: 2 ** 32 - 1})
+    expect(utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238CcFFF8ed887463fD5E0fffffFFFFFfFFffF'))
+      .toEqual({collectionId: 2 ** 32 - 1, tokenId: 2 ** 32 - 1})
 
-    expect(() => {utils.address.nestingAddressToCollectionIdAndTokenNumber('0xF8238CCFfF8ed887463fd5E0000000fE0000007')})
+    expect(() => {utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238CCFfF8ed887463fd5E0000000fE0000007')})
       .toThrow()
 
-    expect(utils.address.collectionIdAndTokenNumberToNestingAddress(0, 0))
+    expect(utils.address.collectionIdAndTokenIdToNestingAddress(0, 0))
       .toBe('0xF8238cCfFf8Ed887463Fd5E00000000000000000')
 
-    expect(utils.address.collectionIdAndTokenNumberToNestingAddress(254, 127))
+    expect(utils.address.collectionIdAndTokenIdToNestingAddress(254, 127))
       .toBe('0xF8238CCFfF8ed887463fd5E0000000fE0000007F')
 
-    expect(utils.address.collectionIdAndTokenNumberToNestingAddress(2 ** 32 - 1, 2 ** 32 - 1))
+    expect(utils.address.collectionIdAndTokenIdToNestingAddress(2 ** 32 - 1, 2 ** 32 - 1))
       .toBe('0xF8238CcFFF8ed887463fD5E0fffffFFFFFfFFffF')
 
     expect(() => {
-      utils.address.collectionIdAndTokenNumberToNestingAddress(-1, 0)
+      utils.address.collectionIdAndTokenIdToNestingAddress(-1, 0)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenNumberToNestingAddress(2 ** 32, 0)
+      utils.address.collectionIdAndTokenIdToNestingAddress(2 ** 32, 0)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenNumberToNestingAddress(0, -1)
+      utils.address.collectionIdAndTokenIdToNestingAddress(0, -1)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenNumberToNestingAddress(0, 2 ** 32)
+      utils.address.collectionIdAndTokenIdToNestingAddress(0, 2 ** 32)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenNumberToNestingAddress(-1, -1)
+      utils.address.collectionIdAndTokenIdToNestingAddress(-1, -1)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenNumberToNestingAddress(2 ** 32, 2 ** 32)
+      utils.address.collectionIdAndTokenIdToNestingAddress(2 ** 32, 2 ** 32)
     }).toThrow()
   })
 })

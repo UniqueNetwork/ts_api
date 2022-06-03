@@ -37,3 +37,14 @@ export const str2vec = (str: string) => {
   }
   return Array.from(str).map(x => x.charCodeAt(0))
 }
+
+export const checkEnvironmentIsBrowser = (safe?: boolean) => {
+  if (typeof window === 'undefined') {
+    if (safe) {
+      return false
+    } else {
+      throw new Error('cannot sign with extenion not in browser')
+    }
+  }
+  return true
+}

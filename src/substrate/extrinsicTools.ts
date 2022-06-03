@@ -1,132 +1,111 @@
-/*
-import {getPolkadotKeyring} from "../libs";
-import {KeypairType} from '../types'
-import {connectToSubstrate} from "./substrate";
+import '@unique-nft/types/augment-api'
+
+import {
+  GenericEventData,
+  InjectedAccountWithMeta,
+  ISigner,
+  ISubmittableResult,
+  KeyringPair,
+  SubmittableExtrinsic,
+} from '../types'
+import {getPolkadotExtensionDapp} from '../libs'
+import {utils} from '../utils'
+import {SubmittableResult} from "@polkadot/api";
+
+const signerIs = {
+  keyring(signer: ISigner): signer is KeyringPair {
+    return typeof (signer as KeyringPair).sign === 'function'
+  },
+  extensionAccount(signer: ISigner): signer is InjectedAccountWithMeta {
+    const address = (signer as InjectedAccountWithMeta).address
+    return utils.address.is.substrateAddress(address) && typeof signer.meta.source === "string"
+  },
+}
+
+export const findEventDataBySectionAndMethod = (txResult: ISubmittableResult, section: string, method: string): GenericEventData | undefined => {
+  return txResult.events.find(event =>
+    event.event.section === section && event.event.method === method
+  )?.event.data
+}
 
 enum TransactionStatus {
-  NOT_READY = 'NOT_READY',
-  FAIL = 'FAIL',
-  SUCCESS = 'SUCCESS'
+  NOT_READY= 'NOT_READY',
+  FAIL= 'FAIL',
+  SUCCESS= 'SUCCESS'
 }
-
-interface CreationResult<R = any> {
-  status: TransactionStatus,
-  result: R
-}
-
-const callSmth = async () => {
-  const api = await connectToSubstrate('ws')
-  const result = await api.tx.unique.createCollectionEx('s').signAndSend('s', (result) => {
-    if (result.status.isInBlock) {
-      console.log(result.status.asInBlock, result.status.index)
+const getTransactionStatus = ({events, status}: SubmittableResult): TransactionStatus => {
+  if (status.isReady) {
+    return TransactionStatus.NOT_READY;
+  }
+  if (status.isBroadcast) {
+    return TransactionStatus.NOT_READY;
+  }
+  if (status.isInBlock || status.isFinalized) {
+    if (events.find(e => e.event.data.method === 'ExtrinsicFailed')) {
+      return TransactionStatus.FAIL;
     }
-  })
-}
-
-export const UniqueUtil = {
-  fromSeed: (seed: string, keypairType: KeypairType = 'sr25519') => {
-    const {Keyring} = getPolkadotKeyring()
-    const keyring = new Keyring({type: keypairType});
-    return keyring.addFromUri(seed);
-  },
-
-  extractCollectionIdFromCreationResult: (creationResult: CreationResult, label: string = 'new collection') => {
-    const wrappedLabel = label ? ` (${label})` : ''
-    if (creationResult.status !== TransactionStatus.SUCCESS) {
-      throw new Error(`Unable to create collection${wrappedLabel}`);
+    if (events.find(e => e.event.data.method === 'ExtrinsicSuccess')) {
+      return TransactionStatus.SUCCESS;
     }
-
-    let collectionId = null
-    creationResult.result.events.forEach((event: any) => {
-      const {data, method, section} = event.event
-      if ((section === 'common') && (method === 'CollectionCreated')) {
-        collectionId = parseInt(data[0].toString(), 10);
-      }
-    })
-
-    if (collectionId === null) {
-      throw Error(`No CollectionCreated event found${wrappedLabel}`)
-    }
-
-    return collectionId;
-  },
-
-  extractTokensFromCreationResult: (creationResult: CreationResult, label = 'new tokens') => {
-    if (creationResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to create tokens for ${label}`);
-    }
-    let success = false, tokens = [];
-    creationResult.result.events.forEach(({event: {data, method, section}}) => {
-      if (method === 'ExtrinsicSuccess') {
-        success = true;
-      } else if ((section === 'common') && (method === 'ItemCreated')) {
-        tokens.push({
-          collectionId: parseInt(data[0].toString(), 10),
-          tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toJSON()
-        });
-      }
-    });
-    return {success, tokens};
   }
 
-  static extractTokensFromBurnResult(burnResult, label = 'burned tokens') {
-    if (burnResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to burn tokens for ${label}`);
-    }
-    let success = false, tokens = [];
-    burnResult.result.events.forEach(({event: {data, method, section}}) => {
-      if (method === 'ExtrinsicSuccess') {
-        success = true;
-      } else if ((section === 'common') && (method === 'ItemDestroyed')) {
-        tokens.push({
-          collectionId: parseInt(data[0].toString(), 10),
-          tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toJSON()
-        });
-      }
-    });
-    return {success, tokens};
-  }
-
-  static findCollectionInEvents(events, collectionId, expectedSection, expectedMethod, label) {
-    let eventId = null;
-    events.forEach(({event: {data, method, section}}) => {
-      if ((section === expectedSection) && (method === expectedMethod)) {
-        eventId = parseInt(data[0].toString(), 10);
-      }
-    });
-
-    if (eventId === null) {
-      throw Error(`No ${expectedMethod} event for ${label}`);
-    }
-    return eventId === collectionId;
-  }
-
-  static isTokenTransferSuccess(events, collectionId, tokenId, fromAddressObj, toAddressObj) {
-    const normalizeAddress = address => {
-      if (address.Substrate) return {Substrate: this.normalizeSubstrateAddress(address.Substrate)};
-      if (address.Ethereum) return {Ethereum: address.Ethereum.toLocaleLowerCase()};
-      return address;
-    }
-    let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1};
-    events.forEach(({event: {data, method, section}}) => {
-      if ((section === 'common') && (method === 'Transfer')) {
-        let hData = data.toHuman();
-        transfer = {
-          collectionId: parseInt(hData[0]),
-          tokenId: parseInt(hData[1]),
-          from: normalizeAddress(hData[2]),
-          to: normalizeAddress(hData[3]),
-          amount: parseInt(hData[4])
-        };
-      }
-    });
-    let isSuccess = parseInt(collectionId) === transfer.collectionId && parseInt(tokenId) === transfer.tokenId;
-    isSuccess = isSuccess && JSON.stringify(normalizeAddress(fromAddressObj)) === JSON.stringify(transfer.from);
-    isSuccess = isSuccess && JSON.stringify(normalizeAddress(toAddressObj)) === JSON.stringify(transfer.to);
-    isSuccess = isSuccess && 1 === transfer.amount;
-    return isSuccess;
-  }
+  return TransactionStatus.FAIL;
 }
-*/
+
+
+export const signTransaction = async <T extends SubmittableExtrinsic>(tx: T, signer: ISigner, label = ''): Promise<T> => {
+  if (signerIs.keyring(signer)) {
+    return tx.signAsync(signer)
+  }
+
+  if (signerIs.extensionAccount(signer)) {
+    if (typeof window === 'undefined') {
+      throw new Error('cannot sign with extenion not in browser')
+    }
+    const extension = getPolkadotExtensionDapp()
+    const injector = await extension.web3FromAddress(signer.address)
+    return tx.signAsync(signer.address, {signer: injector.signer})
+  }
+
+  throw new Error('Attempt to sign failed: no keyring or valid substrate address to sign by extension provided')
+}
+
+export const sendTransaction = async <T extends SubmittableExtrinsic>(tx: T, label = '') => {
+  if (!label) {
+    const {section, method} = tx.unwrap().method.toHuman()
+    label = `transaction ${section}.${method}`
+  }
+
+  return new Promise<ISubmittableResult>(async (resolve, reject) => {
+    let unsub = await tx.send(txResult => {
+      const status = getTransactionStatus(txResult)
+
+      if (status === TransactionStatus.SUCCESS) {
+        resolve(txResult);
+        unsub();
+      } else if (status === TransactionStatus.FAIL) {
+        let errMessage = ''
+
+        if (txResult.dispatchError?.isModule) {
+          // for module errors, we have the section indexed, lookup
+          const decoded = tx.registry.findMetaError(txResult.dispatchError.asModule);
+          const {docs, name, section} = decoded;
+          errMessage = `${section}.${name}: ${docs.join(' ')}`
+        } else {
+          // Other, CannotLookup, BadOrigin, no extra info
+          errMessage = txResult.dispatchError?.toString() || 'Unknown error'
+        }
+
+        const err = new Error(`Transaction failed: "${errMessage}" for ${label}.`)
+        ;(err as any).txResult = txResult
+        reject(err)
+        unsub()
+      }
+    });
+  });
+}
+
+export const signAndSendTransaction = async <T extends SubmittableExtrinsic>(tx: T, signer: ISigner, label = '') => {
+  return await sendTransaction(await signTransaction(tx, signer))
+}
+
