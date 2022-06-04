@@ -22,20 +22,20 @@ export interface CollectionParams {
   permissions?: {
     access?: 'Normal' | 'AllowList'
     mintMode?: boolean
-    nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: number[]}
+    nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: Array<number>}
   }
-  tokenPropertyPermissions?: [{
+  tokenPropertyPermissions?: Array<{
     key: string
     value: {
       mutable: boolean
       collectionAdmin: boolean
       tokenOwner: boolean
     }
-  }]
-  properties?: [{
+  }>
+  properties?: Array<{
     key: string
-    value: string
-  }]
+    value: string | number | null
+  }>
 }
 
 export interface Collection extends CollectionParams {

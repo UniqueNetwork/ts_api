@@ -31,7 +31,7 @@ export const findEventDataBySectionAndMethod = (txResult: ISubmittableResult, se
 export class ExtrinsicError extends Error {
   txResult: ISubmittableResult
 
-  constructor(txResult: SubmittableResult, errMessage: string, label?: string)  {
+  constructor(txResult: SubmittableResult, errMessage: string, label?: string) {
     if (!label) {
       const info = txResult.dispatchInfo?.toHuman()
       label = `transaction ${info?.section}${info?.method}`
@@ -42,17 +42,16 @@ export class ExtrinsicError extends Error {
 }
 
 enum TransactionStatus {
-  NOT_READY= 'NOT_READY',
-  FAIL= 'FAIL',
-  SUCCESS= 'SUCCESS'
+  NOT_READY = 'NOT_READY',
+  FAIL = 'FAIL',
+  SUCCESS = 'SUCCESS'
 }
+
 const getTransactionStatus = ({events, status}: SubmittableResult): TransactionStatus => {
-  if (status.isReady) {
+  if (status.isReady || status.isBroadcast) {
     return TransactionStatus.NOT_READY;
   }
-  if (status.isBroadcast) {
-    return TransactionStatus.NOT_READY;
-  }
+
   if (status.isInBlock || status.isFinalized) {
     if (events.find(e => e.event.data.method === 'ExtrinsicFailed')) {
       return TransactionStatus.FAIL;
