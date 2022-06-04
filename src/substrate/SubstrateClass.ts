@@ -99,11 +99,15 @@ export class Substrate {
     return new TransactionFromRawTx(this.#apiSafe, tx, options)
   }
 
-  getBalance = async (address: string) => {
+  getBalance = async (address: string): Promise<bigint> => {
     const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
 
-    const result = (await this.#apiSafe.query.system.account(substrateAddress)).toHuman()
-    return result
+    const result = await this.#apiSafe.query.system.account(substrateAddress)
+    try {
+      return BigInt((result as any).data.free.toString())
+    } catch(err) {
+      throw new Error(`Cannot cast account result to free balance`)
+    }
   }
 
   getChainProperties = async () => {
