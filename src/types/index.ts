@@ -51,6 +51,11 @@ export type AnyAddress = SubOrEthAddressObj | SubstrateAddress | EthereumAddress
 export type CollectionId = Nominal<number, 'CollectionId'>
 export type TokenId = Nominal<number, 'TokenId'>
 
+export type PropertiesArray = Array<{
+  key: string
+  value: string
+}>
+
 type _EXTRINSIC_RESULT_TMP_ = void
 
 export interface IUniqueSDK<CollectionIdFormat extends number | EthereumAddress, Connection> {

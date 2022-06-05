@@ -1,17 +1,25 @@
 import {CollectionProperties} from '../substrate/extrinsics/unique/types'
 
-type UrlOrInfixUrl =
+/**
+ * first of all, no url. just infix
+ * then, width and height to json
+ * then, unnest it
+ * then add traitEnum (json)
+ * and traits to the token
+ */
+
+export type UrlOrInfixUrl =
   { url: string, urlInfix?: undefined }
   |
   { urlInfix: string, url?: undefined }
 
-type Image = UrlOrInfixUrl & {
+export type Image = UrlOrInfixUrl & {
   width: number
   height: number
   hash?: string
 }
 
-interface CollectionSchemaBasic {
+export interface CollectionSchemaBasic {
   type: string
   subtype: string
   subtypeVersion: string
@@ -21,7 +29,7 @@ interface CollectionSchemaBasic {
   coverImagePreview?: Image
 }
 
-interface TokenSchemaBasic {
+export interface TokenSchemaBasic {
   name?: string
   description?: string
   image: Image
@@ -85,12 +93,12 @@ const tokenWithFullUrlProperties: CollectionProperties = [
 // ====================================
 // Video
 
-interface CollectionSchemaBasicVideo extends CollectionSchemaBasic {
+export interface CollectionSchemaBasicVideo extends CollectionSchemaBasic {
   videoUrlTemplate: `${string}{infix}${string}`
   type: 'BasicVideo'
 }
 
-interface TokenSchemaBasicVideo extends TokenSchemaBasic {
+export interface TokenSchemaBasicVideo extends TokenSchemaBasic {
   video: UrlOrInfixUrl & {
     width: number
     height: number
@@ -125,12 +133,12 @@ const videoToken: TokenSchemaBasicVideo = {
 // ====================================
 // Audio - single
 
-interface CollectionSchemaBasicAudio extends CollectionSchemaBasic {
+export interface CollectionSchemaBasicAudio extends CollectionSchemaBasic {
   audioUrlTemplate: `${string}{infix}${string}`
   type: 'BasicAudio'
 }
 
-interface TokenSchemaBasicAudio extends TokenSchemaBasic {
+export interface TokenSchemaBasicAudio extends TokenSchemaBasic {
   audio: UrlOrInfixUrl & {
     length?: number // seconds
     bitrate?: number // kbps
@@ -140,12 +148,12 @@ interface TokenSchemaBasicAudio extends TokenSchemaBasic {
 }
 
 // ====================================
-interface CollectionSchemaBasicObject3D extends CollectionSchemaBasic {
+export interface CollectionSchemaBasicObject3D extends CollectionSchemaBasic {
   object3DUrlTemplate: `${string}{infix}${string}`
   type: 'Basic3DObject'
 }
 
-interface TokenSchemaBasicObject3D extends TokenSchemaBasic {
+export interface TokenSchemaBasicObject3D extends TokenSchemaBasic {
   object3D: UrlOrInfixUrl & {
     format: string
     // other fields

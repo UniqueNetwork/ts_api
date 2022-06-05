@@ -3,7 +3,7 @@ import '@unique-nft/types/augment-api'
 import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
 import {utils} from '../../../utils'
 import {ExtrinsicError, findEventDataBySectionAndMethod} from '../../extrinsicTools'
-import {Transaction, TransactionOptions, TransactionResult} from '../../Transaction'
+import {Transaction, TransactionOptions, TransactionResult, TransactionSendOptions} from '../../Transaction'
 
 import {CollectionParams} from "./types";
 
@@ -28,12 +28,14 @@ export class ExtrinsicCreateCollection extends Transaction<ExtrinsicCreateCollec
     }
 
     const tx = api.tx.unique.createCollectionEx(collection)
-    super(api, tx, params, options)
+    super(api, tx, params)
   }
 
-  protected async processResult(txResult: ISubmittableResult) {
+  protected async processResult(txResult: ISubmittableResult, options: TransactionSendOptions) {
+    const result = await this.getBaseResult(txResult, options)
+
     const data = findEventDataBySectionAndMethod(txResult, 'common', 'CollectionCreated')
-    console.log('data', data, data?.toHuman())
+    // console.log('data', data, data?.toHuman())
 
     const collectionId = (!!data && parseInt(data[0].toString(), 10) as CollectionId) || null
 
@@ -41,15 +43,9 @@ export class ExtrinsicCreateCollection extends Transaction<ExtrinsicCreateCollec
       throw new ExtrinsicError(txResult, 'No collection id found')
     }
 
-    if (typeof window !== 'undefined') {
-      ;(window as any).createCollectionExResult = data
-    }
-
     return {
-      isSuccess: true,
-      txResult: txResult,
+      ...result,
       collectionId,
-      extrinsicResultData: await this.extractExtrinsicResultDataFromTxResult(txResult)
     }
   }
 }
