@@ -51,7 +51,7 @@ export abstract class Transaction<P, R extends TransactionResult = TransactionRe
   }
 
   async send(options?: TransactionSendOptions): Promise<TransactionResult> {
-    return await this.processResult(await sendTransaction(this.tx))
+    return await this.processResult(await sendTransaction(this.tx), options)
   }
 
   async signAndSend(signer: ISigner, options?: TransactionSendOptions) {

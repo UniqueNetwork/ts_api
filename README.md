@@ -10,6 +10,23 @@ yarn add unique_tslib
 npm install unique_tslib
 ```
 
+Since this project rely on BigInt, there may be needed additional bundler settings.
+
+For Vite there may be useful to set esbuild target to es2020 at least, example of `vite.config.ts`:
+
+```typescript
+import { defineConfig } from 'vite'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  // ...
+  build: {
+    target: 'es2020'
+  }
+})
+
+```
+
 ---
 Brief overview
 
