@@ -1,5 +1,5 @@
-import {ApiPromise, ISigner, ISubmittableResult, SubmittableExtrinsic} from '../types'
-import {sendTransaction, signTransaction} from './extrinsicTools'
+import {ApiPromise, ISigner, ISubmittableResult, SubmittableExtrinsic} from '../../types'
+import {sendTransaction, signTransaction} from '../extrinsicTools'
 
 export interface ExtrinsicInfo {
   blockHash: string
@@ -8,20 +8,20 @@ export interface ExtrinsicInfo {
   txHash: string
 }
 
-export interface TransactionResult {
+export interface ExtrinsicResult {
   txResult: ISubmittableResult
   extrinsicInfo: ExtrinsicInfo
 }
 
-export interface TransactionOptions {
+export interface ExtrinsicOptions {
   //todo: era, header, etc...
 }
 
-export interface TransactionSendOptions {
+export interface ExtrinsicSendOptions {
   getBlockNumber?: boolean
 }
 
-export abstract class Transaction<P, R extends TransactionResult = TransactionResult> {
+export abstract class AbstractExtrinsic<P, R extends ExtrinsicResult = ExtrinsicResult> {
   constructor(
     protected readonly api: ApiPromise,
     protected tx: SubmittableExtrinsic,
@@ -50,16 +50,16 @@ export abstract class Transaction<P, R extends TransactionResult = TransactionRe
     return this
   }
 
-  async send(options?: TransactionSendOptions): Promise<TransactionResult> {
+  async send(options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
     return await this.processResult(await sendTransaction(this.tx), options)
   }
 
-  async signAndSend(signer: ISigner, options?: TransactionSendOptions) {
+  async signAndSend(signer: ISigner, options?: ExtrinsicSendOptions) {
     await this.sign(signer)
     return await this.send(options)
   }
 
-  protected async extractExtrinsicInfoFromTxResult(txResult: ISubmittableResult, options?: TransactionSendOptions): Promise<ExtrinsicInfo>  {
+  protected async extractExtrinsicInfoFromTxResult(txResult: ISubmittableResult, options?: ExtrinsicSendOptions): Promise<ExtrinsicInfo>  {
     const blockHash = txResult.status.asInBlock!.toString()
 
     const blockNumber: number | undefined = (options?.getBlockNumber && !!blockHash)
@@ -74,20 +74,20 @@ export abstract class Transaction<P, R extends TransactionResult = TransactionRe
     }
   }
 
-  protected async getBaseResult(txResult: ISubmittableResult, options?: TransactionSendOptions): Promise<TransactionResult> {
+  protected async getBaseResult(txResult: ISubmittableResult, options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
     return {
       txResult: txResult,
       extrinsicInfo: await this.extractExtrinsicInfoFromTxResult(txResult, options)
     }
   }
 
-  protected async processResult(txResult: ISubmittableResult, options?: TransactionSendOptions): Promise<R> {
+  protected async processResult(txResult: ISubmittableResult, options?: ExtrinsicSendOptions): Promise<R> {
     return await this.getBaseResult(txResult, options) as R
   }
 }
 
-export class TransactionFromRawTx extends Transaction<SubmittableExtrinsic | string> {
-  constructor(api: ApiPromise, tx: SubmittableExtrinsic | string, options?: TransactionOptions) {
+export class TransactionFromRawTx extends AbstractExtrinsic<SubmittableExtrinsic | string> {
+  constructor(api: ApiPromise, tx: SubmittableExtrinsic | string, options?: ExtrinsicOptions) {
     const transaction = typeof tx === 'string' ? api.tx(tx) : tx
     super(api, transaction, tx);
   }

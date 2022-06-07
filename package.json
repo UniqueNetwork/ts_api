@@ -11,6 +11,9 @@
     "lib/",
     "src/"
   ],
+  "repository": "github:UniqueNetwork/ts_api",
+  "description": "Definitely typed JS API for the Unique Network blockchain",
+  "keywords": ["Unique Network", "NFT", "RFT", "blockchain", "Polkadot", "Kusama"],
   "scripts": {
     "ts": "tsc --project tsconfig.json",
     "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo && mkdir lib",

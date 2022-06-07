@@ -4,7 +4,7 @@ import {ISigner, SubOrEthAddress, SubstrateAddress, ApiPromise} from "../types";
 import {getPolkadotApi, uniqueRpcDefinitions} from "../libs";
 import {utils} from "../utils";
 import {ExtrinsicTransferCoins, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
-import {TransactionFromRawTx, TransactionOptions} from "./Transaction";
+import {TransactionFromRawTx, ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
 import {Coin} from "../coin";
 import {
   ExtrinsicCreateCollection,
@@ -20,24 +20,24 @@ export interface ConnectToSubstrateOptions {
   dontAwaitApiIsReady?: boolean
 }
 
-export class Substrate {
-  #api: ApiPromise | undefined
-  #ss58Prefix = 42
-  #coin = Coin.createUnknown18DecimalsCoin()
+export class SubstrateCommon {
+  protected _api: ApiPromise | undefined
+  protected _ss58Prefix = 42
+  protected _coin = Coin.createUnknown18DecimalsCoin()
 
-  get #apiSafe() {
-    if (!this.#api || !this.#api.isConnected) {
+  protected get api() {
+    if (!this._api || !this._api.isConnected) {
       throw new Error(`Not connected to the WS RPC. Please call 'connect' method first.`)
     }
-    return this.#api
+    return this._api
   }
 
   get ss58Prefix() {
-    return this.#ss58Prefix
+    return this._ss58Prefix
   }
 
   get coin() {
-    return this.#coin
+    return this._coin
   }
 
 
@@ -50,7 +50,7 @@ export class Substrate {
 
     const polkadotApi = getPolkadotApi()
 
-    this.#api = new polkadotApi.ApiPromise({
+    this._api = new polkadotApi.ApiPromise({
       provider: new polkadotApi.WsProvider(wsEndpoint),
       rpc: {
         unique: uniqueRpcDefinitions.rpc
@@ -58,51 +58,51 @@ export class Substrate {
     })
 
     if (!options?.dontAwaitApiIsReady) {
-      await this.#api.isReady
+      await this._api.isReady
 
-      this.#coin = new Coin({
-        symbol: this.#api.registry.chainTokens[0],
-        decimals: this.#api.registry.chainDecimals[0],
+      this._coin = new Coin({
+        symbol: this._api.registry.chainTokens[0],
+        decimals: this._api.registry.chainDecimals[0],
         weiSymbol: 'wei'
       })
 
-      this.#ss58Prefix = this.#api.registry.chainSS58 || 42
+      this._ss58Prefix = this._api.registry.chainSS58 || 42
     }
 
     return this
   }
 
   async disconnect() {
-    await this.#api?.disconnect()
+    await this._api?.disconnect()
     return this
   }
 
 
 
   getApi() {
-    return this.#api
+    return this._api
   }
 
   get isConnected(): boolean {
-    return this.#api?.isConnected || false
+    return this._api?.isConnected || false
   }
 
-  transferCoins(params: ExtrinsicTransferCoinsParams, options?: TransactionOptions) {
-    return new ExtrinsicTransferCoins(this.#apiSafe, params, options)
+  transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicTransferCoins(this.api, params, options)
   }
 
-  createCollection(params: ExtrinsicCreateCollectionParams, options?: TransactionOptions) {
-    return new ExtrinsicCreateCollection(this.#apiSafe, params, options)
+  createCollection(params: ExtrinsicCreateCollectionParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicCreateCollection(this.api, params, options)
   }
 
-  createTransactionFromRawTx(tx: SubmittableExtrinsic, options?: TransactionOptions) {
-    return new TransactionFromRawTx(this.#apiSafe, tx, options)
+  createTransactionFromRawTx(tx: SubmittableExtrinsic, options?: ExtrinsicOptions) {
+    return new TransactionFromRawTx(this.api, tx, options)
   }
 
   getBalance = async (address: string): Promise<bigint> => {
     const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
 
-    const result = await this.#apiSafe.query.system.account(substrateAddress)
+    const result = await this.api.query.system.account(substrateAddress)
     try {
       return BigInt((result as any).data.free.toString())
     } catch(err) {
@@ -111,7 +111,7 @@ export class Substrate {
   }
 
   getChainProperties = async () => {
-    const result = (await this.#apiSafe.rpc.system.properties()).toHuman()
+    const result = (await this.api.rpc.system.properties()).toHuman()
     return result
   }
 }

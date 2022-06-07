@@ -1,13 +1,15 @@
-Works in browser and Node.js as well.
+# @unique-nft/api
+
+Definitely typed JS API for the Unique Network 
 
 Install
 
 ```shell
-yarn add unique_tslib
+yarn add @unique-nft/api
 ```
 
 ```shell
-npm install unique_tslib
+npm install @unique-nft/api
 ```
 
 Since this project rely on BigInt, there may be needed additional bundler settings.
@@ -31,20 +33,20 @@ export default defineConfig({
 Brief overview
 
 ```typescript
-import {init, Substrate, utils} from 'unique_tslib'
+import {init, Substrate, utils} from '@unique-nft/api'
 
 const run = async () => {
   await init({})
 
   console.log(utils.address.normalizeAddress('yGHGXr2qCKygrxFw16XXEYRLmQwQt8RN8eMN5UuuJ17ZFPosP'))
 
-  const chain = new Substrate()
+  const chain = new Substrate.Unique()
   await chain.connect(`wss://quartz.unique.network`)
 
   console.log(chain.ss58Prefix)
   console.log(chain.coin.format(1_500_000_000_000_000_000n))
 
-  console.log(await substrate.getChainProperties())
+  console.log(await chain.getChainProperties())
 
   await chain.disconnect()
 }
@@ -58,7 +60,7 @@ run().catch(err => console.error(er))
 Initializing with polkadot extension enabling (works only in browser)
 
 ```typescript
-import {init} from 'unique_tslib'
+import {init} from '@unique-nft/api'
 
 await init({initPolkadotExtensionWithName: 'my app'})
 ```
@@ -66,7 +68,7 @@ await init({initPolkadotExtensionWithName: 'my app'})
 or, gives the same result:
 
 ```typescript
-import {init, polkadotExtensionTools} from 'unique_tslib'
+import {init, polkadotExtensionTools} from '@unique-nft/api'
 
 await init()
 await polkadotExtensionTools.enablePolkadotExtension('my app')
@@ -81,9 +83,9 @@ Transaction may be signed with keyring as well as with an account from the polka
 With keyring (available in both browser and Node.js):
 
 ```typescript
-import {Substrate, substrateTools} from 'unique_tslib'
+import {Substrate, substrateTools} from '@unique-nft/api'
 
-const chain = new Substrate().connect('wss://...')
+const chain = new Substrate.Unique().connect('wss://...')
 
 const keyring = substrateTools.signerTools.fromSeed('electric suit...')
 
@@ -93,21 +95,23 @@ const result = await chain.transferCoins({...}).signAndSend(keyring)
 With the polkadot extension (available in browser only):
 
 ```typescript
-import {Substrate, polkadotExtensionTools} from 'unique_tslib'
+import {Substrate, polkadotExtensionTools} from '@unique-nft/api'
 
-const chain = new Substrate().connect('wss://...')
+const quartz = new Substrate.Unique().connect('wss://quartz.unique.network')
+const kusama = new Substrate.Common().connect('wss://kusama-rpc.polkadot.io')
 
 const accounts = await polkadotExtensionTools.getAllAccounts()
 const account = accounts.find(account => account.address === '5...')
 
-const result = await chain.transferCoins({...}).signAndSend(account)
+const QTZTransfer = await quartz.transferCoins({...}).signAndSend(account)
+const KSMTransfer = await kusama.transferCoins({...}).signAndSend(account)
 ```
 
 ---
 
 #### Extrinsics
 
-Substrate class provides methods which take transaction parameters and return Transaction object.
+Substrate class provide methods which take transaction parameters and return Transaction object.
 
 Example:
 
@@ -129,7 +133,7 @@ const result = await tx.send()
 All params have own typings which can be imported like that:
 
 ```typescript
-import {SubstrateMethodsParams} from 'unique_tslib'
+import {SubstrateMethodsParams} from '@unique-nft/api'
 
 const params: SubstrateMethodsParams.TransferCoins = {
   toAddress: '5...',

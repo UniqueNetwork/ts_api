@@ -34,7 +34,7 @@ export interface LocalizedStringDictionary {
 export enum AttributeKind {
   enum = 0,
   enumMultiple = 1,
-  freeForm = 2,
+  freeValue = 2,
 }
 
 export interface AttributeSchema<T> {

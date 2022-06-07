@@ -3,7 +3,7 @@ import '@unique-nft/types/augment-api'
 import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
 import {utils} from '../../../utils'
 import {ExtrinsicError, findEventDataBySectionAndMethod} from '../../extrinsicTools'
-import {Transaction, TransactionOptions, TransactionResult, TransactionSendOptions} from '../../Transaction'
+import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
 import {CollectionParams} from "./types";
 
@@ -11,12 +11,12 @@ export interface ExtrinsicCreateCollectionParams {
   collection: CollectionParams
 }
 
-export interface ExtrinsicCreateCollectionResult extends TransactionResult {
+export interface ExtrinsicCreateCollectionResult extends ExtrinsicResult {
   collectionId: CollectionId
 }
 
-export class ExtrinsicCreateCollection extends Transaction<ExtrinsicCreateCollectionParams, ExtrinsicCreateCollectionResult> {
-  constructor(api: ApiPromise, params: ExtrinsicCreateCollectionParams, options?: TransactionOptions) {
+export class ExtrinsicCreateCollection extends AbstractExtrinsic<ExtrinsicCreateCollectionParams, ExtrinsicCreateCollectionResult> {
+  constructor(api: ApiPromise, params: ExtrinsicCreateCollectionParams, options?: ExtrinsicOptions) {
     const collection = JSON.parse(JSON.stringify(params.collection))
 
     if (!collection.mode) {
@@ -31,7 +31,7 @@ export class ExtrinsicCreateCollection extends Transaction<ExtrinsicCreateCollec
     super(api, tx, params)
   }
 
-  protected async processResult(txResult: ISubmittableResult, options: TransactionSendOptions) {
+  protected async processResult(txResult: ISubmittableResult, options: ExtrinsicSendOptions) {
     const result = await this.getBaseResult(txResult, options)
 
     const data = findEventDataBySectionAndMethod(txResult, 'common', 'CollectionCreated')
