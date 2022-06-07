@@ -7,8 +7,9 @@ export const init = libs.init
 export * from './types'
 
 export * as constants from './constants'
-export {utils} from './utils'
+export {WS_RPC} from './constants'
 
+export {utils} from './utils'
 
 export * as ethereum from './ethereum'
 import * as substrateTools from './substrate'

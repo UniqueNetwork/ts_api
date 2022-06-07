@@ -12,7 +12,7 @@ yarn add @unique-nft/api
 npm install @unique-nft/api
 ```
 
-Since this project rely on BigInt, there may be needed additional bundler settings.
+Since this project requires BigInt support there may be needed some additional bundler settings.
 
 For Vite there may be useful to set esbuild target to es2020 at least, example of `vite.config.ts`:
 
@@ -83,9 +83,9 @@ Transaction may be signed with keyring as well as with an account from the polka
 With keyring (available in both browser and Node.js):
 
 ```typescript
-import {Substrate, substrateTools} from '@unique-nft/api'
+import {Substrate, substrateTools, WS_RPC} from '@unique-nft/api'
 
-const chain = new Substrate.Unique().connect('wss://...')
+const chain = new Substrate.Unique().connect(WS_RPC.quartz)
 
 const keyring = substrateTools.signerTools.fromSeed('electric suit...')
 
@@ -95,10 +95,10 @@ const result = await chain.transferCoins({...}).signAndSend(keyring)
 With the polkadot extension (available in browser only):
 
 ```typescript
-import {Substrate, polkadotExtensionTools} from '@unique-nft/api'
+import {Substrate, polkadotExtensionTools, WS_RPC} from '@unique-nft/api'
 
-const quartz = new Substrate.Unique().connect('wss://quartz.unique.network')
-const kusama = new Substrate.Common().connect('wss://kusama-rpc.polkadot.io')
+const quartz = new Substrate.Unique().connect(WS_RPC.quartz)
+const kusama = new Substrate.Common().connect(WS_RPC.kusama)
 
 const accounts = await polkadotExtensionTools.getAllAccounts()
 const account = accounts.find(account => account.address === '5...')
@@ -116,7 +116,7 @@ Substrate class provide methods which take transaction parameters and return Tra
 Example:
 
 ```typescript
-const result = await chain
+const result = await quartz
   .transferCoins({toAddress: '5...', amountInWei: 1n})
   .signAndSend(keyringOrAccount)
 ```
@@ -124,7 +124,7 @@ const result = await chain
 More verbose example:
 
 ```typescript
-const tx = chain.transferCoins({toAddress: '5...', amountInWei: 1n})
+const tx = quartz.transferCoins({toAddress: '5...', amountInWei: 1n})
 await tx.sign(keyringOrAccount)
 console.log(tx.getRawTx().toJSON())
 const result = await tx.send()

@@ -10,25 +10,19 @@ const config = {
     publishArgs: ['--access=public'],
   },
   git: {
-    "requireCleanWorkingDir": false,
+    requireCleanWorkingDir: false,
     changelog: 'git log --pretty=format:"* %s (%h)" ${from}...${to}',
     commitMessage: 'chore: release v${version}',
     requireBranch: 'master',
+    tagName: "v${version}",
   },
   "github": {
-    "release": false,
-    "releaseName": "Release ${version}",
-    "releaseNotes": null,
-    "autoGenerate": false,
-    "preRelease": false,
-    "draft": false,
-    "tokenRef": "GITHUB_TOKEN",
-    "assets": null,
-    "host": null,
-    "timeout": 0,
-    "proxy": null,
-    "skipChecks": false,
-    "web": false
+    release: true,
+    releaseName: "Release ${version}",
+    preRelease: true,
+    autoGenerate: true,
+    tokenRef: "GITHUB_TOKEN",
+    assets: null,
   },
 }
 

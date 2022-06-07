@@ -40,7 +40,6 @@ export class SubstrateCommon {
     return this._coin
   }
 
-
   async connect(wsEndpoint: string, options?: ConnectToSubstrateOptions) {
     try {
       new URL(wsEndpoint) // just to test it in a quick way
