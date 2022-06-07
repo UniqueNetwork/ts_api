@@ -12,10 +12,6 @@ import {
 } from "./extrinsics/unique/ExtrinsicCreateCollection";
 import {SubmittableExtrinsic} from "@polkadot/api/promise/types";
 
-
-const normalizeSubstrate = utils.address.normalizeSubstrateAddress
-
-
 export interface ConnectToSubstrateOptions {
   dontAwaitApiIsReady?: boolean
 }

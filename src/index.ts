@@ -12,10 +12,7 @@ export {WS_RPC} from './constants'
 export {utils} from './utils'
 
 export * as ethereum from './ethereum'
-import * as substrateTools from './substrate'
-export {Substrate} from "./substrate";
-export {substrateTools}
-export const polkadotExtensionTools = substrateTools.extensionTools
+export * from './substrate'
 
 export * as coins from './coin'
 export type {Coin} from './coin'
