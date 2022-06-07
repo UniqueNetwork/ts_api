@@ -7,7 +7,9 @@ const config = {
     "after:release": "echo Successfully released ${name} v${version} to ${repo.repository}."
   },
   npm: {
-    publishArgs: ['--access=public'],
+    publishConfig: {
+      access: "public",
+    },
   },
   git: {
     requireCleanWorkingDir: false,
@@ -16,9 +18,9 @@ const config = {
     requireBranch: 'master',
     tagName: "v${version}",
   },
-  "github": {
-    release: true,
-    releaseName: "Release ${version}",
+  github: {
+    release: false,
+    releaseName: "Release v${version}",
     preRelease: true,
     autoGenerate: true,
     tokenRef: "GITHUB_TOKEN",

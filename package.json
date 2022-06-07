@@ -31,6 +31,7 @@
     "develop": "yarn rollup --watch",
     "nodemon": "nodemon --exec \"yarn esno\" ",
     "release": "dotenv release-it",
+    "release_github": "dotenv release-it release-it -- --no-increment --no-git --no-npm --github.release --github.update",
     "test": "vitest run"
   },
   "devDependencies": {
