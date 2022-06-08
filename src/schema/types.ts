@@ -120,7 +120,7 @@ const punkAttributes: Attributes = {'0': 0, '1': [0, 5, 30]}
 export interface CollectionSchemaBasic {
   type: string
   subtype: string
-  subtypeVersion: string
+  subtypeVersion: string // semver
 
   imageUrlTemplate: `${string}{infix}${string}`
   coverImage: Image
@@ -184,14 +184,14 @@ const collectionProperties: CollectionProperties = [
   {"key": "coverImage--height", "value": "48"},
 ]
 const tokenWithInfixProperties: CollectionProperties = [
-  {"key": "image--urlInfix", "value": "QmPCqY7Lmxerm8cLKmB18kT1RxkwnpasPVksA8XLhViVT7"},
-  {"key": "image--width", "value": "48"},
-  {"key": "image--height", "value": "48"},
+  {"key": "image.urlInfix", "value": "QmPCqY7Lmxerm8cLKmB18kT1RxkwnpasPVksA8XLhViVT7"},
+  {"key": "image.width", "value": "48"},
+  {"key": "image.height", "value": "48"},
 ]
 const tokenWithFullUrlProperties: CollectionProperties = [
-  {"key": "image--url", "value": "https://ipfs.uniquenetwork.dev/ipfs/QmPCqY7Lmxerm8cLKmB18kT1RxkwnpasPVksA8XLhViVT7"},
-  {"key": "image--width", "value": "48"},
-  {"key": "image--height", "value": "48"},
+  {"key": "image.url", "value": "https://ipfs.uniquenetwork.dev/ipfs/QmPCqY7Lmxerm8cLKmB18kT1RxkwnpasPVksA8XLhViVT7"},
+  {"key": "image.width", "value": "48"},
+  {"key": "image.height", "value": "48"},
 ]
 
 // ====================================

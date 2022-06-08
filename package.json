@@ -32,7 +32,8 @@
     "nodemon": "nodemon --exec \"yarn esno\" ",
     "release": "dotenv release-it",
     "release_github": "dotenv release-it release-it -- --no-increment --no-git --no-npm --github.release --github.update",
-    "test": "vitest run"
+    "test": "vitest run",
+    "testmon": "vitest"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.2.1",

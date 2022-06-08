@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {init, utils} from '../index'
+import {init, utils} from '../../index'
 
 describe('addresses', async () => {
   await init()

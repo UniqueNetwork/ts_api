@@ -3,7 +3,11 @@ import '@unique-nft/types/augment-api'
 import {ISigner, SubOrEthAddress, SubstrateAddress, ApiPromise} from "../types";
 import {getPolkadotApi, uniqueRpcDefinitions} from "../libs";
 import {utils} from "../utils";
-import {ExtrinsicTransferCoins, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
+import {
+  ExtrinsicTransferCoins,
+  ExtrinsicTransferCoinsOptions,
+  ExtrinsicTransferCoinsParams
+} from "./extrinsics/common/ExtrinsicTransferCoins";
 import {TransactionFromRawTx, ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
 import {Coin} from "../coin";
 import {
@@ -82,7 +86,7 @@ export class SubstrateCommon {
     return this._api?.isConnected || false
   }
 
-  transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicOptions) {
+  transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
     return new ExtrinsicTransferCoins(this.api, params, options)
   }
 
