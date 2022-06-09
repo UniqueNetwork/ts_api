@@ -62,16 +62,16 @@ Initializing with polkadot extension enabling (works only in browser)
 ```typescript
 import {init} from '@unique-nft/api'
 
-await init({initPolkadotExtensionWithName: 'my app'})
+await init({connectToPolkadotExtensionsAs: 'my app'})
 ```
 
 or, gives the same result:
 
 ```typescript
-import {init, polkadotExtensionTools} from '@unique-nft/api'
+import {init, Substrate} from '@unique-nft/api'
 
 await init()
-await polkadotExtensionTools.enablePolkadotExtension('my app')
+await Substrate.extension.connectAs('my app')
 ```
 
 ---
@@ -83,11 +83,14 @@ Transaction may be signed with keyring as well as with an account from the polka
 With keyring (available in both browser and Node.js):
 
 ```typescript
-import {Substrate, substrateTools, WS_RPC} from '@unique-nft/api'
+import {Substrate, init, WS_RPC} from '@unique-nft/api'
 
-const chain = new Substrate.Unique().connect(WS_RPC.quartz)
+await init()
 
-const keyring = substrateTools.signerTools.fromSeed('electric suit...')
+const chain = new Substrate.Unique()
+await chain.connect(WS_RPC.quartz)
+
+const keyring = Substrate.signer.keyringFromSeed('electric suit...')
 
 const result = await chain.transferCoins({...}).signAndSend(keyring)
 ```
@@ -95,17 +98,34 @@ const result = await chain.transferCoins({...}).signAndSend(keyring)
 With the polkadot extension (available in browser only):
 
 ```typescript
-import {Substrate, polkadotExtensionTools, WS_RPC} from '@unique-nft/api'
+import {Substrate, WS_RPC} from '@unique-nft/api'
 
-const quartz = new Substrate.Unique().connect(WS_RPC.quartz)
-const kusama = new Substrate.Common().connect(WS_RPC.kusama)
+const quartz = new Substrate.Unique()
+const kusama = new Substrate.Common()
 
-const accounts = await polkadotExtensionTools.getAllAccounts()
-const account = accounts.find(account => account.address === '5...')
+await init({connectToPolkadotExtensionsAs: 'my app'})
+
+// we can create instances before init 
+// but connect must be invoked only after init call
+await quartz.connect(WS_RPC.quartz)
+await kusama.connect(WS_RPC.kusama)
+
+const accounts = await Substrate.extension.getAllAccounts()
+const account = accounts[0]
+// or, better option take some specific account
+// accounts.find(account => account.address === '5...')
+
+const KSMTransfer = await kusama.transferCoins({...}).signAndSend(account)
 
 const QTZTransfer = await quartz.transferCoins({...}).signAndSend(account)
-const KSMTransfer = await kusama.transferCoins({...}).signAndSend(account)
 ```
+
+Note: in case of Substrate.Unique.transferCoins 
+(not Substrate.Common),  
+we can pass not only substrate address (5... in normal form)
+and also an ethereum address (0x...)
+
+Unique's transferCoins (and other functions where it makes sense) can take any address - substrate and ethereum.
 
 ---
 

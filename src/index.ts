@@ -11,7 +11,7 @@ export {WS_RPC} from './constants'
 
 export {utils} from './utils'
 
-export * as ethereum from './ethereum'
+export * from './ethereum'
 export * from './substrate'
 
 export * as coins from './coin'

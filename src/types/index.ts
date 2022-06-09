@@ -1,7 +1,7 @@
 import '@unique-nft/types/augment-api'
 
-import type {KeyringPair} from '@polkadot/keyring/types'
-import type {KeypairType} from '@polkadot/util-crypto/types'
+import type {KeyringPair, KeyringOptions} from '@polkadot/keyring/types'
+import type {KeypairType, Keypair, Seedpair, Prefix} from '@polkadot/util-crypto/types'
 import type {ApiPromise, SubmittableResult} from '@polkadot/api'
 import type {SubmittableExtrinsic} from '@polkadot/api/promise/types'
 import type {ISubmittableResult} from '@polkadot/types/types'
@@ -13,6 +13,10 @@ import type {HexString} from '@polkadot/util/types'
 export type {
   KeyringPair,
   KeypairType,
+  KeyringOptions,
+  Keypair,
+  Seedpair,
+  Prefix,
   ApiPromise,
   SubmittableExtrinsic,
   ISubmittableResult,
