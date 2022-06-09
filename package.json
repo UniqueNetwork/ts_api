@@ -3,10 +3,16 @@
   "version": "0.0.5",
   "sideEffects": false,
   "license": "MIT",
-  "main": "./lib/bundle.cjs",
-  "module": "./lib/bundle.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "source": "./src/index.ts",
-  "types": "./lib/bundle.d.ts",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "files": [
     "lib/",
     "src/"
@@ -21,19 +27,31 @@
     "Polkadot",
     "Kusama"
   ],
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": [
+      "esm",
+      "cjs"
+    ],
+    "dts": true,
+    "sourcemap": true,
+    "clean": true
+  },
   "scripts": {
     "ts": "tsc --project tsconfig.json",
     "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo && mkdir lib",
     "build:ts": "yarn clean && yarn ts",
-    "build": "yarn rollup",
+    "build": "yarn tsup",
     "rollup": "rollup --config rollup.config.ts --configPlugin typescript --sourcemap",
     "analyze": "yarn rollup --analyze",
     "develop": "yarn rollup --watch",
-    "nodemon": "nodemon --exec \"yarn esno\" ",
+    "esmon": "nodemon --exec \"yarn esno\" ",
     "release": "dotenv release-it",
     "release_github": "dotenv release-it release-it -- --no-increment --no-git --no-npm --github.release --github.update",
-    "test": "vitest run",
-    "testmon": "vitest"
+    "testrun": "vitest run",
+    "test": "vitest"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.2.1",
@@ -54,6 +72,7 @@
     "rollup-plugin-ts": "^2.0.7",
     "rollup-plugin-typescript2": "^0.31.2",
     "tslib": "^2.4.0",
+    "tsup": "^6.1.0",
     "typescript": "^4.7.2",
     "vitest": "^0.12.6"
   },
