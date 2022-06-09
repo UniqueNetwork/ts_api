@@ -4,24 +4,17 @@ export interface CoinOptions {
   weiSymbol: string
 }
 
-const cutoffTrailingZerosAndPadStartWithZeros = (str: bigint | string, fullSize: number) => {
-  // the idea of this function is to get right looking fractional part of a number
-  // For example, with fullSize equals 8 and the str is
-  // '10000' or 10000n, it should return '0001'
-  // first, we pad it: '00010000'
-  // and then cut off trailing zeros to '0001'
-  return str.toString().padStart(fullSize, '0').replace(/\.?0*$/, '')
-}
-
 export class Coin {
-  private readonly decimals: number
-  private readonly symbol: string
-  private readonly weiSymbol: string
+  public readonly decimals: number
+  public readonly symbol: string
+  public readonly weiSymbol: string
+  public readonly oneCoinInWei: bigint
 
   constructor(options: CoinOptions) {
     this.symbol = options.symbol
     this.weiSymbol = options.weiSymbol
     this.decimals = options.decimals
+    this.oneCoinInWei = 10n ** BigInt(options.decimals)
   }
 
   static createUnknown18DecimalsCoin() {
@@ -71,6 +64,8 @@ export class Coin {
     return this.formatWithoutCurrency(wei, decimalPoints) + ` ${this.symbol}`
   }
 
+  // always rounds down insignificant part
+  // because it's better to show '5 UNQ' on balance 5.09 UNQ instead of '5.1 UNQ'
   formatWithoutCurrency(wei: string | bigint, decimalPoints: number = 6): string {
     if (typeof decimalPoints !== 'number') {
       throw new Error(`decimalPoints should be number`)
@@ -78,41 +73,57 @@ export class Coin {
     if (!(Math.round(decimalPoints) === decimalPoints)) {
       throw new Error('decimalPoints should be integer number')
     }
-    if (decimalPoints < 0 || decimalPoints > this.decimals) {
-      throw new Error(`decimal points should be in range [0, ${this.decimals}]`)
+    if (decimalPoints < 0) {
+      throw new Error(`decimal points should be in range GTE 0`)
+    }
+    if (decimalPoints > this.decimals) {
+      decimalPoints = this.decimals
     }
 
     const intPart = this.getIntegerPart(wei)
     const fracPart = this.getFractionalPart(wei)
 
-    if (!decimalPoints) {
-      // rounding - if the fractional part starts with 5 and greater, round up
-      const appendValue = (
-        fracPart.toString().length === this.decimals &&
-        parseInt(fracPart.toString().charAt(0)) >= 5
-      ) ? 1n : 0n
-      return `${intPart + appendValue}`
-    }
-
-    const fracPartString = cutoffTrailingZerosAndPadStartWithZeros(fracPart, this.decimals)
-
     const nonSignificantPartLength = this.decimals - decimalPoints
-    if (!nonSignificantPartLength) {
-      return `${intPart}.${fracPartString}`
-    }
-
     const fracPartIsTooSmall = fracPart < (10n ** BigInt(nonSignificantPartLength))
 
-    if (fracPartIsTooSmall) {
-      return `${intPart}`
-    } else {
-      // rounding - if the next digit after cutoff is 5 and greater, round up
-      const appendValue = parseInt(fracPartString.charAt(decimalPoints)) >= 5 ? 1n : 0n
-      const slicedAndRoundFracPart = BigInt(fracPartString.slice(0, decimalPoints)) + appendValue
-      const trimmedFracPart = cutoffTrailingZerosAndPadStartWithZeros(slicedAndRoundFracPart, decimalPoints)
+    if (!decimalPoints || fracPartIsTooSmall) {
+      return intPart.toString()
+    }
 
-      return `${intPart}.${trimmedFracPart}`
+    const fracPartStr = fracPart.toString()
+      .padStart(18, '0')
+      .slice(0, decimalPoints)
+      .replace(/\.?0*$/, '')
+
+    return `${intPart}.${fracPartStr}`
+  }
+
+  /**
+   * @description Dangerously because for the lossless conversion, strings should be used, not numbers.
+   * Please use the `coinsToWei` method instead.
+   */
+  dangerouslyCoinsToWei(coins: number): bigint {
+    if (coins < 0) {
+      throw new Error(`coins to wei: coins should be >= 0, received ${coins}`)
+    }
+
+    const intPart = Math.floor(coins)
+    if (intPart !== 0) {
+      return this.coinsToWei(coins.toString())
+    } else {
+      return this.coinsToWei((coins + 1).toString()) - this.oneCoinInWei
     }
   }
-}
 
+  coinsToWei(coins: string): bigint {
+    const parts = coins.trim().match(/^(\d*(\.\d*)?)/)
+    if (!parts || !parts[1]) {
+      throw new Error(`coinsToWei: could not parse input: ${coins}`)
+    }
+
+    const [intPart, fracPart] = parts[1].split('.')
+
+    const finalFracPart = fracPart ? BigInt(fracPart.padEnd(18, '0')) : 0n
+    return BigInt(intPart) * this.oneCoinInWei + finalFracPart
+  }
+}

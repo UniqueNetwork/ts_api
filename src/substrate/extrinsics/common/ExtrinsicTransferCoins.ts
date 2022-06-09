@@ -9,7 +9,7 @@ export interface ExtrinsicTransferCoinsParams {
 }
 
 export interface ExtrinsicTransferCoinsOptions extends ExtrinsicOptions {
-  keepAccountAlive?: boolean
+  dontKeepAccountAlive?: boolean
 }
 
 export interface ExtrinsicTransferCoinsResult extends ExtrinsicResult {
@@ -18,7 +18,7 @@ export interface ExtrinsicTransferCoinsResult extends ExtrinsicResult {
 
 export class ExtrinsicTransferCoins extends AbstractExtrinsic<ExtrinsicTransferCoinsParams, ExtrinsicTransferCoinsResult> {
   constructor(api: ApiPromise, params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
-    const method = options?.keepAccountAlive ? 'transferKeepAlive' : 'transfer'
+    const method = options?.dontKeepAccountAlive ? 'transfer' : 'transferKeepAlive'
     const tx = api.tx.balances[method](params.toAddress, params.amountInWei)
 
     super(api, tx, params)
@@ -28,6 +28,7 @@ export class ExtrinsicTransferCoins extends AbstractExtrinsic<ExtrinsicTransferC
     const result = await this.getBaseResult(txResult, options)
 
     const data = findEventDataBySectionAndMethod(txResult, 'balances', 'Transfer')
+
     const isSuccess = !!data &&
       utils.address.compareSubstrateAddresses(this.tx.signer.toString(), data[0].toString()) &&
       utils.address.compareSubstrateAddresses(this.params.toAddress, data[1].toString()) &&

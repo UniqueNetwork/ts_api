@@ -1,6 +1,6 @@
 import '@unique-nft/types/augment-api'
 
-import {ISigner, SubOrEthAddress, SubstrateAddress, ApiPromise} from "../types";
+import {ApiPromise} from "../types";
 import {getPolkadotApi, uniqueRpcDefinitions} from "../libs";
 import {utils} from "../utils";
 import {
@@ -8,12 +8,8 @@ import {
   ExtrinsicTransferCoinsOptions,
   ExtrinsicTransferCoinsParams
 } from "./extrinsics/common/ExtrinsicTransferCoins";
-import {TransactionFromRawTx, ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
+import {ExtrinsicOptions, TransactionFromRawTx} from "./extrinsics/AbstractExtrinsic";
 import {Coin} from "../coin";
-import {
-  ExtrinsicCreateCollection,
-  ExtrinsicCreateCollectionParams
-} from "./extrinsics/unique/ExtrinsicCreateCollection";
 import {SubmittableExtrinsic} from "@polkadot/api/promise/types";
 
 export interface ConnectToSubstrateOptions {
@@ -77,7 +73,6 @@ export class SubstrateCommon {
   }
 
 
-
   getApi() {
     return this._api
   }
@@ -90,18 +85,12 @@ export class SubstrateCommon {
     return new ExtrinsicTransferCoins(this.api, params, options)
   }
 
-  createCollection(params: ExtrinsicCreateCollectionParams, options?: ExtrinsicOptions) {
-    return new ExtrinsicCreateCollection(this.api, params, options)
-  }
-
   createTransactionFromRawTx(tx: SubmittableExtrinsic, options?: ExtrinsicOptions) {
     return new TransactionFromRawTx(this.api, tx, options)
   }
 
-  getBalance = async (address: string): Promise<bigint> => {
-    const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
-
-    const result = await this.api.query.system.account(substrateAddress)
+  async getBalance(address: string): Promise<bigint>{
+    const result = await this.api.query.system.account(address)
     try {
       return BigInt((result as any).data.free.toString())
     } catch(err) {
@@ -109,7 +98,7 @@ export class SubstrateCommon {
     }
   }
 
-  getChainProperties = async () => {
+  async getChainProperties() {
     const result = (await this.api.rpc.system.properties()).toHuman()
     return result
   }

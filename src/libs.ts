@@ -4,9 +4,10 @@ import type * as PolkadotApiObjType from '@polkadot/api'
 import type * as PolkadotKeyringObjType from '@polkadot/keyring'
 import type * as PolkadotUtilCryptoObjType from '@polkadot/util-crypto'
 import type * as PolkadotExtensionDappType from '@polkadot/extension-dapp'
+import type * as EthersType from 'ethers'
+
 import {unique as uniqueRpcDefinitions} from '@unique-nft/types/definitions'
 import {getKeys} from './tsUtils'
-import type * as EthersType from 'ethers'
 
 type PolkadotApi = typeof PolkadotApiObjType
 type PolkadotKeyring = typeof PolkadotKeyringObjType

@@ -54,30 +54,33 @@ export abstract class AbstractExtrinsic<P, R extends ExtrinsicResult = Extrinsic
     return await this.processResult(await sendTransaction(this.tx), options)
   }
 
-  async signAndSend(signer: ISigner, options?: ExtrinsicSendOptions) {
+  async signAndSend(signer: ISigner, options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
     await this.sign(signer)
     return await this.send(options)
   }
 
-  protected async extractExtrinsicInfoFromTxResult(txResult: ISubmittableResult, options?: ExtrinsicSendOptions): Promise<ExtrinsicInfo>  {
+  async getPaymentInfo(fromAddress: string): Promise<bigint> {
+    const result = await this.tx.paymentInfo(fromAddress)
+    return result.partialFee.toBigInt()
+  }
+
+  protected async getBaseResult(txResult: ISubmittableResult, options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
     const blockHash = txResult.status.asInBlock!.toString()
 
     const blockNumber: number | undefined = (options?.getBlockNumber && !!blockHash)
       ? (await this.api.rpc.chain.getBlock(blockHash)).block.header.number.toNumber()
       : undefined
 
-    return {
+    const extrinsicInfo: ExtrinsicInfo =  {
       blockHash,
       txHash: txResult.txHash.toString(),
       txIndex: txResult.txIndex,
       blockNumber
     }
-  }
 
-  protected async getBaseResult(txResult: ISubmittableResult, options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
     return {
       txResult: txResult,
-      extrinsicInfo: await this.extractExtrinsicInfoFromTxResult(txResult, options)
+      extrinsicInfo,
     }
   }
 

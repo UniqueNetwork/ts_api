@@ -7,5 +7,8 @@ lib
 .rollup.cache
 .env
 !.env.example
+.test.env
+!.test.env.example
 tsconfig.tsbuildinfo
 .tsconfig.tsbuildinfo
+____*
