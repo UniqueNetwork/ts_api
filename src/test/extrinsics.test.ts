@@ -52,3 +52,52 @@ suite('extrinsics', async () => {
     expect(balanceAfter - balanceBefore).toBe(toSend)
   })
 })
+
+suite('CollectionSponsor tests', async () => {
+  test('Set sponsor for collection', async (ctx) => {
+    const {chain, keyring1} = ctx.meta.suite.file!
+
+
+    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+      .signAndSend(keyring1)
+
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({ collectionId: createCollectionResult.collectionId, newSponsorAddress: keyring1.address })
+      .signAndSend(keyring1);
+
+    expect(setCollectionSponsorResult.isSuccess).toBe(true);
+  })
+
+  test('Confirm sponsorship', async (ctx) => {
+    const {chain, keyring1, keyringBob} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+      .signAndSend(keyring1)
+
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({ collectionId: createCollectionResult.collectionId, newSponsorAddress: keyringBob.address })
+      .signAndSend(keyring1)
+
+    expect(setCollectionSponsorResult.isSuccess).toBe(true)
+
+    const confirmCollectionSponsorResult = await chain.confirmSponsorship({ collectionId: createCollectionResult.collectionId })
+      .signAndSend(keyringBob)
+
+    expect(confirmCollectionSponsorResult.isSuccess).toBe(true)
+  })
+
+  test('[Negative test]: Confirm sponsorship by another user', async (ctx) => {
+    const {chain, keyring1, keyringBob} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+      .signAndSend(keyring1)
+
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({ collectionId: createCollectionResult.collectionId, newSponsorAddress: keyringBob.address })
+      .signAndSend(keyring1)
+
+    expect(setCollectionSponsorResult.isSuccess).toBe(true)
+
+    await expect(chain.confirmSponsorship({ collectionId: createCollectionResult.collectionId })
+      .signAndSend(keyring1))
+      .rejects
+      .toThrow('unique.ConfirmUnsetSponsorFail')
+  })
+})
