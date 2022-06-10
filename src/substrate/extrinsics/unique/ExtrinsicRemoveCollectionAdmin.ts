@@ -7,7 +7,7 @@ import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptio
 
 export interface ExtrinsicRemoveCollectionAdminParams {
   collectionId: CollectionId
-  AdminAddress: string
+  adminAddress: string
 }
 
 export interface ExtrinsicRemoveCollectionAdminResult extends ExtrinsicResult {
@@ -17,7 +17,7 @@ export interface ExtrinsicRemoveCollectionAdminResult extends ExtrinsicResult {
 export class ExtrinsicRemoveCollectionAdmin extends AbstractExtrinsic<ExtrinsicRemoveCollectionAdminParams, ExtrinsicRemoveCollectionAdminResult> {
   constructor(api: ApiPromise, params: ExtrinsicRemoveCollectionAdminParams, options?: ExtrinsicOptions) {
 
-    const tx = api.tx.unique.removeCollectionAdmin(params.collectionId, addressToObject(params.AdminAddress))
+    const tx = api.tx.unique.removeCollectionAdmin(params.collectionId, addressToObject(params.adminAddress))
 
     super(api, tx, params)
   }

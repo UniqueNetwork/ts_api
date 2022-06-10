@@ -67,7 +67,7 @@ suite('Add & remove collection Admin tests', async () => {
 
     expect(addCollectionAdminResult.isSuccess).toBe(true)
 
-    const removeCollectionAdminResult = await chain.removeCollectionAdmin({collectionId: collectionId, AdminAddress: keyring2.address})
+    const removeCollectionAdminResult = await chain.removeCollectionAdmin({collectionId: collectionId, adminAddress: keyring2.address})
       .signAndSend(keyring1)
 
     expect(removeCollectionAdminResult.isSuccess).toBe(true)
@@ -84,7 +84,7 @@ suite('Add & remove collection Admin tests', async () => {
     await expect(chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
       .signAndSend(keyring2))
       .rejects
-      .toThrow(/common.NoPermission/)
+      .toThrow('common.NoPermission')
   })
 
   test('[Negative test] Removing collection admin by non admin user', async (ctx) => {
@@ -100,9 +100,9 @@ suite('Add & remove collection Admin tests', async () => {
 
     expect(addCollectionAdminResult.isSuccess).toBe(true)
 
-    await expect(chain.removeCollectionAdmin({ collectionId: collectionId, AdminAddress: keyring2.address})
+    await expect(chain.removeCollectionAdmin({ collectionId: collectionId, adminAddress: keyring2.address})
       .signAndSend(keyringBob))
       .rejects
-      .toThrow(/common.NoPermission/)
+      .toThrow('common.NoPermission')
   })
 })
