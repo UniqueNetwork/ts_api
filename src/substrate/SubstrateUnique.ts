@@ -12,6 +12,16 @@ import {
 } from "./extrinsics/unique/ExtrinsicCreateCollection";
 import {SubstrateCommon} from "./SubstrateCommon";
 
+import {
+  ExtrinsicSetCollectionSponsor,
+  ExtrinsicSetCollectionSponsorParams
+} from './extrinsics/unique/ExtrinsicSetCollectionSponsor';
+
+import {
+  ExtrinsicConfirmSponsorship,
+  ExtrinsicConfirmSponsorshipParams
+} from './extrinsics/unique/ExtrinsicConfirmSponsorship'
+
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
 
@@ -33,5 +43,13 @@ export class SubstrateUnique extends SubstrateCommon {
     const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
 
     return await super.getBalance(substrateAddress)
+  }
+
+  setCollectionSponsor(params: ExtrinsicSetCollectionSponsorParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicSetCollectionSponsor(this.api, params, options)
+  }
+
+  confirmSponsorship(params: ExtrinsicConfirmSponsorshipParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicConfirmSponsorship(this.api, params, options)
   }
 }
