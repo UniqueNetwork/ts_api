@@ -14,7 +14,7 @@
     }
   },
   "files": [
-    "lib/",
+    "dist/",
     "src/"
   ],
   "repository": "github:UniqueNetwork/ts_api",
