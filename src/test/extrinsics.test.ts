@@ -29,6 +29,9 @@ beforeAll(async (context) => {
   context.keyringBob = Substrate.signer.keyringFromSeed(config.SUB_SEED_BOB)
 })
 
+
+
+
 suite('extrinsics', async () => {
   test('isConnected', async (ctx) => {
     const {chain} = ctx.meta.suite.file!
@@ -52,6 +55,8 @@ suite('extrinsics', async () => {
     expect(balanceAfter - balanceBefore).toBe(toSend)
   })
 })
+
+
 
 suite('CollectionSponsor tests', async () => {
   test('Set sponsor for collection', async (ctx) => {
@@ -101,3 +106,62 @@ suite('CollectionSponsor tests', async () => {
       .toThrow('unique.ConfirmUnsetSponsorFail')
   })
 })
+
+
+
+suite('Add & remove collection Admin tests', async () => {
+  test('Add & remove collection admin', async (ctx) => {
+    const {chain, keyring1, keyring2} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+      .signAndSend(keyring1)
+
+    const collectionId = createCollectionResult.collectionId;
+
+    const addCollectionAdminResult = await chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
+      .signAndSend(keyring1)
+
+    expect(addCollectionAdminResult.isSuccess).toBe(true)
+
+    const removeCollectionAdminResult = await chain.removeCollectionAdmin({collectionId: collectionId, adminAddress: keyring2.address})
+      .signAndSend(keyring1)
+
+    expect(removeCollectionAdminResult.isSuccess).toBe(true)
+  })
+
+  test('[Negative test] add collection admin by not an owner', async (ctx) => {
+    const {chain, keyring1, keyring2} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+      .signAndSend(keyring1)
+
+    const collectionId = createCollectionResult.collectionId;
+
+    await expect(chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
+      .signAndSend(keyring2))
+      .rejects
+      .toThrow('common.NoPermission')
+  })
+
+  test('[Negative test] Removing collection admin by non admin user', async (ctx) => {
+    const {chain, keyring1, keyring2, keyringBob} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+      .signAndSend(keyring1)
+
+    const collectionId = createCollectionResult.collectionId;
+
+    const addCollectionAdminResult = await chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
+      .signAndSend(keyring1)
+
+    expect(addCollectionAdminResult.isSuccess).toBe(true)
+
+    await expect(chain.removeCollectionAdmin({ collectionId: collectionId, adminAddress: keyring2.address})
+      .signAndSend(keyringBob))
+      .rejects
+      .toThrow('common.NoPermission')
+  })
+})
+
+
+
