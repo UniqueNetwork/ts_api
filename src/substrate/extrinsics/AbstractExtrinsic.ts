@@ -50,11 +50,11 @@ export abstract class AbstractExtrinsic<P, R extends ExtrinsicResult = Extrinsic
     return this
   }
 
-  async send(options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
+  async send(options?: ExtrinsicSendOptions): Promise<R> {
     return await this.processResult(await sendTransaction(this.tx), options)
   }
 
-  async signAndSend(signer: ISigner, options?: ExtrinsicSendOptions): Promise<ExtrinsicResult> {
+  async signAndSend(signer: ISigner, options?: ExtrinsicSendOptions): Promise<R> {
     await this.sign(signer)
     return await this.send(options)
   }

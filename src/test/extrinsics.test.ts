@@ -1,6 +1,7 @@
-import {expect, test, beforeAll, suite, describe} from 'vitest'
+import {afterAll, beforeAll, expect, suite, test} from 'vitest'
 import * as dotenv from 'dotenv'
 import fs from 'fs'
+import {init, KeyringPair, Substrate, SubstrateUnique} from "../index";
 
 declare module 'vitest' {
   export interface Suite {
@@ -11,8 +12,6 @@ declare module 'vitest' {
     keyringBob: KeyringPair
   }
 }
-
-import {init, SubstrateUnique, Substrate, KeyringPair} from "../index";
 
 beforeAll(async (context) => {
   const config = dotenv.parse(fs.readFileSync('./src/test/.test.env').toString('utf8'))
@@ -29,7 +28,41 @@ beforeAll(async (context) => {
   context.keyringBob = Substrate.signer.keyringFromSeed(config.SUB_SEED_BOB)
 })
 
+afterAll(async (context) => {
+  const {chain, keyring1, keyring2} = context
+  const [balance1, balance2] = await Promise.all([
+    chain.getBalance(keyring1.address),
+    chain.getBalance(keyring2.address),
+  ])
+  console.log(`After all balance of ${keyring1.address} is ${chain.coin.formatFullLength(balance1)}`)
+  console.log(`After all balance of ${keyring2.address} is ${chain.coin.formatFullLength(balance2)}`)
+})
 
+
+const transferCoins = async (chain: SubstrateUnique, from: KeyringPair, to: KeyringPair) => {
+  const threshold = chain.coin.coinsToWei(`1000`) // 1000 QTZ
+
+  const balanceBefore = await chain.getBalance(to.address)
+  const toSend = (balanceBefore < threshold) ? threshold - balanceBefore : 1n
+
+  console.log(
+    `Transferring ${chain.coin.formatFullLength(toSend)} ` +
+    `from ${from.address} to ${to.address}. ` +
+    `Balance before is ${chain.coin.format(balanceBefore, chain.coin.decimals)}`
+  )
+
+  await chain
+    .transferCoins({toAddress: to.address, amountInWei: toSend})
+    .signAndSend(from)
+
+  const balanceAfter = await chain.getBalance(to.address)
+  console.log(
+    `Balance of ${to.address} after is ` +
+    chain.coin.format(balanceAfter, chain.coin.decimals)
+  )
+
+  expect(balanceAfter - balanceBefore).toBe(toSend)
+}
 
 
 suite('extrinsics', async () => {
@@ -39,23 +72,14 @@ suite('extrinsics', async () => {
   })
 
   test('transfer tokens', async (ctx) => {
-    const {chain, keyring1, keyringAlice} = ctx.meta.suite.file!
+    const {chain, keyring1, keyring2, keyringAlice, keyringBob} = ctx.meta.suite.file!
 
-    const threshold = chain.coin.coinsToWei(`1000`) // 1000 QTZ
-
-    const balanceBefore = await chain.getBalance(keyring1.address)
-    const toSend = (balanceBefore < threshold) ? threshold : 1n
-
-    //sends `toSend` from Alice to keyring1
-    await chain.transferCoins({toAddress: keyring1.address, amountInWei: toSend})
-      .signAndSend(keyringAlice)
-
-    const balanceAfter = await chain.getBalance(keyring1.address)
-
-    expect(balanceAfter - balanceBefore).toBe(toSend)
+    await Promise.all([
+      transferCoins(chain, keyringAlice, keyring1),
+      transferCoins(chain, keyringBob, keyring2)
+    ])
   })
 })
-
 
 
 suite('CollectionSponsor tests', async () => {
@@ -63,10 +87,19 @@ suite('CollectionSponsor tests', async () => {
     const {chain, keyring1} = ctx.meta.suite.file!
 
 
-    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
       .signAndSend(keyring1)
 
-    const setCollectionSponsorResult = await chain.setCollectionSponsor({ collectionId: createCollectionResult.collectionId, newSponsorAddress: keyring1.address })
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({
+      collectionId: createCollectionResult.collectionId,
+      newSponsorAddress: keyring1.address
+    })
       .signAndSend(keyring1);
 
     expect(setCollectionSponsorResult.isSuccess).toBe(true);
@@ -75,15 +108,24 @@ suite('CollectionSponsor tests', async () => {
   test('Confirm sponsorship', async (ctx) => {
     const {chain, keyring1, keyringBob} = ctx.meta.suite.file!
 
-    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
       .signAndSend(keyring1)
 
-    const setCollectionSponsorResult = await chain.setCollectionSponsor({ collectionId: createCollectionResult.collectionId, newSponsorAddress: keyringBob.address })
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({
+      collectionId: createCollectionResult.collectionId,
+      newSponsorAddress: keyringBob.address
+    })
       .signAndSend(keyring1)
 
     expect(setCollectionSponsorResult.isSuccess).toBe(true)
 
-    const confirmCollectionSponsorResult = await chain.confirmSponsorship({ collectionId: createCollectionResult.collectionId })
+    const confirmCollectionSponsorResult = await chain.confirmSponsorship({collectionId: createCollectionResult.collectionId})
       .signAndSend(keyringBob)
 
     expect(confirmCollectionSponsorResult.isSuccess).toBe(true)
@@ -92,15 +134,24 @@ suite('CollectionSponsor tests', async () => {
   test('[Negative test]: Confirm sponsorship by another user', async (ctx) => {
     const {chain, keyring1, keyringBob} = ctx.meta.suite.file!
 
-    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
       .signAndSend(keyring1)
 
-    const setCollectionSponsorResult = await chain.setCollectionSponsor({ collectionId: createCollectionResult.collectionId, newSponsorAddress: keyringBob.address })
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({
+      collectionId: createCollectionResult.collectionId,
+      newSponsorAddress: keyringBob.address
+    })
       .signAndSend(keyring1)
 
     expect(setCollectionSponsorResult.isSuccess).toBe(true)
 
-    await expect(chain.confirmSponsorship({ collectionId: createCollectionResult.collectionId })
+    await expect(chain.confirmSponsorship({collectionId: createCollectionResult.collectionId})
       .signAndSend(keyring1))
       .rejects
       .toThrow('unique.ConfirmUnsetSponsorFail')
@@ -108,22 +159,33 @@ suite('CollectionSponsor tests', async () => {
 })
 
 
-
 suite('Add & remove collection Admin tests', async () => {
   test('Add & remove collection admin', async (ctx) => {
     const {chain, keyring1, keyring2} = ctx.meta.suite.file!
 
-    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
       .signAndSend(keyring1)
 
     const collectionId = createCollectionResult.collectionId;
 
-    const addCollectionAdminResult = await chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
+    const addCollectionAdminResult = await chain.addCollectionAdmin({
+      collectionId: collectionId,
+      newAdminAddress: keyring2.address
+    })
       .signAndSend(keyring1)
 
     expect(addCollectionAdminResult.isSuccess).toBe(true)
 
-    const removeCollectionAdminResult = await chain.removeCollectionAdmin({collectionId: collectionId, adminAddress: keyring2.address})
+    const removeCollectionAdminResult = await chain.removeCollectionAdmin({
+      collectionId: collectionId,
+      adminAddress: keyring2.address
+    })
       .signAndSend(keyring1)
 
     expect(removeCollectionAdminResult.isSuccess).toBe(true)
@@ -132,12 +194,18 @@ suite('Add & remove collection Admin tests', async () => {
   test('[Negative test] add collection admin by not an owner', async (ctx) => {
     const {chain, keyring1, keyring2} = ctx.meta.suite.file!
 
-    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
       .signAndSend(keyring1)
 
     const collectionId = createCollectionResult.collectionId;
 
-    await expect(chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
+    await expect(chain.addCollectionAdmin({collectionId: collectionId, newAdminAddress: keyring2.address})
       .signAndSend(keyring2))
       .rejects
       .toThrow('common.NoPermission')
@@ -146,17 +214,26 @@ suite('Add & remove collection Admin tests', async () => {
   test('[Negative test] Removing collection admin by non admin user', async (ctx) => {
     const {chain, keyring1, keyring2, keyringBob} = ctx.meta.suite.file!
 
-    const createCollectionResult = await chain.createCollection({ collection: { name: 'test-name', description: 'test-descr', tokenPrefix: '0xff' }})
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
       .signAndSend(keyring1)
 
     const collectionId = createCollectionResult.collectionId;
 
-    const addCollectionAdminResult = await chain.addCollectionAdmin({ collectionId: collectionId, newAdminAddress: keyring2.address})
+    const addCollectionAdminResult = await chain.addCollectionAdmin({
+      collectionId: collectionId,
+      newAdminAddress: keyring2.address
+    })
       .signAndSend(keyring1)
 
     expect(addCollectionAdminResult.isSuccess).toBe(true)
 
-    await expect(chain.removeCollectionAdmin({ collectionId: collectionId, adminAddress: keyring2.address})
+    await expect(chain.removeCollectionAdmin({collectionId: collectionId, adminAddress: keyring2.address})
       .signAndSend(keyringBob))
       .rejects
       .toThrow('common.NoPermission')

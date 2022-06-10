@@ -10,11 +10,18 @@ export class Coin {
   public readonly weiSymbol: string
   public readonly oneCoinInWei: bigint
 
+  // half of decimals wei
+  // for 18 decimals will be gigawei or gwei
+  public readonly hwei: bigint
+
   constructor(options: CoinOptions) {
     this.symbol = options.symbol
     this.weiSymbol = options.weiSymbol
     this.decimals = options.decimals
-    this.oneCoinInWei = 10n ** BigInt(options.decimals)
+
+    const decimalsBigInt = BigInt(options.decimals)
+    this.oneCoinInWei = 10n ** decimalsBigInt
+    this.hwei = 10n ** (decimalsBigInt / 2n)
   }
 
   static createUnknown18DecimalsCoin() {
@@ -62,6 +69,9 @@ export class Coin {
 
   format(wei: string | bigint, decimalPoints: number = 6): string {
     return this.formatWithoutCurrency(wei, decimalPoints) + ` ${this.symbol}`
+  }
+  formatFullLength(wei: string | bigint): string {
+    return this.format(wei, this.decimals)
   }
 
   // always rounds down insignificant part
