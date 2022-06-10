@@ -98,6 +98,6 @@ suite('CollectionSponsor tests', async () => {
     await expect(chain.confirmSponsorship({ collectionId: createCollectionResult.collectionId })
       .signAndSend(keyring1))
       .rejects
-      .toThrow(/unique.ConfirmUnsetSponsorFail/)
+      .toThrow('unique.ConfirmUnsetSponsorFail')
   })
 })
