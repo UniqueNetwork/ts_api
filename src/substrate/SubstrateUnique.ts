@@ -12,6 +12,16 @@ import {
 } from "./extrinsics/unique/ExtrinsicCreateCollection";
 import {SubstrateCommon} from "./SubstrateCommon";
 
+import {
+  ExtrinsicAddCollectionAdmin,
+  ExtrinsicAddCollectionAdminParams
+} from "./extrinsics/unique/ExtrinsicAddCollectionAdmin";
+
+import {
+  ExtrinsicRemoveCollectionAdmin,
+  ExtrinsicRemoveCollectionAdminParams
+} from "./extrinsics/unique/ExtrinsicRemoveCollectionAdmin"
+
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
 
@@ -33,5 +43,13 @@ export class SubstrateUnique extends SubstrateCommon {
     const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
 
     return await super.getBalance(substrateAddress)
+  }
+
+  addCollectionAdmin(params: ExtrinsicAddCollectionAdminParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicAddCollectionAdmin(this.api, params, options)
+  }
+
+  removeCollectionAdmin(params: ExtrinsicRemoveCollectionAdminParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicRemoveCollectionAdmin(this.api, params, options)
   }
 }
