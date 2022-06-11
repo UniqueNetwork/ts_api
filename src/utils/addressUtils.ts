@@ -13,6 +13,7 @@ import {
   TokenId,
   HexString
 } from '../types'
+import {decodeAddress} from "@polkadot/util-crypto";
 
 
 export const validateEthereumAddress = (address: string) => {
@@ -24,7 +25,12 @@ export const validateEthereumAddress = (address: string) => {
 
 export const validateSubstrateAddress = (address: string): SubstrateAddress => {
   const {validateAddress} = getPolkadotUtilCrypto()
-  validateAddress(address)
+  try {
+    validateAddress(address)
+    decodeAddress(address)
+  } catch(err: any) {
+    throw new Error(`validateSubstrateAddress: address "${address}" is not valid`)
+  }
   return address as SubstrateAddress
 }
 

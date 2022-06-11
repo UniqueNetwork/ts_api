@@ -1,6 +1,6 @@
 import {PropertiesArray} from '../types'
 
-export const SEPARATOR = '--'
+export const SEPARATOR = '.'
 
 export const convertNestedObjectToPropertyArray = <T extends object>(obj: T, separator: string, prefix?: string): PropertiesArray => {
   let collectionProperties: PropertiesArray = []
