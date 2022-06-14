@@ -40,6 +40,21 @@ import {
 } from './extrinsics/unique/ExtrinsicChangeCollectionOwner'
 import { CollectionId } from 'src/types';
 
+import {
+  ExtrinsicRemoveCollectionSponsor,
+  ExtrinsicRemoveCollectionSponsorParams
+} from './extrinsics/unique/ExtrinsicRemoveCollectionSponsor'
+
+import {
+  ExtrinsicRemoveFromAllowList,
+  ExtrinsicRemoveFromAllowListParams
+} from './extrinsics/unique/ExtrinsicRemoveFromAllowList'
+
+import {
+  ExtrinsicAddToAllowList,
+  ExtrinsicAddToAllowListParams
+} from './extrinsics/unique/ExtrinsicAddToAllowList';
+
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
 
@@ -54,8 +69,8 @@ export class SubstrateUnique extends SubstrateCommon {
     return await super.getBalance(substrateAddress)
   }
 
-  async __getRawCollectionById(collectionId: CollectionId, atBlock?: string) {
-    const rawCollection = (await this.api.rpc.unique.collectionById(collectionId, atBlock)).unwrap()
+  async __getRawCollectionById(collectionId: CollectionId) {
+    const rawCollection = (await this.api.rpc.unique.collectionById(collectionId)).unwrap()
 
     return rawCollection
   }
@@ -68,7 +83,6 @@ export class SubstrateUnique extends SubstrateCommon {
   createCollection(params: ExtrinsicCreateCollectionParams, options?: ExtrinsicOptions) {
     return new ExtrinsicCreateCollection(this.api, params, options)
   }
-
 
   addCollectionAdmin(params: ExtrinsicAddCollectionAdminParams, options?: ExtrinsicOptions) {
     return new ExtrinsicAddCollectionAdmin(this.api, params, options)
@@ -88,5 +102,17 @@ export class SubstrateUnique extends SubstrateCommon {
 
   changeCollectionOwner(params: ExtrinsicChangeCollectionOwnerParams, options?: ExtrinsicOptions) {
     return new ExtrinsicChangeCollectionOwner(this.api, params, options)
+  }
+
+  removeCollectionSponsor(params: ExtrinsicRemoveCollectionSponsorParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicRemoveCollectionSponsor(this.api, params, options)
+  }
+
+  addToAllowList(params: ExtrinsicAddToAllowListParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicAddToAllowList(this.api, params, options)
+  }
+
+  removeFromAllowList(params: ExtrinsicRemoveFromAllowListParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicRemoveFromAllowList(this.api, params, options)
   }
 }

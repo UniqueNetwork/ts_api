@@ -106,6 +106,35 @@ suite('CollectionSponsor tests', async () => {
     expect(setCollectionSponsorResult.isSuccess).toBe(true);
   })
 
+  test('Remove collection sponsor', async (ctx) => {
+    const {chain, keyring1} = ctx.meta.suite.file!
+
+
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
+      .signAndSend(keyring1)
+
+    const setCollectionSponsorResult = await chain.setCollectionSponsor({
+      collectionId: createCollectionResult.collectionId,
+      newSponsorAddress: keyring1.address
+    })
+      .signAndSend(keyring1);
+
+    expect(setCollectionSponsorResult.isSuccess).toBe(true);
+
+    const removeCollectionSponsorResult = await chain.removeCollectionSponsor({
+      collectionId: createCollectionResult.collectionId
+    })
+    .signAndSend(keyring1)
+
+    expect(removeCollectionSponsorResult.isSuccess).toBe(true)
+  })
+
   test('Confirm sponsorship', async (ctx) => {
     const {chain, keyring1, keyringBob} = ctx.meta.suite.file!
 
@@ -261,9 +290,42 @@ suite('ChangeCollectionOwner tests', async () => {
       newOwnerAddress: keyring2.address
     }).signAndSend(keyring1)
 
+    expect(changeOwnerResult.isSuccess).toBe(true)
+
     //FIXME: change collectionById method asap
     const collection = await chain.__getRawCollectionById(collectionId)
     expect(keyring2.address).toBe(normalizeSubstrateAddress(collection.owner.toString()))
+  })
+})
+
+suite('Allow list tests', async () => {
+  test('Add and remove in/from allow list', async (ctx) => {
+    const {chain, keyring1, keyring2, keyringBob} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
+      .signAndSend(keyring1)
+
+    const addToAllowListResult = await chain.addToAllowList({
+      collectionId: createCollectionResult.collectionId,
+      address: keyring2.address
+    })
+      .signAndSend(keyring1)
+
+    expect(addToAllowListResult.isSuccess).toBe(true)
+
+    const removeFromAllowListResult = await chain.removeFromAllowList({
+      collectionId: createCollectionResult.collectionId,
+      address: keyring2.address
+    })
+      .signAndSend(keyring1)
+
+    expect(removeFromAllowListResult.isSuccess).toBe(true)
   })
 })
 

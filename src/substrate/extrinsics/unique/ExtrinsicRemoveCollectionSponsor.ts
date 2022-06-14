@@ -24,7 +24,7 @@ export class ExtrinsicRemoveCollectionSponsor extends AbstractExtrinsic<Extrinsi
   protected async processResult(txResult: ISubmittableResult, options: ExtrinsicSendOptions) {
     const result = await this.getBaseResult(txResult, options)
 
-    const data = findEventDataBySectionAndMethod(txResult, 'unique', 'CollectionOwnedChanged')
+    const data = findEventDataBySectionAndMethod(txResult, 'unique', 'CollectionSponsorRemoved')
 
     const isSuccess = !!data && !isNaN((parseInt(data[0].toString(), 10)))
 

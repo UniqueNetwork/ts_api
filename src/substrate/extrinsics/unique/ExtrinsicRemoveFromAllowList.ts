@@ -7,25 +7,25 @@ import {ExtrinsicError, findEventDataBySectionAndMethod} from '../../extrinsicTo
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
 
-export interface ExtrinsicAddToAllowListParams {
+export interface ExtrinsicRemoveFromAllowListParams {
   collectionId: CollectionId
   address: string
 }
 
-export interface ExtrinsicAddToAllowListResult extends ExtrinsicResult {
+export interface ExtrinsicRemoveFromAllowListResult extends ExtrinsicResult {
   isSuccess: boolean
 }
 
-export class ExtrinsicAddToAllowList extends AbstractExtrinsic<ExtrinsicAddToAllowListParams, ExtrinsicAddToAllowListResult> {
-  constructor(api: ApiPromise, params: ExtrinsicAddToAllowListParams, options?: ExtrinsicOptions) {
-    const tx = api.tx.unique.addToAllowList(params.collectionId, addressToObject(params.address))
+export class ExtrinsicRemoveFromAllowList extends AbstractExtrinsic<ExtrinsicRemoveFromAllowListParams, ExtrinsicRemoveFromAllowListResult> {
+  constructor(api: ApiPromise, params: ExtrinsicRemoveFromAllowListParams, options?: ExtrinsicOptions) {
+    const tx = api.tx.unique.removeFromAllowList(params.collectionId, addressToObject(params.address))
     super(api, tx, params)
   }
 
   protected async processResult(txResult: ISubmittableResult, options: ExtrinsicSendOptions) {
     const result = await this.getBaseResult(txResult, options)
 
-    const data = findEventDataBySectionAndMethod(txResult, 'unique', 'AllowListAddressAdded')
+    const data = findEventDataBySectionAndMethod(txResult, 'unique', 'AllowListAddressRemoved')
 
     const isSuccess = !!data &&
       !isNaN((parseInt(data[0].toString(), 10))) &&
