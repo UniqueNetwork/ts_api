@@ -2,6 +2,7 @@ import {afterAll, beforeAll, expect, suite, test} from 'vitest'
 import * as dotenv from 'dotenv'
 import fs from 'fs'
 import {init, KeyringPair, Substrate, SubstrateUnique} from "../index";
+import { normalizeSubstrateAddress } from '../utils/addressUtils';
 
 declare module 'vitest' {
   export interface Suite {
@@ -237,6 +238,32 @@ suite('Add & remove collection Admin tests', async () => {
       .signAndSend(keyringBob))
       .rejects
       .toThrow('common.NoPermission')
+  })
+})
+
+suite('ChangeCollectionOwner tests', async () => {
+  test('ChangeCollectionOwner', async (ctx) => {
+    const {chain, keyring1, keyring2, keyringBob} = ctx.meta.suite.file!
+
+    const createCollectionResult = await chain.createCollection({
+      collection: {
+        name: 'test-name',
+        description: 'test-descr',
+        tokenPrefix: '0xff'
+      }
+    })
+      .signAndSend(keyring1)
+
+    const collectionId = createCollectionResult.collectionId;
+
+    const changeOwnerResult = await chain.changeCollectionOwner({
+      collectionId: collectionId,
+      newOwnerAddress: keyring2.address
+    }).signAndSend(keyring1)
+
+    //FIXME: change collectionById method asap
+    const collection = await chain.__getRawCollectionById(collectionId)
+    expect(keyring2.address).toBe(normalizeSubstrateAddress(collection.owner.toString()))
   })
 })
 
