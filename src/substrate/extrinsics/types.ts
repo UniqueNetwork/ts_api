@@ -4,6 +4,10 @@ import {ExtrinsicAddCollectionAdminParams} from "./unique/ExtrinsicAddCollection
 import {ExtrinsicRemoveCollectionAdminParams} from "./unique/ExtrinsicRemoveCollectionAdmin";
 import {ExtrinsicSetCollectionSponsorParams} from "./unique/ExtrinsicSetCollectionSponsor";
 import {ExtrinsicConfirmSponsorshipParams} from "./unique/ExtrinsicConfirmSponsorship";
+import { ExtrinsicAddToAllowListParams } from "./unique/ExtrinsicAddToAllowList";
+import { ExtrinsicChangeCollectionOwnerParams } from "./unique/ExtrinsicChangeCollectionOwner";
+import { ExtrinsicRemoveCollectionSponsorParams } from "./unique/ExtrinsicRemoveCollectionSponsor";
+import { ExtrinsicRemoveFromAllowListParams } from "./unique/ExtrinsicRemoveFromAllowList";
 
 
 export namespace SubstrateMethodsParams {
@@ -13,4 +17,8 @@ export namespace SubstrateMethodsParams {
   export type RemoveCollectionAdmin = ExtrinsicRemoveCollectionAdminParams
   export type SetCollectionSponsor = ExtrinsicSetCollectionSponsorParams
   export type ConfirmCollectionSponsor = ExtrinsicConfirmSponsorshipParams
+  export type AddToAllowList = ExtrinsicAddToAllowListParams
+  export type ChangeCollectionOwner = ExtrinsicChangeCollectionOwnerParams
+  export type RemoveCollectionSponsor = ExtrinsicRemoveCollectionSponsorParams
+  export type RemoveFromAllowList = ExtrinsicRemoveFromAllowListParams
 }
