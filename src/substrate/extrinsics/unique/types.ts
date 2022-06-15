@@ -1,5 +1,16 @@
 import {CollectionId} from "../../../types";
 
+export interface TokenPropertyPermission {
+  mutable: boolean
+  collectionAdmin: boolean
+  tokenOwner: boolean
+}
+
+export interface TokenPropertyPermissionObject {
+  key: string
+  permission: TokenPropertyPermission
+}
+
 export interface CollectionParams {
   name: string
   description: string
@@ -24,17 +35,10 @@ export interface CollectionParams {
     mintMode?: boolean
     nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: Array<number>}
   }
-  tokenPropertyPermissions?: Array<{
-    key: string
-    value: {
-      mutable: boolean
-      collectionAdmin: boolean
-      tokenOwner: boolean
-    }
-  }>
+  tokenPropertyPermissions?: Array<TokenPropertyPermissionObject>
   properties?: Array<{
     key: string
-    value: string | number | null
+    value: string
   }>
 }
 
