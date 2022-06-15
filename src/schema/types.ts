@@ -1,4 +1,5 @@
 import {CollectionProperties} from '../substrate/extrinsics/unique/types'
+import {getEnumKeys, getEnumValues} from "../tsUtils";
 
 /**
  * infix and url or just infix - ?
@@ -17,16 +18,20 @@ export type Image = UrlOrInfixUrl & {
 }
 
 export enum AttributeType {
-  integer = 1,                             // number
-  float = 2,                               // number
-  string = 3,                              // string
-  localizedStringDictionaryIndex = 4,      // number
-  boolean = 5,                             // number
-  isoDate = 6,                             // string // ISO Date: YYYY-MM-DD
+  integer = 0,                             // number
+  float = 1,                               // number
+  string = 2,                              // string
+  localizedStringDictionaryIndex = 3,      // number
+  boolean = 4,                             // number
+  isoDate = 5,                             // string // ISO Date: YYYY-MM-DD
+  time = 5,                                // string // 24h time: HH:mm:ss
   timestamp = 7,                           // number // js, milliseconds from epoch
   colorRgba = 8,                           // string // 'rrggbbaa'
 }
 
+
+// value: 'tanyushka'
+// value: {en: 'tanyushka', ru: 'Танюшка:)'}
 export interface LocalizedStringDictionary {
   [K: string]: string
 }
@@ -37,11 +42,12 @@ export enum AttributeKind {
   freeValue = 2,
 }
 
-export interface AttributeSchema<T> {
+export interface AttributeSchema {
   name: string | LocalizedStringDictionary
   optional?: boolean
   type: AttributeType
   kind: AttributeKind
+  defaultLocale?: string
   values?: Array<{
     number: number,
     value: number | string | LocalizedStringDictionary
@@ -56,7 +62,7 @@ export type AttributesSchema = {
   schemaVersion: string
   nextAttributeId: number
   attributes: {
-    [K in number]: AttributeSchema<any>
+    [K in number]: AttributeSchema
   }
 }
 
@@ -117,15 +123,24 @@ const punksAttributesSchema: AttributesSchema = {
 const punkAttributes: Attributes = {'0': 0, '1': [0, 5, 30]}
 
 
+export const COLLECTION_SCHEMA_FAMILY_NAME = <const>'Basic'
+
+export enum COLLECTION_SCHEMA_TYPE_NAME {
+  BasicImage = 'BasicImage',
+  BasicVideo = 'BasicVideo',
+  BasicAudio = 'BasicAudio',
+  BasicObject3D = 'BasicObject3D',
+}
+
+
 export interface CollectionSchemaBasic {
-  type: string
-  subtype: string
-  subtypeVersion: string // semver
+  family: typeof COLLECTION_SCHEMA_FAMILY_NAME
+  type: COLLECTION_SCHEMA_TYPE_NAME
+  typeVersion: string // semver
 
   imageUrlTemplate: `${string}{infix}${string}`
   coverImage: Image
   coverImagePreview?: Image
-  desiredDefaultImageDimensions?: DimensionsString
 
   attributesSchema: string
 }
@@ -141,9 +156,9 @@ export interface TokenSchemaBasic {
 // example
 
 const collection: CollectionSchemaBasic = {
-  type: 'Basic',
-  subtype: 'BasicImage',
-  subtypeVersion: '1.0.0',
+  family: 'Basic',
+  type: COLLECTION_SCHEMA_TYPE_NAME.BasicImage,
+  typeVersion: '1.0.0',
 
   imageUrlTemplate: `https://ipfs.uniquenetwork.dev/ipfs/{infix}`,
   coverImage: {
@@ -199,7 +214,7 @@ const tokenWithFullUrlProperties: CollectionProperties = [
 
 export interface CollectionSchemaBasicVideo extends CollectionSchemaBasic {
   videoUrlTemplate: `${string}{infix}${string}`
-  type: 'BasicVideo'
+  type: COLLECTION_SCHEMA_TYPE_NAME.BasicVideo
 }
 
 export interface TokenSchemaBasicVideo extends TokenSchemaBasic {
@@ -233,7 +248,7 @@ const videoToken: TokenSchemaBasicVideo = {
 
 export interface CollectionSchemaBasicAudio extends CollectionSchemaBasic {
   audioUrlTemplate: `${string}{infix}${string}`
-  type: 'BasicAudio'
+  type: COLLECTION_SCHEMA_TYPE_NAME.BasicAudio
 }
 
 export interface TokenSchemaBasicAudio extends TokenSchemaBasic {
@@ -248,7 +263,7 @@ export interface TokenSchemaBasicAudio extends TokenSchemaBasic {
 // ====================================
 export interface CollectionSchemaBasicObject3D extends CollectionSchemaBasic {
   object3DUrlTemplate: `${string}{infix}${string}`
-  type: 'Basic3DObject'
+  type: COLLECTION_SCHEMA_TYPE_NAME.BasicObject3D
 }
 
 export interface TokenSchemaBasicObject3D extends TokenSchemaBasic {
