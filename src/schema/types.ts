@@ -17,13 +17,14 @@ export type UrlTemplateString = `${string}{infix}${string}`
 export enum AttributeType {
   integer = 0,                             // number
   float = 1,                               // number
-  string = 2,                              // string
-  localizedStringDictionaryIndex = 3,      // number
-  boolean = 4,                             // number
-  isoDate = 5,                             // string // ISO Date: YYYY-MM-DD
-  time = 5,                                // string // 24h time: HH:mm:ss
-  timestamp = 7,                           // number // js, milliseconds from epoch
-  colorRgba = 8,                           // string // 'rrggbbaa'
+  boolean = 2,                             // number
+  string = 3,                              // string
+  localizedStringDictionaryIndex = 4,      // number
+  url = 5,                                 // string
+  isoDate = 6,                             // string // ISO Date: YYYY-MM-DD
+  time = 7,                                // string // 24h time: HH:mm:ss
+  timestamp = 8,                           // number // js, milliseconds from epoch
+  colorRgba = 9,                           // string // 'rrggbbaa'
 }
 
 
@@ -110,10 +111,10 @@ const punksAttributesSchema: CollectionAttributes =  {
 const punkAttributes: TokenAttributes = {'0': 0, '1': [0, 5, 30]}
 
 
-export const COLLECTION_SCHEMA_NAME = <const>'super'
+export const COLLECTION_SCHEMA_NAME = <const>'unique'
 
 
-export interface CollectionSchemaSuper {
+export interface CollectionSchemaUnique {
   schemaName: typeof COLLECTION_SCHEMA_NAME
   schemaVersion: string // semver
 
@@ -141,9 +142,9 @@ export interface CollectionSchemaSuper {
   }
 }
 
-export interface TokenSchemaSuper {
-  name?: string
-  description?: string
+export interface TokenSchemaUnique {
+  name?: string | LocalizedStringDictionary
+  description?: string | LocalizedStringDictionary
   image: UrlOrInfixUrlWithHash
   imagePreview?: UrlOrInfixUrlWithHash
   attributes?: TokenAttributes
@@ -154,7 +155,7 @@ export interface TokenSchemaSuper {
 
 // example
 
-const collection: CollectionSchemaSuper = {
+const collection: CollectionSchemaUnique = {
   schemaName: COLLECTION_SCHEMA_NAME,
   schemaVersion: '1.0.0',
 
@@ -173,7 +174,7 @@ const collection: CollectionSchemaSuper = {
 
 
 
-const tokenWithInfix: TokenSchemaSuper = {
+const tokenWithInfix: TokenSchemaUnique = {
   image: {
     urlInfix: 'QmPCqY7Lmxerm8cLKmB18kT1RxkwnpasPVksA8XLhViVT7',
     hash: '0x223423423423423234234'

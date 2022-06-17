@@ -5,120 +5,193 @@ import {
   AttributeType,
   COLLECTION_SCHEMA_NAME,
   CollectionAttributes,
-  CollectionSchemaSuper,
+  CollectionSchemaUnique,
   LocalizedStringDictionary,
   UrlOrInfixUrlWithHash
 } from "../types";
-import {getEnumValues, getKeys, getValues} from "../../tsUtils";
+import {getEnumKeys, getEnumValues, getKeys} from "../../tsUtils";
 import {
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
+import {ValidationError} from "../../utils/errors";
 
 
 const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
 const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
+const ATTRIBUTE_TYPE_NAME_BY_VALUE = getEnumKeys(AttributeType)
+const ATTRIBUTE_KIND_NAME_BY_VALUE = getEnumKeys(AttributeKind)
 
 
 const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
 const RGBA_REGEX = /^#?[A-Fa-f0-9]{8}$/
 
+
 //
 // common validators
 //
 
-const isPlainObject = (obj: any, minKeys?: number): obj is Object => {
-  const isObj = (
-    typeof obj === `object` &&
-    !(obj === null || obj instanceof Map || obj instanceof Set || Array.isArray(obj))
-  )
+const isPlainObject = (obj: any, varName: string): obj is Object => {
+  if (typeof obj !== 'object')
+    throw new ValidationError(`${varName} is not an object, got ${typeof obj}: ${obj}`)
+  if (obj === null)
+    throw new ValidationError(`${varName} is a null, should be valid object`)
+  if (obj instanceof Map)
+    throw new ValidationError(`${varName} is a Map, should be plain object`)
+  if (obj instanceof Set)
+    throw new ValidationError(`${varName} is a Set, should be plain object`)
+  if (Array.isArray(obj))
+    throw new ValidationError(`${varName} is an array, should be plain object`)
 
-  return isObj && (typeof minKeys !== 'number' || getKeys(obj).length >= minKeys)
+  return true
 }
 
-const isIntegerNumber = (num: any): num is number => {
-  return typeof num === 'number' && !isNaN(num)
-}
-
-const isValidAttributeKey = (num: string | number | symbol): boolean => {
-  if (typeof num === 'number') {
-    return num === Math.round(num)
-  } else if (typeof num === 'string') {
-    return !isNaN(parseInt(num))
-  } else {
-    return false
+const validateIntegerNumber = (num: any, varName: string): num is number => {
+  if (typeof num !== 'number' || isNaN(num)) {
+    throw new ValidationError(`${varName} is not a valid number, got ${num}`)
   }
+  return true
+}
+
+const validateAttributeKey = (num: string | number | symbol, varName: string): boolean => {
+  let isOk = false
+
+  if (typeof num === 'number') {
+    isOk = num === Math.round(num)
+  } else if (typeof num === 'string') {
+    isOk = !isNaN(parseInt(num))
+  }
+
+  if (!isOk) {
+    throw new ValidationError(`${varName}["${String(num)}"] is not a valid number key, got ${String(num)}`)
+  }
+
+  return true
 }
 
 const LANG_REGEX = /^[a-z]{2}(-[A-Z]{2})?$/
-const validateLangCode = (key: string | number | symbol): boolean => {
-  return typeof key === 'string' && !!key.match(LANG_REGEX)
+const validateLangCode = (key: string | number | symbol, varName: string): boolean => {
+  if (typeof key !== 'string') {
+    throw new ValidationError(`${varName}: key ${String(key)} should be a string`)
+  }
+  if (!key.match(LANG_REGEX)) {
+    throw new ValidationError(`${varName} should be a valid Language code string (like 'co' or 'ca-ES'), got ${key}`)
+  }
+
+  return true
 }
 
-const isValidURL = (url: string): boolean => {
+const validateURL = (url: string, varName: string): boolean => {
   if (typeof url !== 'string') {
-    return false
+    throw new ValidationError(`${varName} should be a string`)
   }
 
   try {
     new URL(url)
     return true
   } catch (err) {
-    return false
+    throw new ValidationError(`${varName} should be a valid URL, got ${url}`)
   }
 }
 
-const validateLocalizedStringDictionary = (dict: any): dict is LocalizedStringDictionary => {
-  return (
-    isPlainObject(dict, 1) &&
-    getKeys(dict).every(validateLangCode) &&
-    getValues(dict).every(value => typeof value === 'string')
-  )
+export const validateAndParseSemverString = (str: string, varName: string): Semver => {
+  if (!Semver.isValid(str))
+    throw new ValidationError(`${varName} is not a valid semver string (passed ${str})`)
+
+  return Semver.fromString(str)
 }
 
-const validateUrlTemplateString = (str: any): str is string => {
-  return typeof str === 'string' && str.indexOf('{infix}') >= 0
-}
-
-export const validateUrlWithHashObject = (obj: any): obj is UrlOrInfixUrlWithHash => {
-  return (
-    isPlainObject(obj) &&
-    (
-      typeof obj.urlInfix === 'string' ||
-      (typeof obj.url === 'string' && isValidURL(obj.url))
-    ) &&
-    (!obj.hasOwnProperty('hash') || typeof obj.hash === 'string')
-  )
-}
-
-export const validateStringField = <T extends object>(obj: T, key: keyof T, optional?: boolean): boolean => {
-  if (!isPlainObject(obj)) {
-    return false
+const validateStringOrLocalizedStringDictionary = (dict: any, varName: string): dict is string | LocalizedStringDictionary => {
+  if (typeof dict === 'string') {
+    return true
   }
+
+  isPlainObject(dict, varName)
+
+  if (getKeys(dict).length === 0) {
+    throw new ValidationError(`${varName} is an empty object, should have at least one key`)
+  }
+  for (const key in dict) {
+    validateLangCode(key, `${varName}["${key}"]`)
+    if (typeof dict[key] !== 'string') {
+      throw new ValidationError(`${varName}["${key}"] should be a string, got ${typeof key}: ${key}`)
+    }
+  }
+
+  return true
+}
+
+const validateUrlTemplateString = (str: any, varName: string): str is string => {
+  const prefix = `TemplateUrlString is not valid, ${varName}`
+  if (typeof str !== 'string')
+    throw new ValidationError(`${prefix} is not a string, got ${str}`)
+  if (str.indexOf('{infix}') < 0)
+    throw new ValidationError(`${prefix} doesn't contain "{infix}", got ${str}`)
+  return true
+}
+
+export const validateUrlWithHashObject = (obj: any, varName: string): obj is UrlOrInfixUrlWithHash => {
+  isPlainObject(obj, varName)
+
+  if (typeof obj.urlInfix !== 'string' && typeof obj.url !== 'string')
+    throw new ValidationError(`${varName} should have "urlInfix" or "url" string field`)
+
+  if (typeof obj.urlInfix === 'string' && typeof obj.url === 'string')
+    throw new ValidationError(`${varName} should have only one of "urlInfix" or "url" string field`)
+
+  if (typeof obj.url === 'string') {
+    validateURL(obj.url, `${varName}.url`)
+  }
+
+  if (obj.hasOwnProperty('hash') && typeof obj.hash !== 'string')
+    throw new ValidationError(`${varName}.hash should be a string`)
+
+  return true
+}
+
+export const validateFieldByType = <T extends object>(obj: T, key: keyof T, type: string, optional: boolean, varName: string): boolean => {
+  isPlainObject(obj, varName)
 
   if (optional) {
-    return !obj.hasOwnProperty(key) || typeof obj[key] === 'string'
+    if (obj.hasOwnProperty(key) && typeof obj[key] !== type) {
+      throw new ValidationError(`${varName}.${String(key)} is passed and not a ${type}, got ${typeof obj[key]}: ${obj[key]}`)
+    }
   } else {
-    return obj.hasOwnProperty(key) && typeof obj[key] === 'string'
+    if (!obj.hasOwnProperty(key)) {
+      throw new ValidationError(`${varName}.${String(key)} not found in ${varName}`)
+    }
+    if (typeof obj[key] !== type) {
+      throw new ValidationError(`${varName}.${String(key)} should be a ${type}, got ${typeof obj[key]}: ${obj[key]}`)
+    }
   }
+  return true
 }
 
-export const validateSingleTokenPropertyPermission = (tpp: any): tpp is TokenPropertyPermissionObject => {
-  return (
-    isPlainObject(tpp) &&
-    typeof tpp.key === 'string' &&
-    isPlainObject(tpp.permission) &&
-    typeof tpp.permission.mutable === 'boolean' &&
-    typeof tpp.permission.collectionAdmin === 'boolean' &&
-    typeof tpp.permission.tokenOwner === 'boolean'
-  )
+export const validateSingleTokenPropertyPermission = (tpp: any, varName: string): tpp is TokenPropertyPermissionObject => {
+  isPlainObject(tpp, varName)
+  validateFieldByType(tpp, 'key', 'string', false, varName)
+
+  const permissionVarName = `${varName}.permission`
+
+  isPlainObject(tpp.permission, permissionVarName)
+
+  validateFieldByType(tpp.permission, 'mutable', 'boolean', false, permissionVarName)
+  validateFieldByType(tpp.permission, 'collectionAdmin', 'boolean', false, permissionVarName)
+  validateFieldByType(tpp.permission, 'tokenOwner', 'boolean', false, permissionVarName)
+
+  return true
 }
 
-export const validateCollectionTokenPropertyPermissions = (tpps: any): tpps is CollectionTokenPropertyPermissions => {
-  return (
-    Array.isArray(tpps) &&
-    tpps.every(validateSingleTokenPropertyPermission)
-  )
+export const validateCollectionTokenPropertyPermissions = (tpps: any, varName: string = 'tokenPropertyPermissions'): tpps is CollectionTokenPropertyPermissions => {
+  if (!Array.isArray(tpps))
+    throw new ValidationError(`${varName} should be an array, got ${typeof tpps}: ${tpps}`)
+
+
+  tpps.forEach((tpp, index) => {
+    validateSingleTokenPropertyPermission(tpp, `${varName}[${index}]`)
+  })
+
+  return true
 }
 
 
@@ -126,7 +199,7 @@ export const validateCollectionTokenPropertyPermissions = (tpps: any): tpps is C
 // collection validators
 //
 
-export const validateValueVsAttributeType = (value: any, type: AttributeType): value is typeof type => {
+export const validateValueVsAttributeType = (value: any, type: AttributeType, varName: string): value is typeof type => {
   //number types
   const valueShouldBeNumber = [
     AttributeType.integer,
@@ -137,152 +210,146 @@ export const validateValueVsAttributeType = (value: any, type: AttributeType): v
 
   if (valueShouldBeNumber) {
     if (typeof value !== "number") {
-      return false
+      throw new ValidationError(`${varName}: should be a number, got ${typeof value}: ${value}`)
     }
-    if ([AttributeType.integer, AttributeType.timestamp].includes(type)) {
-      return value === Math.round(value)
+    if ([AttributeType.integer, AttributeType.timestamp].includes(type) && value !== Math.round(value)) {
+      throw new ValidationError(`${varName}: should be an integer number, got ${value}`)
     }
-    if (type === AttributeType.boolean) {
-      return (value === 0 || value === 1)
+    if (type === AttributeType.boolean && ![0, 1].includes(value)) {
+      throw new ValidationError(`${varName}: should be a boolean integer: 0 or 1, got ${value}`)
     }
+
+    return true
   }
 
   //string (exact "string") type
   // string can be a string or an object (dictionary)
-  if (type === AttributeType.string) {
-    return (
-      (typeof value === "string") ||
-      validateLocalizedStringDictionary(value)
-    )
-  }
+  if (type === AttributeType.localizedStringDictionaryIndex) {
+    validateStringOrLocalizedStringDictionary(value, varName)
 
+    return true
+  }
 
   // all other types are deriving from string (isoDate and so on)
 
   if (typeof value !== "string") {
-    return false
+    throw new ValidationError(`${varName}: should be a string, got ${typeof value}: ${value}`)
   }
 
   if (type === AttributeType.isoDate && isNaN(new Date(value).valueOf())) {
-    return false
+    throw new ValidationError(`${varName}: should be a valid ISO Date (YYYY-MM-DD), got ${value}`)
   }
 
   if (type === AttributeType.time && isNaN(new Date('1970-01-01T' + value).valueOf())) {
-    return false
+    throw new ValidationError(`${varName}: should be a valid time in (hh:mm or hh:mm:ss), got ${value}`)
   }
 
-  if (type === AttributeType.colorRgba) {
-    return !!value.match(RGB_REGEX) || !!value.match(RGBA_REGEX)
+  if (type === AttributeType.colorRgba && (!value.match(RGB_REGEX) && !value.match(RGBA_REGEX))) {
+    throw new ValidationError(`${varName}: should be a valid rgb or rgba color (like "#ff00ff00"), got ${value}`)
   }
-
 
   return true
 }
 
-export const validateAttributesSchemaSingleAttribute = (attr: any): attr is AttributeSchema => {
-  if (
-    !isPlainObject(attr) ||
-    (typeof attr.name !== 'string' || !validateLocalizedStringDictionary(attr.name)) ||
-    (attr.optional && typeof attr.optional !== "boolean") ||
-    (typeof attr.type !== "number" || !POSSIBLE_ATTRIBUTE_TYPES.includes(attr.type)) ||
-    (typeof attr.kind !== "number" || !POSSIBLE_ATTRIBUTE_KINDS.includes(attr.kind)) ||
-    (
-      attr.type === AttributeType.localizedStringDictionaryIndex &&
-      attr.hasOwnProperty('defaultLocale') &&
-      !validateLangCode(attr.defaultLocale)
-    )
-  ) {
-    return false
+export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, varName: string): attr is AttributeSchema => {
+  isPlainObject(attr, varName)
+
+  validateStringOrLocalizedStringDictionary(attr.name, `${varName}.name`)
+
+  if (attr.hasOwnProperty('optional') && typeof attr.optional !== "boolean")
+    throw new ValidationError(`${varName}.optional should be boolean when passed, got ${typeof attr.optional}: ${attr.optional}`)
+
+  if (typeof attr.type !== 'number' || !POSSIBLE_ATTRIBUTE_TYPES.includes(attr.type))
+    throw new ValidationError(`${varName}.type should be a valid attribute type, got ${typeof attr.type}: ${attr.type}`)
+
+  if (typeof attr.kind !== 'number' || !POSSIBLE_ATTRIBUTE_KINDS.includes(attr.kind))
+    throw new ValidationError(`${varName}.kind should be a valid attribute kind, got ${typeof attr.kind}: ${attr.kind}`)
+
+  if (attr.type === AttributeType.localizedStringDictionaryIndex && attr.hasOwnProperty('defaultLocale')) {
+    validateLangCode(attr.defaultLocale, `${varName}.defaultLocale`)
   }
 
   if ([AttributeKind.enum, AttributeKind.enumMultiple].includes(attr.kind)) {
-    return Array.isArray(attr.values) && attr.values.every((keyValueObj: any) => {
-      if (
-        !isPlainObject(keyValueObj) ||
-        typeof keyValueObj.number !== "number" ||
-        !keyValueObj.hasOwnProperty('value')
-      ) {
-        return false
-      }
-      return validateValueVsAttributeType(keyValueObj.value, attr.type)
+    if (!Array.isArray(attr.values))
+      throw new ValidationError(`${varName}.values is not a valid Array, got ${attr.values}`)
+
+
+    attr.values.forEach((keyValueObj: any, index: number) => {
+      const localVarName = `${varName}.values[${index}]`
+
+      isPlainObject(keyValueObj, localVarName)
+
+      validateFieldByType(keyValueObj, 'number', 'number', false, localVarName)
+
+      if (!keyValueObj.hasOwnProperty('value'))
+        throw new ValidationError(`${localVarName} has no field "value"`)
+
+      validateValueVsAttributeType(keyValueObj.value, attr.type, localVarName)
     })
+
+  } else if (attr.kind !== AttributeKind.freeValue) {
+    throw new ValidationError(`${varName}.kind is not known, got ${attr.kind}`)
   }
 
-  return attr.kind === AttributeKind.freeValue
+  return true
 }
 
-export const validateCollectionAttributes = (attributes: any): attributes is CollectionAttributes => {
-  return (
-    isPlainObject(attributes) &&
-    getKeys(attributes).every(isValidAttributeKey) &&
-    getValues(attributes).every(validateAttributesSchemaSingleAttribute)
-  )
-}
-
-export const validateCollectionSchema = <C extends CollectionSchemaSuper>(schema: any): schema is C => {
-  const areCommonFieldsOk: boolean = (
-    isPlainObject(schema) &&
-    schema.schemaName === COLLECTION_SCHEMA_NAME &&
-    Semver.isValid(schema.schemaVersion) &&
-    validateUrlTemplateString(schema.imageUrlTemplate) &&
-    validateUrlWithHashObject(schema.coverImage) &&
-    (
-      !schema.hasOwnProperty('coverImagePreview') ||
-      validateUrlWithHashObject(schema.coverImagePreview)
-    ) &&
-    Semver.isValid(schema.attributesSchemaVersion) &&
-    isIntegerNumber(schema.nextAttributeId) &&
-    validateCollectionAttributes(schema.attributes)
-  )
-  if (!areCommonFieldsOk) {
-    return false
+export const validateCollectionAttributes = (attributes: any, varName: string): attributes is CollectionAttributes => {
+  isPlainObject(attributes, varName)
+  for (const key in attributes) {
+    validateAttributeKey(key, varName)
+    validateAttributesSchemaSingleAttribute(parseInt(key), attributes[key], `${varName}["${key}"]`)
   }
+
+  return true
+}
+
+export const validateCollectionSchema = <C extends CollectionSchemaUnique>(schema: any): schema is C => {
+  isPlainObject(schema, 'Passed collection schema')
+
+  if (schema.schemaName !== COLLECTION_SCHEMA_NAME)
+    throw new ValidationError(`schemaName is not valid (passed ${schema.schemaName})`)
+
+  const schemaVersion = validateAndParseSemverString(schema.schemaVersion, 'schemaVersion')
+
+  validateUrlTemplateString(schema.imageUrlTemplate, 'imageUrlTemplate')
+
+  validateUrlWithHashObject(schema.coverImage, 'coverImage')
+
+  if (schema.hasOwnProperty('coverImagePreview')) {
+    validateUrlWithHashObject(schema.coverImagePreview, 'coverImagePreview')
+  }
+
+  validateIntegerNumber(schema.nextAttributeId, 'nextAttributeId')
+
+  const attributesSchemaVersion = validateAndParseSemverString(schema.attributesSchemaVersion, 'attributesSchemaVersion')
+
+  validateCollectionAttributes(schema.attributes, 'attributes')
 
   const currentMaxAttributeId = Math.max(...getKeys(schema.attributes).map(key => parseInt(key as any)))
   if (schema.nextAttributeId <= currentMaxAttributeId) {
-    return false
+    throw new ValidationError(`nextAttributeId should be at least ${currentMaxAttributeId + 1}, got ${schema.nextAttributeId}`)
   }
 
-  const version = Semver.fromString(schema.schemaVersion)
-
-
-  if (
-    schema.hasOwnProperty('video') &&
-    (
-      !isPlainObject(schema.video) ||
-      !validateUrlTemplateString(schema.video.urlTemplate)
-    )
-  ) {
-    return false
+  if (schema.hasOwnProperty('video')) {
+    isPlainObject(schema.video, 'video')
+    validateUrlTemplateString(schema.video.urlTemplate, 'video')
   }
 
-  if (
-    schema.hasOwnProperty('audio') &&
-    (
-      !isPlainObject(schema.audio) ||
-      !validateUrlTemplateString(schema.audio.urlTemplate) ||
-      typeof schema.audio.format !== 'string' ||
-      (
-        schema.hasOwnProperty('isLossless') &&
-        typeof schema.audio.isLossless !== 'boolean'
-      )
-    )
-  ) {
-    return false
+  if (schema.hasOwnProperty('audio')) {
+    isPlainObject(schema.audio, 'audio')
+    validateUrlTemplateString(schema.audio.urlTemplate, 'audio')
+
+    validateFieldByType(schema.audio, 'format', 'string', false, 'audio')
+    validateFieldByType(schema.audio, 'isLossless', 'boolean', true, 'audio')
   }
 
+  if (schema.hasOwnProperty('object3D')) {
+    isPlainObject(schema.object3D, 'object3D')
+    validateUrlTemplateString(schema.object3D.urlTemplate, 'object3D')
 
-  if (
-    schema.hasOwnProperty('audio') &&
-    (
-      !isPlainObject(schema.object3D) ||
-      !validateUrlTemplateString(schema.object3D.urlTemplate) ||
-      typeof schema.object3D.format !== 'string'
-    )
-  ) {
-    return false
+    validateFieldByType(schema.object3D, 'format', 'string', false, 'object3D')
   }
-
 
   return true
 }
@@ -291,64 +358,69 @@ export const validateCollectionSchema = <C extends CollectionSchemaSuper>(schema
 // token validators
 //
 
-export const validateToken = <T, C extends CollectionSchemaSuper>(token: any, collectionSchema: C): token is T => {
+const validateEnumAttributeValue = (schema: AttributeSchema, num: number, varName: string) => {
+  validateIntegerNumber(num, varName)
+  const enumValues = schema.values?.map(({number}) => number) || []
+  if (!enumValues.some(n => n === num)) {
+    throw new ValidationError(`${varName} value (${num}) not found in the attribute schema enum keys: [${enumValues.join()}]`)
+  }
+}
+
+export const validateToken = <T, C extends CollectionSchemaUnique>(token: any, collectionSchema: C): token is T => {
   if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME) {
-    return false
+    throw new ValidationError(`schemaName is not valid (passed ${collectionSchema.schemaName})`)
   }
 
-  const version = Semver.fromString(collectionSchema.schemaVersion)
-  const isOk = (
-    validateStringField(token, 'name', true) &&
-    validateStringField(token, 'description', true) &&
-    validateUrlWithHashObject(token.image) &&
-    (
-      !token.hasOwnProperty('imagePreview') ||
-      validateUrlWithHashObject(token.imagePreview)
-    )
-  )
-  if (isOk) {
-    return false
+  validateFieldByType(token, 'name', 'string', true, 'token')
+  validateFieldByType(token, 'name', 'description', true, 'token')
+  validateUrlWithHashObject(token.image, 'token.image')
+
+  if (token.hasOwnProperty('imagePreview')) {
+    validateUrlWithHashObject(token.imagePreview, 'token.imagePreview')
   }
+
+  const version = validateAndParseSemverString(collectionSchema.schemaVersion, 'collectionSchema.schemaVersion')
+
   if (token.attributes) {
-    if (!isPlainObject(token.attributes) || !getKeys(token.attributes).every(isValidAttributeKey)) {
-      return false
-    }
-    for (let key in token.attributes) {
+    isPlainObject(token.attributes, 'token.attributes')
+
+    for (let key in collectionSchema.attributes) {
+      const schema = collectionSchema.attributes[key]
+
+      validateAttributeKey(key, 'token.attributes')
+      const varName = `token.attribute.${key}`
+
       const attr = token.attributes[key]
-      if (!(key in collectionSchema.attributes)) {
-        return false
-      }
-      const schema = collectionSchema.attributes[key as any as number]
+      if (!schema.optional && !token.attributes.hasOwnProperty(key))
+        throw new ValidationError(`${varName} should be provided, it's not optional attribute`)
+
       if (schema.kind === AttributeKind.freeValue) {
-        validateValueVsAttributeType(attr, schema.type)
-      } else if ([AttributeKind.enum, AttributeKind.enumMultiple].includes(schema.kind)) {
-        const numbers = schema.kind === AttributeKind.enumMultiple ? attr : [attr]
-        if (!Array.isArray(numbers) || !numbers.every(isIntegerNumber)) {
-          return false
-        }
-        return numbers.every(num => !!schema.values?.findIndex(({number}) => number === num))
+        validateValueVsAttributeType(attr, schema.type, varName)
+      } else if (schema.kind === AttributeKind.enumMultiple) {
+        if (!Array.isArray(attr))
+          throw new ValidationError(`${varName} should be an array, because it's kind is enumMultiple`)
+
+        attr.forEach((num, index) => {
+          validateEnumAttributeValue(schema, num, `${varName}[${index}]`)
+        })
+      } else if (schema.kind === AttributeKind.enum) {
+        validateEnumAttributeValue(schema, attr, varName)
       } else {
-        return false
+        throw new ValidationError(`${varName}: attribute schema kind is unknown: ${schema.kind}`)
       }
     }
   }
 
-  if (collectionSchema.hasOwnProperty('video')) {
-    if (token.hasOwnProperty('video') && !validateUrlWithHashObject(token.video)) {
-      return false
-    }
+  if (collectionSchema.hasOwnProperty('video') && token.hasOwnProperty('video')) {
+    validateUrlWithHashObject(token.video, 'token.video')
   }
 
-  if (collectionSchema.hasOwnProperty('audio')) {
-    if (token.hasOwnProperty('audio') && !validateUrlWithHashObject(token.audio)) {
-      return false
-    }
+  if (collectionSchema.hasOwnProperty('audio') && token.hasOwnProperty('audio')) {
+    validateUrlWithHashObject(token.audio, 'token.audio')
   }
 
-  if (collectionSchema.hasOwnProperty('object3D')) {
-    if (token.hasOwnProperty('object3D') && !validateUrlWithHashObject(token.object3D)) {
-      return false
-    }
+  if (collectionSchema.hasOwnProperty('object3D') && token.hasOwnProperty('object3D')) {
+    validateUrlWithHashObject(token.object3D, 'token.object3D')
   }
 
   return true

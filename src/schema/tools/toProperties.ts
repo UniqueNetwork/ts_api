@@ -1,4 +1,4 @@
-import {CollectionSchemaSuper} from "../types";
+import {CollectionSchemaUnique, TokenSchemaUnique, UrlOrInfixUrlWithHash} from "../types";
 import {
   CollectionProperties,
   CollectionTokenPropertyPermissions,
@@ -8,7 +8,7 @@ import {converters} from "../schemaUtils";
 import {getKeys} from "../../tsUtils";
 import {validateCollectionTokenPropertyPermissions} from "./validators";
 
-export const collectionSchemaToProperties = (schema: CollectionSchemaSuper): CollectionProperties => {
+export const collectionSchemaToProperties = (schema: CollectionSchemaUnique): CollectionProperties => {
   return converters.objectToProperties(schema)
 }
 
@@ -21,7 +21,7 @@ export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
 
-export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSchemaSuper, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
+export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSchemaUnique, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name
     generateDefaultTPPObjectForKey('d'), // description
@@ -42,7 +42,7 @@ export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSch
 
   if (schema.hasOwnProperty('audio')) {
     permissions.push(generateDefaultTPPObjectForKey('au'))  // audio url infix
-    permissions.push(generateDefaultTPPObjectForKey('aui')) // audio url
+    permissions.push(generateDefaultTPPObjectForKey('auu')) // audio url
     permissions.push(generateDefaultTPPObjectForKey('auh')) // audio hash
   }
 
@@ -70,4 +70,39 @@ export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSch
   }
 
   return permissions
+}
+
+const urlInfixObjToObj = (to: any,  prefix: string, source: UrlOrInfixUrlWithHash) => {
+  if (typeof source.urlInfix === 'string') {
+    to[`${prefix}`] = source.urlInfix
+  } else if (typeof source.url === 'string') {
+    to[`${prefix}u`] = source.url
+  }
+
+  if (typeof source.hash === 'string') {
+    to[`${prefix}h`] = source.hash
+  }
+}
+
+export const tokenToProperties = (token: TokenSchemaUnique) => {
+  const obj: any = {}
+  if (token.name) obj.n = token.name
+  if (token.description) obj.n = token.description
+  if (token.attributes) {
+    for (const n in token.attributes) {
+      const value = token.attributes[n]
+      //obj[`a.${n}`] = typeof value === "object" ? JSON.stringify(value) : value
+      console.log(value, String(value))
+      obj[`a.${n}`] = String(value)
+    }
+  }
+
+  urlInfixObjToObj(obj, 'i', token.image)
+
+  if (token.imagePreview) urlInfixObjToObj(obj, 'p', token.imagePreview)
+  if (token.video) urlInfixObjToObj(obj, 'v', token.video)
+  if (token.audio) urlInfixObjToObj(obj, 'au', token.audio)
+  if (token.object3D) urlInfixObjToObj(obj, '3d', token.object3D)
+
+  return converters.objectToProperties(obj)
 }

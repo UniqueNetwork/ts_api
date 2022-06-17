@@ -14,15 +14,16 @@ const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: st
       !(value === null || value instanceof Map || value instanceof Set || Array.isArray(value))
     ) {
       for (let secondLevelKey in value) {
+        const secondLevelValue = value[secondLevelKey]
         collectionProperties.push({
           key: `${key}${separator}${secondLevelKey}`,
-          value: JSON.stringify(value[secondLevelKey])
+          value: typeof secondLevelValue === 'object' ? JSON.stringify(secondLevelValue) : String(secondLevelValue)
         })
       }
     } else {
       collectionProperties.push({
         key,
-        value: JSON.stringify(value)
+        value: String(value)
       })
     }
   }
