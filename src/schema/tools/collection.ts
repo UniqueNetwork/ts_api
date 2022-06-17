@@ -35,7 +35,7 @@ export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: Col
     generateDefaultTPPObjectForKey('p'), // preview image url infix
     generateDefaultTPPObjectForKey('pu'),// preview image url
     generateDefaultTPPObjectForKey('ph'),// preview image hash
-    ...getKeys(schema.attributes).map(key => generateDefaultTPPObjectForKey(`a.${key}`))
+    ...getKeys(schema.attributesSchema).map(key => generateDefaultTPPObjectForKey(`a.${key}`))
   ]
 
   if (schema.hasOwnProperty('video')) {
