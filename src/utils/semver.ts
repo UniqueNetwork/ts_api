@@ -45,8 +45,8 @@ export class Semver {
     return new Semver(parsed)
   }
 
-  static isValid(version: string) {
-    return Semver.parseToArray(version) !== null
+  static isValid(version: string): boolean {
+    return typeof version === 'string' && Semver.parseToArray(version) !== null
   }
 
   isGteThan(version: string) {

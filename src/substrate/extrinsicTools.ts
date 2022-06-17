@@ -11,6 +11,7 @@ import {
 } from '../types'
 import {getPolkadotExtensionDapp} from '../libs'
 import {utils} from '../utils'
+import {ExtrinsicError} from "../utils/errors";
 
 const signerIs = {
   keyring(signer: ISigner): signer is KeyringPair {
@@ -28,18 +29,7 @@ export const findEventDataBySectionAndMethod = (txResult: ISubmittableResult, se
   )?.event.data
 }
 
-export class ExtrinsicError extends Error {
-  txResult: ISubmittableResult
 
-  constructor(txResult: SubmittableResult, errMessage: string, label?: string) {
-    if (!label) {
-      const info = txResult.dispatchInfo?.toHuman()
-      label = `transaction ${info?.section}${info?.method}`
-    }
-    super(`Transaction failed: "${errMessage}"${label ? ' for' + label : ''}.`)
-    this.txResult = txResult
-  }
-}
 
 enum TransactionStatus {
   NOT_READY = 'NOT_READY',

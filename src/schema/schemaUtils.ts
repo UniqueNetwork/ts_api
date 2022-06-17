@@ -1,78 +1,63 @@
 import {PropertiesArray} from '../types'
+import {safeJSONParse} from "../tsUtils";
 
-export const SEPARATOR = '.'
-
-export const convertNestedObjectToPropertyArray = <T extends object>(obj: T, separator: string, prefix?: string): PropertiesArray => {
-  let collectionProperties: PropertiesArray = []
-
-  if (typeof obj !== 'object' || obj === null) {
-    collectionProperties.push({
-      key: prefix || '',
-      value: obj as any
-    })
+const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
+  if (typeof obj !== "object" || obj === null) {
+    throw new Error(`Object is not valid: ${obj}`)
   }
-  for (const key in obj) {
-    const value = obj[key]
-    const prefixedKey = prefix ? `${prefix}${separator}${key}` : key
 
-    if (typeof value === 'object' && value !== null) {
-      if (value instanceof Map || value instanceof Set) {
-        throw new Error('Map and Set are prohibited in properties')
-      } else if (Array.isArray(value)) {
-        for (let i = 0; i < value.length; i++) {
-          collectionProperties = collectionProperties.concat(
-            convertNestedObjectToPropertyArray(value[i] as any, separator, prefixedKey + `${separator}${i}`)
-          )
-        }
-      } else {
-        collectionProperties = collectionProperties.concat(
-          convertNestedObjectToPropertyArray(value as any, separator, prefixedKey)
-        )
+  const collectionProperties: PropertiesArray = []
+
+  for (let key in obj) {
+    const value = obj[key]
+    if (
+      typeof value === 'object' &&
+      !(value === null || value instanceof Map || value instanceof Set || Array.isArray(value))
+    ) {
+      for (let secondLevelKey in value) {
+        const secondLevelValue = value[secondLevelKey]
+        collectionProperties.push({
+          key: `${key}${separator}${secondLevelKey}`,
+          value: JSON.stringify(secondLevelValue)
+        })
       }
     } else {
       collectionProperties.push({
-        key: prefixedKey,
-        value: value as any
+        key,
+        value: JSON.stringify(value)
       })
     }
   }
+
   return collectionProperties
 }
 
-export const convertPropertyArrayToNestedObject = <T extends object>(arr: PropertiesArray, separator: string): T => {
+export const convertPropertyArrayTo2layerObject = <T extends object>(properties: PropertiesArray, separator: string): T => {
   const obj: any = {}
-  for (let {key, value} of arr) {
+
+  for (let {key, value} of properties) {
     const keyParts = key.split(separator)
     const length = keyParts.length
     if (length === 1) {
-      obj[key] = value
+      obj[key] = safeJSONParse(value)
     } else {
-      let objLevel = obj
-      for (let i = 0; i < length; i++) {
-        const isLast = i === length - 1
-        const keyPart = keyParts[i]
-
-        if (isLast) {
-          objLevel[keyPart] = value
-        } else {
-          if (!objLevel[keyPart]) {
-            const isArray = !isNaN(parseInt(keyParts[i + 1]))
-            objLevel[keyPart] = isArray ? [] : {}
-          }
-          objLevel = objLevel[keyPart]
-        }
+      const [key, innerKey] = keyParts
+      if (typeof obj[key] !== 'object') {
+        obj[key] = {}
       }
-
+      obj[key][innerKey] = safeJSONParse(value)
     }
   }
   return obj as T
 }
 
-export const converters = {
+const SEPARATOR = '.'
+
+export const converters2Layers = {
   objectToProperties: <T extends object>(obj: T): PropertiesArray => {
-    return convertNestedObjectToPropertyArray(obj, SEPARATOR)
+    return convert2LayerObjectToProperties(obj, SEPARATOR)
   },
   propertiesToObject: <T extends object>(arr: PropertiesArray): T => {
-    return convertPropertyArrayToNestedObject(arr, SEPARATOR)
+    return convertPropertyArrayTo2layerObject(arr, SEPARATOR)
   }
 }
