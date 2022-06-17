@@ -1,6 +1,3 @@
-import {CollectionProperties} from '../substrate/extrinsics/unique/types'
-import {getEnumKeys, getEnumValues} from "../tsUtils";
-
 /**
  * infix and url or just infix - ?
  * width and height to json - or to the indexer?
@@ -10,21 +7,27 @@ export type UrlOrInfixUrl =
   { url: string, urlInfix?: undefined }
   |
   { urlInfix: string, url?: undefined }
-export type UrlOrInfixUrlWithHash = UrlOrInfixUrl & {hash?: string}
+export type UrlOrInfixUrlWithHash = UrlOrInfixUrl & { hash?: string }
 
 export type UrlTemplateString = `${string}{infix}${string}`
+export const AttributeTypeMask = {
+  number: 0x100,
+  string: 0x200,
+  object: 0x400,
+}
 
 export enum AttributeType {
-  integer = 0,                             // number
-  float = 1,                               // number
-  boolean = 2,                             // number
-  string = 3,                              // string
-  localizedStringDictionaryIndex = 4,      // number
-  url = 5,                                 // string
-  isoDate = 6,                             // string // ISO Date: YYYY-MM-DD
-  time = 7,                                // string // 24h time: HH:mm:ss
-  timestamp = 8,                           // number // js, milliseconds from epoch
-  colorRgba = 9,                           // string // 'rrggbbaa'
+  integer = 0x101,                             // number
+  float = 0x102,                               // number
+  boolean = 0x103,                             // number
+  timestamp = 0x104,                           // number // js, milliseconds from epoch
+  localizedStringDictionaryIndex = 0x105,      // number
+  string = 0x201,                              // string
+  url = 0x203,                                 // string
+  isoDate = 0x204,                             // string // ISO Date: YYYY-MM-DD
+  time = 0x205,                                // string // 24h time: HH:mm:ss
+  colorRgba = 0x206,                           // string // 'rrggbbaa'
+  localizedStringDictionary = 0x401,           // object
 }
 
 
@@ -51,14 +54,14 @@ export interface AttributeSchema {
 }
 
 export interface TokenAttributes {
-  [K: number]: number | Array<number> | string
+  [K: number]: number | Array<number> | string | LocalizedStringDictionary
 }
 
 export type CollectionAttributes = {
   [K: number]: AttributeSchema
 }
 
-const punksAttributesSchema: CollectionAttributes =  {
+const punksAttributesSchema: CollectionAttributes = {
   '0': {
     name: {en: 'gender'},
     type: AttributeType.localizedStringDictionaryIndex,
@@ -136,7 +139,7 @@ export interface CollectionSchemaUnique {
     isLossless?: boolean
   }
 
-  object3D?: {
+  spatialObject?: {
     urlTemplate?: UrlTemplateString
     format: string
   }
@@ -145,12 +148,12 @@ export interface CollectionSchemaUnique {
 export interface TokenSchemaUnique {
   name?: string | LocalizedStringDictionary
   description?: string | LocalizedStringDictionary
+  attributes?: TokenAttributes
   image: UrlOrInfixUrlWithHash
   imagePreview?: UrlOrInfixUrlWithHash
-  attributes?: TokenAttributes
   video?: UrlOrInfixUrlWithHash
   audio?: UrlOrInfixUrlWithHash
-  object3D?: UrlOrInfixUrlWithHash
+  spatialObject?: UrlOrInfixUrlWithHash
 }
 
 // example
@@ -171,7 +174,6 @@ const collection: CollectionSchemaUnique = {
   nextAttributeId: 2,
   attributes: punksAttributesSchema
 }
-
 
 
 const tokenWithInfix: TokenSchemaUnique = {

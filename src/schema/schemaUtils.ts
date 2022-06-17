@@ -1,4 +1,5 @@
 import {PropertiesArray} from '../types'
+import {safeJSONParse} from "../tsUtils";
 
 const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
   if (typeof obj !== "object" || obj === null) {
@@ -17,13 +18,13 @@ const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: st
         const secondLevelValue = value[secondLevelKey]
         collectionProperties.push({
           key: `${key}${separator}${secondLevelKey}`,
-          value: typeof secondLevelValue === 'object' ? JSON.stringify(secondLevelValue) : String(secondLevelValue)
+          value: JSON.stringify(secondLevelValue)
         })
       }
     } else {
       collectionProperties.push({
         key,
-        value: String(value)
+        value: JSON.stringify(value)
       })
     }
   }
@@ -38,13 +39,13 @@ export const convertPropertyArrayTo2layerObject = <T extends object>(properties:
     const keyParts = key.split(separator)
     const length = keyParts.length
     if (length === 1) {
-      obj[key] = JSON.parse(value)
+      obj[key] = safeJSONParse(value)
     } else {
       const [key, innerKey] = keyParts
       if (typeof obj[key] !== 'object') {
         obj[key] = {}
       }
-      obj[key][innerKey] = JSON.parse(value)
+      obj[key][innerKey] = safeJSONParse(value)
     }
   }
   return obj as T
@@ -52,7 +53,7 @@ export const convertPropertyArrayTo2layerObject = <T extends object>(properties:
 
 const SEPARATOR = '.'
 
-export const converters = {
+export const converters2Layers = {
   objectToProperties: <T extends object>(obj: T): PropertiesArray => {
     return convert2LayerObjectToProperties(obj, SEPARATOR)
   },

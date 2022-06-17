@@ -3,13 +3,14 @@ import {
   AttributeKind,
   AttributeSchema,
   AttributeType,
+  AttributeTypeMask,
   COLLECTION_SCHEMA_NAME,
   CollectionAttributes,
   CollectionSchemaUnique,
   LocalizedStringDictionary,
   UrlOrInfixUrlWithHash
 } from "../types";
-import {getEnumKeys, getEnumValues, getKeys} from "../../tsUtils";
+import {getEnumValues, getKeys, getReversedEnum} from "../../tsUtils";
 import {
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
@@ -19,8 +20,8 @@ import {ValidationError} from "../../utils/errors";
 
 const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
 const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
-const ATTRIBUTE_TYPE_NAME_BY_VALUE = getEnumKeys(AttributeType)
-const ATTRIBUTE_KIND_NAME_BY_VALUE = getEnumKeys(AttributeKind)
+const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
+const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
 
 
 const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
@@ -200,17 +201,10 @@ export const validateCollectionTokenPropertyPermissions = (tpps: any, varName: s
 //
 
 export const validateValueVsAttributeType = (value: any, type: AttributeType, varName: string): value is typeof type => {
-  //number types
-  const valueShouldBeNumber = [
-    AttributeType.integer,
-    AttributeType.float,
-    AttributeType.timestamp,
-    AttributeType.boolean,
-  ].includes(type)
-
-  if (valueShouldBeNumber) {
+  console.log(ATTRIBUTE_TYPE_NAME_BY_VALUE)
+  if (type & AttributeTypeMask.number) {
     if (typeof value !== "number") {
-      throw new ValidationError(`${varName}: should be a number, got ${typeof value}: ${value}`)
+      throw new ValidationError(`${varName}: should be a number, got ${typeof value}: ${value}, type: ${type} (${ATTRIBUTE_TYPE_NAME_BY_VALUE[type]})`)
     }
     if ([AttributeType.integer, AttributeType.timestamp].includes(type) && value !== Math.round(value)) {
       throw new ValidationError(`${varName}: should be an integer number, got ${value}`)
@@ -222,33 +216,38 @@ export const validateValueVsAttributeType = (value: any, type: AttributeType, va
     return true
   }
 
-  //string (exact "string") type
-  // string can be a string or an object (dictionary)
-  if (type === AttributeType.localizedStringDictionaryIndex) {
-    validateStringOrLocalizedStringDictionary(value, varName)
+  if (type & AttributeTypeMask.object) {
+    isPlainObject(value, varName)
+
+    if (type === AttributeType.localizedStringDictionary) {
+      validateStringOrLocalizedStringDictionary(value, varName)
+    }
 
     return true
   }
 
   // all other types are deriving from string (isoDate and so on)
+  if (type & AttributeTypeMask.string) {
+    if (typeof value !== "string") {
+      throw new ValidationError(`${varName}: should be a string, got ${typeof value}: ${value}`)
+    }
 
-  if (typeof value !== "string") {
-    throw new ValidationError(`${varName}: should be a string, got ${typeof value}: ${value}`)
+    if (type === AttributeType.isoDate && isNaN(new Date(value).valueOf())) {
+      throw new ValidationError(`${varName}: should be a valid ISO Date (YYYY-MM-DD), got ${value}`)
+    }
+
+    if (type === AttributeType.time && isNaN(new Date('1970-01-01T' + value).valueOf())) {
+      throw new ValidationError(`${varName}: should be a valid time in (hh:mm or hh:mm:ss), got ${value}`)
+    }
+
+    if (type === AttributeType.colorRgba && (!value.match(RGB_REGEX) && !value.match(RGBA_REGEX))) {
+      throw new ValidationError(`${varName}: should be a valid rgb or rgba color (like "#ff00ff00"), got ${value}`)
+    }
+
+    return true
   }
 
-  if (type === AttributeType.isoDate && isNaN(new Date(value).valueOf())) {
-    throw new ValidationError(`${varName}: should be a valid ISO Date (YYYY-MM-DD), got ${value}`)
-  }
-
-  if (type === AttributeType.time && isNaN(new Date('1970-01-01T' + value).valueOf())) {
-    throw new ValidationError(`${varName}: should be a valid time in (hh:mm or hh:mm:ss), got ${value}`)
-  }
-
-  if (type === AttributeType.colorRgba && (!value.match(RGB_REGEX) && !value.match(RGBA_REGEX))) {
-    throw new ValidationError(`${varName}: should be a valid rgb or rgba color (like "#ff00ff00"), got ${value}`)
-  }
-
-  return true
+  throw new ValidationError(`${varName}: unknown attribute type: ${type} (${ATTRIBUTE_TYPE_NAME_BY_VALUE[type]})`)
 }
 
 export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, varName: string): attr is AttributeSchema => {
@@ -284,7 +283,14 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
       if (!keyValueObj.hasOwnProperty('value'))
         throw new ValidationError(`${localVarName} has no field "value"`)
 
-      validateValueVsAttributeType(keyValueObj.value, attr.type, localVarName)
+      validateValueVsAttributeType(
+        keyValueObj.value,
+        attr.type !== AttributeType.localizedStringDictionaryIndex
+          ? attr.type
+          : AttributeType.localizedStringDictionary
+        ,
+        localVarName
+      )
     })
 
   } else if (attr.kind !== AttributeKind.freeValue) {
@@ -344,11 +350,11 @@ export const validateCollectionSchema = <C extends CollectionSchemaUnique>(schem
     validateFieldByType(schema.audio, 'isLossless', 'boolean', true, 'audio')
   }
 
-  if (schema.hasOwnProperty('object3D')) {
-    isPlainObject(schema.object3D, 'object3D')
-    validateUrlTemplateString(schema.object3D.urlTemplate, 'object3D')
+  if (schema.hasOwnProperty('spatialObject')) {
+    isPlainObject(schema.spatialObject, 'spatialObject')
+    validateUrlTemplateString(schema.spatialObject.urlTemplate, 'spatialObject')
 
-    validateFieldByType(schema.object3D, 'format', 'string', false, 'object3D')
+    validateFieldByType(schema.spatialObject, 'format', 'string', false, 'spatialObject')
   }
 
   return true
@@ -419,8 +425,8 @@ export const validateToken = <T, C extends CollectionSchemaUnique>(token: any, c
     validateUrlWithHashObject(token.audio, 'token.audio')
   }
 
-  if (collectionSchema.hasOwnProperty('object3D') && token.hasOwnProperty('object3D')) {
-    validateUrlWithHashObject(token.object3D, 'token.object3D')
+  if (collectionSchema.hasOwnProperty('spatialObject') && token.hasOwnProperty('spatialObject')) {
+    validateUrlWithHashObject(token.spatialObject, 'token.spatialObject')
   }
 
   return true

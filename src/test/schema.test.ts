@@ -1,5 +1,5 @@
 import {describe, test, expect} from 'vitest'
-import {converters} from "../schema/schemaUtils";
+import {converters2Layers} from "../schema/schemaUtils";
 
 
 describe('schema', async () => {
@@ -30,17 +30,17 @@ describe('schema', async () => {
 
 
   test.concurrent('Nested object to properties', () => {
-    expect(converters.objectToProperties(nestedObject)).toEqual(properties)
+    expect(converters2Layers.objectToProperties(nestedObject)).toEqual(properties)
   })
 
   test.concurrent('Properties to nested object', () => {
-    expect(converters.objectToProperties(nestedObject)).toEqual(properties)
+    expect(converters2Layers.objectToProperties(nestedObject)).toEqual(properties)
   })
 
 
   test.concurrent('Duplex: object -> properties -> object', () => {
-    const toProps = converters.objectToProperties(nestedObject)
-    const parsedBack = converters.propertiesToObject(toProps)
+    const toProps = converters2Layers.objectToProperties(nestedObject)
+    const parsedBack = converters2Layers.propertiesToObject(toProps)
 
     expect(nestedObject).toEqual(parsedBack)
     expect(JSON.stringify(nestedObject)).toBe(JSON.stringify(parsedBack))

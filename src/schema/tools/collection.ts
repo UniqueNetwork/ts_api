@@ -1,16 +1,21 @@
-import {CollectionSchemaUnique, TokenSchemaUnique, UrlOrInfixUrlWithHash} from "../types";
+import {CollectionSchemaUnique} from "../types";
 import {
   CollectionProperties,
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
-import {converters} from "../schemaUtils";
+import {converters2Layers} from "../schemaUtils";
 import {getKeys} from "../../tsUtils";
 import {validateCollectionTokenPropertyPermissions} from "./validators";
 
-export const collectionSchemaToProperties = (schema: CollectionSchemaUnique): CollectionProperties => {
-  return converters.objectToProperties(schema)
+export const packCollectionSchemaToProperties = (schema: CollectionSchemaUnique): CollectionProperties => {
+  return converters2Layers.objectToProperties(schema)
 }
+
+export const unpackCollectionSchemaFromProperties = <T extends CollectionSchemaUnique>(properties: CollectionProperties): any => {
+  return converters2Layers.propertiesToObject(properties) as any
+}
+
 
 const generateDefaultTPPObjectForKey = (key: string): TokenPropertyPermissionObject => ({
   key,
@@ -20,8 +25,7 @@ const generateDefaultTPPObjectForKey = (key: string): TokenPropertyPermissionObj
 export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
-
-export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSchemaUnique, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
+export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: CollectionSchemaUnique, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name
     generateDefaultTPPObjectForKey('d'), // description
@@ -46,10 +50,10 @@ export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSch
     permissions.push(generateDefaultTPPObjectForKey('auh')) // audio hash
   }
 
-  if (schema.hasOwnProperty('object3D')) {
-    permissions.push(generateDefaultTPPObjectForKey('3d'))  // 3DObject url infix
-    permissions.push(generateDefaultTPPObjectForKey('3du')) // 3DObject url
-    permissions.push(generateDefaultTPPObjectForKey('3dh')) // 3DObject hash
+  if (schema.hasOwnProperty('spatialObject')) {
+    permissions.push(generateDefaultTPPObjectForKey('so'))  // spatialObject url infix
+    permissions.push(generateDefaultTPPObjectForKey('sou')) // spatialObject url
+    permissions.push(generateDefaultTPPObjectForKey('soh')) // spatialObject hash
   }
 
   if (options?.overwriteTPPs) {
@@ -70,39 +74,4 @@ export const collectionSchemaToTokenPropertyPermissions = (schema: CollectionSch
   }
 
   return permissions
-}
-
-const urlInfixObjToObj = (to: any,  prefix: string, source: UrlOrInfixUrlWithHash) => {
-  if (typeof source.urlInfix === 'string') {
-    to[`${prefix}`] = source.urlInfix
-  } else if (typeof source.url === 'string') {
-    to[`${prefix}u`] = source.url
-  }
-
-  if (typeof source.hash === 'string') {
-    to[`${prefix}h`] = source.hash
-  }
-}
-
-export const tokenToProperties = (token: TokenSchemaUnique) => {
-  const obj: any = {}
-  if (token.name) obj.n = token.name
-  if (token.description) obj.n = token.description
-  if (token.attributes) {
-    for (const n in token.attributes) {
-      const value = token.attributes[n]
-      //obj[`a.${n}`] = typeof value === "object" ? JSON.stringify(value) : value
-      console.log(value, String(value))
-      obj[`a.${n}`] = String(value)
-    }
-  }
-
-  urlInfixObjToObj(obj, 'i', token.image)
-
-  if (token.imagePreview) urlInfixObjToObj(obj, 'p', token.imagePreview)
-  if (token.video) urlInfixObjToObj(obj, 'v', token.video)
-  if (token.audio) urlInfixObjToObj(obj, 'au', token.audio)
-  if (token.object3D) urlInfixObjToObj(obj, '3d', token.object3D)
-
-  return converters.objectToProperties(obj)
 }
