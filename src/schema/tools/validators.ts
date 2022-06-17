@@ -5,10 +5,10 @@ import {
   AttributeType,
   AttributeTypeMask,
   COLLECTION_SCHEMA_NAME,
-  CollectionAttributes,
+  CollectionAttributesSchema,
   CollectionSchemaUnique,
   LocalizedStringDictionary,
-  UrlOrInfixUrlWithHash
+  UrlOrUrlInfixWithHash
 } from "../types";
 import {getEnumValues, getKeys, getReversedEnum} from "../../tsUtils";
 import {
@@ -131,7 +131,7 @@ const validateUrlTemplateString = (str: any, varName: string): str is string => 
   return true
 }
 
-export const validateUrlWithHashObject = (obj: any, varName: string): obj is UrlOrInfixUrlWithHash => {
+export const validateUrlWithHashObject = (obj: any, varName: string): obj is UrlOrUrlInfixWithHash => {
   isPlainObject(obj, varName)
 
   if (typeof obj.urlInfix !== 'string' && typeof obj.url !== 'string')
@@ -201,7 +201,6 @@ export const validateCollectionTokenPropertyPermissions = (tpps: any, varName: s
 //
 
 export const validateValueVsAttributeType = (value: any, type: AttributeType, varName: string): value is typeof type => {
-  console.log(ATTRIBUTE_TYPE_NAME_BY_VALUE)
   if (type & AttributeTypeMask.number) {
     if (typeof value !== "number") {
       throw new ValidationError(`${varName}: should be a number, got ${typeof value}: ${value}, type: ${type} (${ATTRIBUTE_TYPE_NAME_BY_VALUE[type]})`)
@@ -264,10 +263,6 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
   if (typeof attr.kind !== 'number' || !POSSIBLE_ATTRIBUTE_KINDS.includes(attr.kind))
     throw new ValidationError(`${varName}.kind should be a valid attribute kind, got ${typeof attr.kind}: ${attr.kind}`)
 
-  if (attr.type === AttributeType.localizedStringDictionaryIndex && attr.hasOwnProperty('defaultLocale')) {
-    validateLangCode(attr.defaultLocale, `${varName}.defaultLocale`)
-  }
-
   if ([AttributeKind.enum, AttributeKind.enumMultiple].includes(attr.kind)) {
     if (!Array.isArray(attr.values))
       throw new ValidationError(`${varName}.values is not a valid Array, got ${attr.values}`)
@@ -300,7 +295,7 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
   return true
 }
 
-export const validateCollectionAttributes = (attributes: any, varName: string): attributes is CollectionAttributes => {
+export const validateCollectionAttributesSchema = (attributes: any, varName: string): attributes is CollectionAttributesSchema => {
   isPlainObject(attributes, varName)
   for (const key in attributes) {
     validateAttributeKey(key, varName)
@@ -326,16 +321,9 @@ export const validateCollectionSchema = <C extends CollectionSchemaUnique>(schem
     validateUrlWithHashObject(schema.coverImagePreview, 'coverImagePreview')
   }
 
-  validateIntegerNumber(schema.nextAttributeId, 'nextAttributeId')
-
   const attributesSchemaVersion = validateAndParseSemverString(schema.attributesSchemaVersion, 'attributesSchemaVersion')
 
-  validateCollectionAttributes(schema.attributes, 'attributes')
-
-  const currentMaxAttributeId = Math.max(...getKeys(schema.attributes).map(key => parseInt(key as any)))
-  if (schema.nextAttributeId <= currentMaxAttributeId) {
-    throw new ValidationError(`nextAttributeId should be at least ${currentMaxAttributeId + 1}, got ${schema.nextAttributeId}`)
-  }
+  validateCollectionAttributesSchema(schema.attributesSchema, 'attributesSchema')
 
   if (schema.hasOwnProperty('video')) {
     isPlainObject(schema.video, 'video')
@@ -390,8 +378,8 @@ export const validateToken = <T, C extends CollectionSchemaUnique>(token: any, c
   if (token.attributes) {
     isPlainObject(token.attributes, 'token.attributes')
 
-    for (let key in collectionSchema.attributes) {
-      const schema = collectionSchema.attributes[key]
+    for (let key in collectionSchema.attributesSchema) {
+      const schema = collectionSchema.attributesSchema[key]
 
       validateAttributeKey(key, 'token.attributes')
       const varName = `token.attribute.${key}`

@@ -8,8 +8,8 @@ dist
 .rollup.cache
 .env
 !.env.example
-.test.env
-!.test.env.example
+.*.env
+!.*.example.env
 tsconfig.tsbuildinfo
 .tsconfig.tsbuildinfo
 .tsbuildinfo

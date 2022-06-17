@@ -5,13 +5,13 @@ import {
   LocalizedStringDictionary,
   TokenAttributes,
   TokenSchemaUnique,
-  UrlOrInfixUrlWithHash
+  UrlOrUrlInfixWithHash
 } from "../types";
 import {validateToken} from "./validators";
 import {safeJSONParse} from "../../tsUtils";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
 
-const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: UrlOrInfixUrlWithHash) => {
+const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: UrlOrUrlInfixWithHash) => {
   if (typeof source.urlInfix === 'string') {
     properties.push({key: `${prefix}`, value: source.urlInfix})
   } else if (typeof source.url === 'string') {
@@ -38,12 +38,12 @@ const addKeyToTokenProperties = (properties: PropertiesArray, key: string, value
   })
 }
 
-export const packTokenToProperties = (token: TokenSchemaUnique, schema: CollectionSchemaUnique) => {
+export const packTokenToProperties = (token: TokenSchemaUnique, schema: CollectionSchemaUnique): PropertiesArray => {
   validateToken(token, schema)
 
   const properties: PropertiesArray = []
   if (token.name) addKeyToTokenProperties(properties, 'n', token.name)
-  if (token.description) addKeyToTokenProperties(properties, 'n', token.description)
+  if (token.description) addKeyToTokenProperties(properties, 'd', token.description)
 
   if (token.attributes) {
     for (const n in token.attributes) {
@@ -65,7 +65,7 @@ const fillTokenFieldByKeyPrefix = <T extends TokenSchemaUnique>(token: T, proper
   const keysMatchingPrefix = [`${keyPrefix}`, `${keyPrefix}u`, `${keyPrefix}h`]
   if (properties.some(({key}) => keysMatchingPrefix.includes(key))) token[tokenField] = {} as any
 
-  const field = token[tokenField] as any as UrlOrInfixUrlWithHash
+  const field = token[tokenField] as any as UrlOrUrlInfixWithHash
 
   const urlInfixProperty = properties.find(({key}) => key === keysMatchingPrefix[0])
   if (urlInfixProperty) field.urlInfix = urlInfixProperty.value
@@ -99,8 +99,8 @@ export const unpackTokenFromProperties = <T extends TokenSchemaUnique>(propertie
 
     attributes.forEach(({key, value}) => {
       const attributeKey = parseInt(key.split('.')[1] || '')
-      if (!isNaN(attributeKey) || !schema.attributes.hasOwnProperty(attributeKey)) {
-        const attributeSchema = schema.attributes[attributeKey]
+      if (!isNaN(attributeKey) || !schema.attributesSchema.hasOwnProperty(attributeKey)) {
+        const attributeSchema = schema.attributesSchema[attributeKey]
         const {type, kind} = attributeSchema
 
         if (kind === AttributeKind.enum) {

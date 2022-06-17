@@ -48,8 +48,8 @@
     "analyze": "yarn rollup --analyze",
     "develop": "yarn rollup --watch",
     "esmon": "nodemon --exec \"yarn esno\" ",
-    "release": "dotenv release-it",
-    "release_github": "dotenv release-it release-it -- --no-increment --no-git --no-npm --github.release --github.update",
+    "release": "dotenv -e .release.env -- release-it",
+    "release_github": "dotenv -e .release.env -- --no-increment --no-git --no-npm --github.release --github.update",
     "testrun": "vitest run",
     "test": "vitest"
   },
