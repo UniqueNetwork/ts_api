@@ -8,7 +8,7 @@ import {
   CollectionAttributesSchema,
   CollectionSchemaUnique,
   LocalizedStringDictionary,
-  UrlOrUrlInfixWithHash
+  InfixOrUrlOrCidAndHash
 } from "../types";
 import {getEnumValues, getKeys, getReversedEnum} from "../../tsUtils";
 import {
@@ -131,21 +131,25 @@ const validateUrlTemplateString = (str: any, varName: string): str is string => 
   return true
 }
 
-export const validateUrlWithHashObject = (obj: any, varName: string): obj is UrlOrUrlInfixWithHash => {
+export const validateUrlWithHashObject = (obj: any, varName: string): obj is InfixOrUrlOrCidAndHash => {
   isPlainObject(obj, varName)
 
-  if (typeof obj.urlInfix !== 'string' && typeof obj.url !== 'string')
-    throw new ValidationError(`${varName} should have "urlInfix" or "url" string field`)
+  const keysAmount = ['urlInfix', 'url', 'ipfsCid']
+    .map(field => Number(typeof obj[field] === 'string'))
+    .reduce((prev, curr) => {
+      return prev + curr
+    }, 0)
 
-  if (typeof obj.urlInfix === 'string' && typeof obj.url === 'string')
-    throw new ValidationError(`${varName} should have only one of "urlInfix" or "url" string field`)
+  if (keysAmount !== 1) {
+    throw new ValidationError(`${varName} should have one and only one of "urlInfix" or "url" or "ipfsCid" string fields, got ${JSON.stringify(obj)}`)
+  }
 
   if (typeof obj.url === 'string') {
     validateURL(obj.url, `${varName}.url`)
   }
 
-  if (obj.hasOwnProperty('hash') && typeof obj.hash !== 'string')
-    throw new ValidationError(`${varName}.hash should be a string`)
+  if (obj.hasOwnProperty('hash'))
+    validateFieldByType(obj, 'hash', 'string', false, varName)
 
   return true
 }
@@ -264,30 +268,21 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
     throw new ValidationError(`${varName}.kind should be a valid attribute kind, got ${typeof attr.kind}: ${attr.kind}`)
 
   if ([AttributeKind.enum, AttributeKind.enumMultiple].includes(attr.kind)) {
-    if (!Array.isArray(attr.values))
-      throw new ValidationError(`${varName}.values is not a valid Array, got ${attr.values}`)
+    isPlainObject(attr.enumValues, `${varName}.enumValues`)
 
-
-    attr.values.forEach((keyValueObj: any, index: number) => {
-      const localVarName = `${varName}.values[${index}]`
-
-      isPlainObject(keyValueObj, localVarName)
-
-      validateFieldByType(keyValueObj, 'number', 'number', false, localVarName)
-
-      if (!keyValueObj.hasOwnProperty('value'))
-        throw new ValidationError(`${localVarName} has no field "value"`)
+    for (const key in attr.enumValues) {
+      const localVarName = `${varName}.enumValues[${key}]`
+      validateIntegerNumber(parseInt(key), localVarName)
 
       validateValueVsAttributeType(
-        keyValueObj.value,
+        attr.enumValues[key],
         attr.type !== AttributeType.localizedStringDictionaryIndex
           ? attr.type
           : AttributeType.localizedStringDictionary
         ,
         localVarName
       )
-    })
-
+    }
   } else if (attr.kind !== AttributeKind.freeValue) {
     throw new ValidationError(`${varName}.kind is not known, got ${attr.kind}`)
   }
@@ -325,6 +320,11 @@ export const validateCollectionSchema = <C extends CollectionSchemaUnique>(schem
 
   validateCollectionAttributesSchema(schema.attributesSchema, 'attributesSchema')
 
+  if (schema.hasOwnProperty('imagePreview')) {
+    isPlainObject(schema.video, 'video')
+    validateUrlTemplateString(schema.video.urlTemplate, 'video')
+  }
+
   if (schema.hasOwnProperty('video')) {
     isPlainObject(schema.video, 'video')
     validateUrlTemplateString(schema.video.urlTemplate, 'video')
@@ -352,11 +352,12 @@ export const validateCollectionSchema = <C extends CollectionSchemaUnique>(schem
 // token validators
 //
 
-const validateEnumAttributeValue = (schema: AttributeSchema, num: number, varName: string) => {
+const validateAttributeEnumKey = (schema: AttributeSchema, num: number, varName: string) => {
   validateIntegerNumber(num, varName)
-  const enumValues = schema.values?.map(({number}) => number) || []
-  if (!enumValues.some(n => n === num)) {
-    throw new ValidationError(`${varName} value (${num}) not found in the attribute schema enum keys: [${enumValues.join()}]`)
+  const enumKeys = getKeys(schema.enumValues || {}).map(n => parseInt(n as any as string))
+  console.log(num, typeof num, enumKeys, enumKeys.map(e => typeof e), enumKeys.includes(num),)
+  if (!enumKeys.includes(num)) {
+    throw new ValidationError(`${varName} value (${num}) not found in the attribute schema enum keys: [${enumKeys.join()}]`)
   }
 }
 
@@ -395,10 +396,10 @@ export const validateToken = <T, C extends CollectionSchemaUnique>(token: any, c
           throw new ValidationError(`${varName} should be an array, because it's kind is enumMultiple`)
 
         attr.forEach((num, index) => {
-          validateEnumAttributeValue(schema, num, `${varName}[${index}]`)
+          validateAttributeEnumKey(schema, num, `${varName}[${index}]`)
         })
       } else if (schema.kind === AttributeKind.enum) {
-        validateEnumAttributeValue(schema, attr, varName)
+        validateAttributeEnumKey(schema, attr, varName)
       } else {
         throw new ValidationError(`${varName}: attribute schema kind is unknown: ${schema.kind}`)
       }

@@ -22,6 +22,13 @@ const generateDefaultTPPObjectForKey = (key: string): TokenPropertyPermissionObj
   permission: {mutable: false, collectionAdmin: true, tokenOwner: false}
 })
 
+const generateDefaultTPPsForInfixOrUrlOrCidAndHashObject = (permissions: CollectionTokenPropertyPermissions, prefix: string) => {
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.i`)) // url infix
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.c`)) // ipfs cid
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.u`)) // url
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.h`)) // hash
+}
+
 export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
@@ -29,31 +36,28 @@ export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: Col
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name
     generateDefaultTPPObjectForKey('d'), // description
-    generateDefaultTPPObjectForKey('i'), // image url infix
-    generateDefaultTPPObjectForKey('iu'),// image url
-    generateDefaultTPPObjectForKey('ih'),// image hash
-    generateDefaultTPPObjectForKey('p'), // preview image url infix
-    generateDefaultTPPObjectForKey('pu'),// preview image url
-    generateDefaultTPPObjectForKey('ph'),// preview image hash
-    ...getKeys(schema.attributesSchema).map(key => generateDefaultTPPObjectForKey(`a.${key}`))
   ]
 
+  generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'i')     // image url, urlInfix, ipfsCid and hash (i.u, i.i, i.c, i.h)
+
+  if (schema.hasOwnProperty('imagePreview')) {
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'p')    // imagePreview url, urlInfix, ipfsCid and hash (p.u, p.i, p.c, p.h)
+  }
+
   if (schema.hasOwnProperty('video')) {
-    permissions.push(generateDefaultTPPObjectForKey('v'))  // video url infix
-    permissions.push(generateDefaultTPPObjectForKey('vu')) // video url
-    permissions.push(generateDefaultTPPObjectForKey('vh')) // video hash
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'v')    // video url, urlInfix, ipfsCid and hash (v.u, v.i, v.c, v.h)
   }
 
   if (schema.hasOwnProperty('audio')) {
-    permissions.push(generateDefaultTPPObjectForKey('au'))  // audio url infix
-    permissions.push(generateDefaultTPPObjectForKey('auu')) // audio url
-    permissions.push(generateDefaultTPPObjectForKey('auh')) // audio hash
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'au')   // audio url, urlInfix, ipfsCid and hash (au.u, au.i, au.c, au.h)
   }
 
   if (schema.hasOwnProperty('spatialObject')) {
-    permissions.push(generateDefaultTPPObjectForKey('so'))  // spatialObject url infix
-    permissions.push(generateDefaultTPPObjectForKey('sou')) // spatialObject url
-    permissions.push(generateDefaultTPPObjectForKey('soh')) // spatialObject hash
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'so')   // spatialObject url, urlInfix, ipfsCid and hash (so.u, so.i, so.c, so.h)
+  }
+
+  if (schema.attributesSchema) {
+    getKeys(schema.attributesSchema).forEach(key => generateDefaultTPPObjectForKey(`a.${key}`))
   }
 
   if (options?.overwriteTPPs) {

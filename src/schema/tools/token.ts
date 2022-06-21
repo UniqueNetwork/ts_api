@@ -1,25 +1,29 @@
 import {PropertiesArray} from "../../types";
 import {
-  AttributeKind, AttributeType, AttributeTypeMask,
+  AttributeKind,
+  AttributeType,
+  AttributeTypeMask,
   CollectionSchemaUnique,
+  InfixOrUrlOrCidAndHash,
   LocalizedStringDictionary,
   TokenAttributes,
-  TokenSchemaUnique,
-  UrlOrUrlInfixWithHash
+  TokenSchemaUnique
 } from "../types";
 import {validateToken} from "./validators";
-import {safeJSONParse} from "../../tsUtils";
+import {getEntries, safeJSONParse} from "../../tsUtils";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
 
-const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: UrlOrUrlInfixWithHash) => {
+const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: InfixOrUrlOrCidAndHash) => {
   if (typeof source.urlInfix === 'string') {
-    properties.push({key: `${prefix}`, value: source.urlInfix})
+    properties.push({key: `${prefix}.i`, value: source.urlInfix})
+  } else if (typeof source.ipfsCid === 'string') {
+    properties.push({key: `${prefix}.c`, value: source.ipfsCid})
   } else if (typeof source.url === 'string') {
-    properties.push({key: `${prefix}u`, value: source.url})
+    properties.push({key: `${prefix}.u`, value: source.url})
   }
 
   if (typeof source.hash === 'string') {
-    properties.push({key: `${prefix}h`, value: source.hash})
+    properties.push({key: `${prefix}.h`, value: source.hash})
   }
 }
 
@@ -53,19 +57,19 @@ export const packTokenToProperties = (token: TokenSchemaUnique, schema: Collecti
   }
 
   if (token.image) addUrlObjectToTokenProperties(properties, 'i', token.image)
-  if (token.imagePreview) addUrlObjectToTokenProperties(properties, 'p', token.imagePreview)
-  if (token.video) addUrlObjectToTokenProperties(properties, 'v', token.video)
-  if (token.audio) addUrlObjectToTokenProperties(properties, 'au', token.audio)
-  if (token.spatialObject) addUrlObjectToTokenProperties(properties, 'so', token.spatialObject)
+  if (schema.imagePreview && token.imagePreview) addUrlObjectToTokenProperties(properties, 'p', token.imagePreview)
+  if (schema.video && token.video) addUrlObjectToTokenProperties(properties, 'v', token.video)
+  if (schema.audio && token.audio) addUrlObjectToTokenProperties(properties, 'au', token.audio)
+  if (schema.spatialObject && token.spatialObject) addUrlObjectToTokenProperties(properties, 'so', token.spatialObject)
 
   return properties
 }
 
-const fillTokenFieldByKeyPrefix = <T extends TokenSchemaUnique>(token: T, properties: PropertiesArray, keyPrefix: string, tokenField: keyof T) => {
-  const keysMatchingPrefix = [`${keyPrefix}`, `${keyPrefix}u`, `${keyPrefix}h`]
+const fillTokenFieldByKeyPrefix = <T extends TokenSchemaUnique>(token: T, properties: PropertiesArray, prefix: string, tokenField: keyof T) => {
+  const keysMatchingPrefix = [`${prefix}.i`, `${prefix}.u`, `${prefix}.c`, `${prefix}.h`]
   if (properties.some(({key}) => keysMatchingPrefix.includes(key))) token[tokenField] = {} as any
 
-  const field = token[tokenField] as any as UrlOrUrlInfixWithHash
+  const field = token[tokenField] as any as InfixOrUrlOrCidAndHash
 
   const urlInfixProperty = properties.find(({key}) => key === keysMatchingPrefix[0])
   if (urlInfixProperty) field.urlInfix = urlInfixProperty.value
@@ -73,7 +77,10 @@ const fillTokenFieldByKeyPrefix = <T extends TokenSchemaUnique>(token: T, proper
   const urlProperty = properties.find(({key}) => key === keysMatchingPrefix[1])
   if (urlProperty) field.url = urlProperty.value
 
-  const hashProperty = properties.find(({key}) => key === keysMatchingPrefix[2])
+  const ipfsCidProperty = properties.find(({key}) => key === keysMatchingPrefix[2])
+  if (ipfsCidProperty) field.ipfsCid = ipfsCidProperty.value
+
+  const hashProperty = properties.find(({key}) => key === keysMatchingPrefix[3])
   if (hashProperty) field.hash = hashProperty.value
 }
 
@@ -121,4 +128,43 @@ export const unpackTokenFromProperties = <T extends TokenSchemaUnique>(propertie
   }
 
   return token
+}
+
+interface DecodedTokenAttributes {
+  [K: number]: string | number | LocalizedStringDictionary | Array<string | number | LocalizedStringDictionary>
+}
+export const decodeTokenAttributes = (token: TokenSchemaUnique, collectionSchema: CollectionSchemaUnique): DecodedTokenAttributes => {
+  const attributes: DecodedTokenAttributes = {}
+  if (!token.attributes) return {}
+
+  const entries = getEntries(token.attributes)
+  for (const entry of entries) {
+    const [key, value] = entry
+
+    const schema = collectionSchema.attributesSchema[key]
+
+    if (!schema) continue
+
+    if (schema.kind === AttributeKind.freeValue) {
+      attributes[key] = value
+    }
+
+    if (!schema.enumValues) continue
+
+    if (schema.kind === AttributeKind.enum && typeof value === 'number') {
+      if (schema.enumValues.hasOwnProperty(value)) {
+        attributes[key] = schema.enumValues[value]
+      }
+    }
+
+    if (schema.kind === AttributeKind.enumMultiple && Array.isArray(value)) {
+      attributes[key] = []
+      for (const num in value) {
+        if (schema.enumValues.hasOwnProperty(num)) {
+          ;(attributes[key] as Array<any>).push(schema.enumValues[num])
+        }
+      }
+    }
+  }
+  return attributes
 }

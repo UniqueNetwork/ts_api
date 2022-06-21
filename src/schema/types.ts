@@ -1,8 +1,10 @@
-export type UrlOrInfixUrl =
-  { url: string, urlInfix?: undefined }
+export type InfixOrUrlOrCid =
+  { url: string, urlInfix?: undefined, ipfsCid?: undefined }
   |
-  { urlInfix: string, url?: undefined }
-export type UrlOrUrlInfixWithHash = UrlOrInfixUrl & { hash?: string }
+  { urlInfix: string, url?: undefined, ipfsCid?: undefined }
+  |
+  { ipfsCid: string, url?: undefined, urlInfix?: undefined }
+export type InfixOrUrlOrCidAndHash = InfixOrUrlOrCid & { hash?: string }
 
 export type UrlTemplateString = `${string}{infix}${string}`
 export const AttributeTypeMask = {
@@ -41,10 +43,7 @@ export interface AttributeSchema {
   optional?: boolean
   type: AttributeType
   kind: AttributeKind
-  values?: Array<{
-    number: number,
-    value: number | string | LocalizedStringDictionary
-  }>
+  enumValues?: {[K: number]: number | string | LocalizedStringDictionary}
 }
 
 export interface TokenAttributes {
@@ -62,11 +61,15 @@ export interface CollectionSchemaUnique {
   schemaVersion: string // semver
 
   imageUrlTemplate: UrlTemplateString
-  coverImage: UrlOrUrlInfixWithHash
-  coverImagePreview?: UrlOrUrlInfixWithHash
+  coverImage: InfixOrUrlOrCidAndHash
+  coverImagePreview?: InfixOrUrlOrCidAndHash
 
   attributesSchemaVersion: string
   attributesSchema: CollectionAttributesSchema
+
+  imagePreview?: {
+    urlTemplate?: UrlTemplateString
+  }
 
   video?: {
     urlTemplate?: UrlTemplateString
@@ -88,9 +91,9 @@ export interface TokenSchemaUnique {
   name?: string | LocalizedStringDictionary
   description?: string | LocalizedStringDictionary
   attributes?: TokenAttributes
-  image: UrlOrUrlInfixWithHash
-  imagePreview?: UrlOrUrlInfixWithHash
-  video?: UrlOrUrlInfixWithHash
-  audio?: UrlOrUrlInfixWithHash
-  spatialObject?: UrlOrUrlInfixWithHash
+  image: InfixOrUrlOrCidAndHash
+  imagePreview?: InfixOrUrlOrCidAndHash
+  video?: InfixOrUrlOrCidAndHash
+  audio?: InfixOrUrlOrCidAndHash
+  spatialObject?: InfixOrUrlOrCidAndHash
 }

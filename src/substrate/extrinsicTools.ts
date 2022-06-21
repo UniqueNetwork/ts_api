@@ -11,7 +11,7 @@ import {
 } from '../types'
 import {getPolkadotExtensionDapp} from '../libs'
 import {utils} from '../utils'
-import {ExtrinsicError} from "../utils/errors";
+import {ExtrinsicError} from '../utils/errors'
 
 const signerIs = {
   keyring(signer: ISigner): signer is KeyringPair {
@@ -39,19 +39,19 @@ enum TransactionStatus {
 
 const getTransactionStatus = ({events, status}: SubmittableResult): TransactionStatus => {
   if (status.isReady || status.isBroadcast) {
-    return TransactionStatus.NOT_READY;
+    return TransactionStatus.NOT_READY
   }
 
   if (status.isInBlock || status.isFinalized) {
     if (events.find(e => e.event.data.method === 'ExtrinsicFailed')) {
-      return TransactionStatus.FAIL;
+      return TransactionStatus.FAIL
     }
     if (events.find(e => e.event.data.method === 'ExtrinsicSuccess')) {
-      return TransactionStatus.SUCCESS;
+      return TransactionStatus.SUCCESS
     }
   }
 
-  return TransactionStatus.FAIL;
+  return TransactionStatus.FAIL
 }
 
 
@@ -83,26 +83,26 @@ export const sendTransaction = async <T extends SubmittableExtrinsic>(tx: T, lab
       const status = getTransactionStatus(txResult)
 
       if (status === TransactionStatus.SUCCESS) {
-        resolve(txResult);
-        unsub();
+        unsub()
+        resolve(txResult)
       } else if (status === TransactionStatus.FAIL) {
         let errMessage = ''
 
         if (txResult.dispatchError?.isModule) {
           // for module errors, we have the section indexed, lookup
-          const decoded = tx.registry.findMetaError(txResult.dispatchError.asModule);
-          const {docs, name, section} = decoded;
+          const decoded = tx.registry.findMetaError(txResult.dispatchError.asModule)
+          const {docs, name, section} = decoded
           errMessage = `${section}.${name}: ${docs.join(' ')}`
         } else {
           // Other, CannotLookup, BadOrigin, no extra info
           errMessage = txResult.dispatchError?.toString() || 'Unknown error'
         }
 
-        reject(new ExtrinsicError(txResult, errMessage, label))
         unsub()
+        reject(new ExtrinsicError(txResult, errMessage, label))
       }
-    });
-  });
+    })
+  })
 }
 
 export const signAndSendTransaction = async <T extends SubmittableExtrinsic>(tx: T, signer: ISigner, label = '') => {
