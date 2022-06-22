@@ -1,19 +1,45 @@
-import {CollectionSchemaUnique} from "../types";
+import {UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate} from "../types";
 import {
   CollectionProperties,
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
-import {converters2Layers} from "../schemaUtils";
+import {converters2Layers, decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from "../schemaUtils";
 import {getKeys} from "../../tsUtils";
-import {validateCollectionTokenPropertyPermissions} from "./validators";
+import {validateCollectionSchema, validateCollectionTokenPropertyPermissions} from "./validators";
+import {PropertiesArray} from "../../types";
 
-export const packCollectionSchemaToProperties = (schema: CollectionSchemaUnique): CollectionProperties => {
+export const packCollectionSchemaToProperties = (schema: UniqueCollectionSchemaToCreate): CollectionProperties => {
   return converters2Layers.objectToProperties(schema)
 }
 
-export const unpackCollectionSchemaFromProperties = <T extends CollectionSchemaUnique>(properties: CollectionProperties): any => {
+export const unpackCollectionSchemaFromProperties = <T extends UniqueCollectionSchemaToCreate>(properties: PropertiesArray): any => {
   return converters2Layers.propertiesToObject(properties) as any
+}
+
+
+
+
+export const decodeUniqueCollectionFromProperties = <T extends UniqueCollectionSchemaDecoded>(properties: CollectionProperties): DecodingResult<T> => {
+  try {
+    const unpackedSchema = unpackCollectionSchemaFromProperties<T>(properties)
+    validateCollectionSchema(unpackedSchema)
+    if (unpackedSchema.coverPicture) {
+      unpackedSchema.coverPicture = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicture, unpackedSchema.image)
+    }
+    if (unpackedSchema.coverPicturePreview) {
+      unpackedSchema.coverPicturePreview = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicturePreview, unpackedSchema.image)
+    }
+    return {
+      isValid: true,
+      decoded: unpackedSchema as T,
+    }
+  } catch(e) {
+    return {
+      isValid: false,
+      validationError: e as Error,
+    }
+  }
 }
 
 
@@ -32,7 +58,7 @@ const generateDefaultTPPsForInfixOrUrlOrCidAndHashObject = (permissions: Collect
 export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
-export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: CollectionSchemaUnique, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
+export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: UniqueCollectionSchemaToCreate, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name
     generateDefaultTPPObjectForKey('d'), // description
@@ -57,7 +83,9 @@ export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: Col
   }
 
   if (schema.attributesSchema) {
-    getKeys(schema.attributesSchema).forEach(key => generateDefaultTPPObjectForKey(`a.${key}`))
+    getKeys(schema.attributesSchema).forEach(key => {
+      permissions.push(generateDefaultTPPObjectForKey(`a.${key}`))
+    })
   }
 
   if (options?.overwriteTPPs) {

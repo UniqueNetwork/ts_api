@@ -1,3 +1,5 @@
+import {CollectionId, SubOrEthAddressObj, TokenId} from "../types";
+
 export type InfixOrUrlOrCid =
   { url: string, urlInfix?: undefined, ipfsCid?: undefined }
   |
@@ -5,8 +7,8 @@ export type InfixOrUrlOrCid =
   |
   { ipfsCid: string, url?: undefined, urlInfix?: undefined }
 export type InfixOrUrlOrCidAndHash = InfixOrUrlOrCid & { hash?: string }
-
-export type UrlTemplateString = `${string}{infix}${string}`
+export const URL_TEMPLATE_INFIX = <const>'{infix}'
+export type UrlTemplateString = `${string}${typeof URL_TEMPLATE_INFIX}${string}`
 export const AttributeTypeMask = {
   number: 0x100,
   string: 0x200,
@@ -46,7 +48,7 @@ export interface AttributeSchema {
   enumValues?: {[K: number]: number | string | LocalizedStringDictionary}
 }
 
-export interface TokenAttributes {
+export interface EncodedTokenAttributes {
   [K: number]: number | Array<number> | string | LocalizedStringDictionary
 }
 
@@ -56,16 +58,19 @@ export type CollectionAttributesSchema = {
 
 export const COLLECTION_SCHEMA_NAME = <const>'unique'
 
-export interface CollectionSchemaUnique {
+export interface UniqueCollectionSchemaToCreate {
   schemaName: typeof COLLECTION_SCHEMA_NAME
   schemaVersion: string // semver
 
-  imageUrlTemplate: UrlTemplateString
-  coverImage: InfixOrUrlOrCidAndHash
-  coverImagePreview?: InfixOrUrlOrCidAndHash
+  coverPicture: InfixOrUrlOrCidAndHash
+  coverPicturePreview?: InfixOrUrlOrCidAndHash
 
   attributesSchemaVersion: string
   attributesSchema: CollectionAttributesSchema
+
+  image: {
+    urlTemplate: UrlTemplateString
+  }
 
   imagePreview?: {
     urlTemplate?: UrlTemplateString
@@ -87,13 +92,41 @@ export interface CollectionSchemaUnique {
   }
 }
 
-export interface TokenSchemaUnique {
+export type UniqueCollectionSchemaDecoded = Omit<UniqueCollectionSchemaToCreate, 'coverPicture' | 'coverPicturePreview'> & {
+  coverPicture: DecodedInfixOrUrlOrCidAndHash
+  coverPicturePreview: DecodedInfixOrUrlOrCidAndHash
+}
+
+interface IToken<GenericInfixUrlOrCidWithHash> {
   name?: string | LocalizedStringDictionary
   description?: string | LocalizedStringDictionary
-  attributes?: TokenAttributes
-  image: InfixOrUrlOrCidAndHash
-  imagePreview?: InfixOrUrlOrCidAndHash
-  video?: InfixOrUrlOrCidAndHash
-  audio?: InfixOrUrlOrCidAndHash
-  spatialObject?: InfixOrUrlOrCidAndHash
+  image: GenericInfixUrlOrCidWithHash
+  imagePreview?: GenericInfixUrlOrCidWithHash
+  video?: GenericInfixUrlOrCidWithHash
+  audio?: GenericInfixUrlOrCidWithHash
+  spatialObject?: GenericInfixUrlOrCidWithHash
+}
+
+export interface UniqueTokenToCreate extends IToken<InfixOrUrlOrCidAndHash>{
+  encodedAttributes?: EncodedTokenAttributes
+}
+
+type AttributeDecodedValue = string | number | LocalizedStringDictionary | Array<string | number | LocalizedStringDictionary>
+
+type DecodedAttributes  = {
+  [K: number]: {
+    name: string | LocalizedStringDictionary
+    value: AttributeDecodedValue
+  }
+}
+
+export type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & {fullUrl: string | null}
+
+export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash> {
+  owner: SubOrEthAddressObj,
+  nestingParentToken?: {
+    collectionId: CollectionId
+    tokenId: TokenId
+  }
+  attributes: DecodedAttributes
 }

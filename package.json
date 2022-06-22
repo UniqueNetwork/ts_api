@@ -83,7 +83,9 @@
     "@polkadot/types": "8.7.1",
     "@polkadot/util": "9.4.1",
     "@polkadot/util-crypto": "9.4.1",
-    "@unique-nft/types": "0.6.0-4",
+    "@unique-nft/quartz-mainnet-types": "0.5.3",
+    "@unique-nft/unique-mainnet-types": "0.6.2",
+    "@unique-nft/opal-testnet-types": "0.5.2",
     "ethers": "5.6.8"
   }
 }

@@ -4,10 +4,12 @@ import {ExtrinsicAddCollectionAdminParams} from "./unique/ExtrinsicAddCollection
 import {ExtrinsicRemoveCollectionAdminParams} from "./unique/ExtrinsicRemoveCollectionAdmin";
 import {ExtrinsicSetCollectionSponsorParams} from "./unique/ExtrinsicSetCollectionSponsor";
 import {ExtrinsicConfirmSponsorshipParams} from "./unique/ExtrinsicConfirmSponsorship";
-import { ExtrinsicAddToAllowListParams } from "./unique/ExtrinsicAddToAllowList";
-import { ExtrinsicChangeCollectionOwnerParams } from "./unique/ExtrinsicChangeCollectionOwner";
-import { ExtrinsicRemoveCollectionSponsorParams } from "./unique/ExtrinsicRemoveCollectionSponsor";
-import { ExtrinsicRemoveFromAllowListParams } from "./unique/ExtrinsicRemoveFromAllowList";
+import {ExtrinsicAddToAllowListParams} from "./unique/ExtrinsicAddToAllowList";
+import {ExtrinsicChangeCollectionOwnerParams} from "./unique/ExtrinsicChangeCollectionOwner";
+import {ExtrinsicRemoveCollectionSponsorParams} from "./unique/ExtrinsicRemoveCollectionSponsor";
+import {ExtrinsicRemoveFromAllowListParams} from "./unique/ExtrinsicRemoveFromAllowList";
+import {ExtrinsicCreateNftToken} from "./unique/ExtrinsicCreateNftToken";
+import {ExtrinsicCreateMultipleNftTokensParams} from "./unique/ExtrinsicCreateMultipleNftTokens";
 
 
 export namespace SubstrateMethodsParams {
@@ -21,4 +23,6 @@ export namespace SubstrateMethodsParams {
   export type ChangeCollectionOwner = ExtrinsicChangeCollectionOwnerParams
   export type RemoveCollectionSponsor = ExtrinsicRemoveCollectionSponsorParams
   export type RemoveFromAllowList = ExtrinsicRemoveFromAllowListParams
+  export type CreateNftToken = ExtrinsicCreateNftToken
+  export type CreateMultipleNftTokens = ExtrinsicCreateMultipleNftTokensParams
 }

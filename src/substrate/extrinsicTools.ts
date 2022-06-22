@@ -1,5 +1,3 @@
-import '@unique-nft/types/augment-api'
-
 import {
   GenericEventData,
   InjectedAccountWithMeta,
@@ -27,6 +25,12 @@ export const findEventDataBySectionAndMethod = (txResult: ISubmittableResult, se
   return txResult.events.find(event =>
     event.event.section === section && event.event.method === method
   )?.event.data
+}
+
+export const findManyEventsDataBySectionAndMethod = (txResult: ISubmittableResult, section: string, method: string): Array<GenericEventData> => {
+  return txResult.events.filter(event =>
+    event.event.section === section && event.event.method === method
+  ).map(event => event.event.data).filter(data => !!data)
 }
 
 
