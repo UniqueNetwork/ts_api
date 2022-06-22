@@ -1,19 +1,17 @@
-import '@unique-nft/types/augment-api'
-
-import {ApiPromise} from "../types";
-import {getPolkadotApi, uniqueRpcDefinitions} from "../libs";
+import {ApiPromise, SubmittableExtrinsic, DefinitionRpc, DefinitionRpcSub} from '../types'
+import {getPolkadotApi, rpcDefinitions} from '../libs'
 import {utils} from "../utils";
 import {
   ExtrinsicTransferCoins,
   ExtrinsicTransferCoinsOptions,
   ExtrinsicTransferCoinsParams
-} from "./extrinsics/common/ExtrinsicTransferCoins";
-import {ExtrinsicOptions, TransactionFromRawTx} from "./extrinsics/AbstractExtrinsic";
+} from './extrinsics/common/ExtrinsicTransferCoins'
+import {ExtrinsicOptions, TransactionFromRawTx} from './extrinsics/AbstractExtrinsic'
 import {Coin} from "../coin";
-import {SubmittableExtrinsic} from "@polkadot/api/promise/types";
 
 export interface ConnectToSubstrateOptions {
   dontAwaitApiIsReady?: boolean
+  uniqueRpcDefinitions?: Record<string, DefinitionRpc | DefinitionRpcSub>
 }
 
 export class SubstrateCommon {
@@ -48,7 +46,7 @@ export class SubstrateCommon {
     this._api = new polkadotApi.ApiPromise({
       provider: new polkadotApi.WsProvider(wsEndpoint),
       rpc: {
-        unique: uniqueRpcDefinitions.rpc
+        unique: options?.uniqueRpcDefinitions ? options.uniqueRpcDefinitions : rpcDefinitions.opal
       },
     })
 

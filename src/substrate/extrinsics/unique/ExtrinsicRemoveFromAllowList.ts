@@ -1,8 +1,6 @@
-import '@unique-nft/types/augment-api'
 import { addressToObject } from '../../../utils/addressUtils'
 
 import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
-import {utils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 

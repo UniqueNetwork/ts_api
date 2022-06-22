@@ -3,14 +3,14 @@ import {
   AttributeKind,
   AttributeType,
   AttributeTypeMask,
-  CollectionSchemaUnique,
+  UniqueCollectionSchema,
   InfixOrUrlOrCidAndHash,
   LocalizedStringDictionary,
-  TokenAttributes,
-  TokenSchemaUnique
+  EncodedTokenAttributes,
+  UniqueTokenToCreate, UniqueTokenDecoded
 } from "../types";
 import {validateToken} from "./validators";
-import {getEntries, safeJSONParse} from "../../tsUtils";
+import {getEntries, getValues, safeJSONParse} from "../../tsUtils";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
 
 const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: InfixOrUrlOrCidAndHash) => {
@@ -42,16 +42,16 @@ const addKeyToTokenProperties = (properties: PropertiesArray, key: string, value
   })
 }
 
-export const packTokenToProperties = (token: TokenSchemaUnique, schema: CollectionSchemaUnique): PropertiesArray => {
+export const packTokenToProperties = (token: UniqueTokenToCreate, schema: UniqueCollectionSchema): PropertiesArray => {
   validateToken(token, schema)
 
   const properties: PropertiesArray = []
   if (token.name) addKeyToTokenProperties(properties, 'n', token.name)
   if (token.description) addKeyToTokenProperties(properties, 'd', token.description)
 
-  if (token.attributes) {
-    for (const n in token.attributes) {
-      const value = token.attributes[n]
+  if (token.encodedAttributes) {
+    for (const n in token.encodedAttributes) {
+      const value = token.encodedAttributes[n]
       addKeyToTokenProperties(properties, `a.${n}`, value)
     }
   }
@@ -65,7 +65,7 @@ export const packTokenToProperties = (token: TokenSchemaUnique, schema: Collecti
   return properties
 }
 
-const fillTokenFieldByKeyPrefix = <T extends TokenSchemaUnique>(token: T, properties: PropertiesArray, prefix: string, tokenField: keyof T) => {
+const fillTokenFieldByKeyPrefix = <T extends UniqueTokenToCreate>(token: T, properties: PropertiesArray, prefix: string, tokenField: keyof T) => {
   const keysMatchingPrefix = [`${prefix}.i`, `${prefix}.u`, `${prefix}.c`, `${prefix}.h`]
   if (properties.some(({key}) => keysMatchingPrefix.includes(key))) token[tokenField] = {} as any
 
@@ -85,7 +85,7 @@ const fillTokenFieldByKeyPrefix = <T extends TokenSchemaUnique>(token: T, proper
 }
 
 
-export const unpackTokenFromProperties = <T extends TokenSchemaUnique>(properties: CollectionProperties, schema: CollectionSchemaUnique): T => {
+export const unpackTokenFromProperties = <T extends UniqueTokenToCreate>(properties: CollectionProperties, schema: UniqueCollectionSchema): T => {
   const token: T = {} as T
 
   const name = properties.find(({key}) => key === 'n')
@@ -102,7 +102,7 @@ export const unpackTokenFromProperties = <T extends TokenSchemaUnique>(propertie
 
   const attributes = properties.filter(({key}) => key.startsWith('a.'))
   if (attributes.length) {
-    token.attributes = {} as TokenAttributes
+    token.encodedAttributes = {} as EncodedTokenAttributes
 
     attributes.forEach(({key, value}) => {
       const attributeKey = parseInt(key.split('.')[1] || '')
@@ -111,16 +111,16 @@ export const unpackTokenFromProperties = <T extends TokenSchemaUnique>(propertie
         const {type, kind} = attributeSchema
 
         if (kind === AttributeKind.enum) {
-          token.attributes![attributeKey] = parseInt(value)
+          token.encodedAttributes![attributeKey] = parseInt(value)
         } else if (kind === AttributeKind.enumMultiple) {
-          token.attributes![attributeKey] = value.split(',').map(n => parseInt(n))
+          token.encodedAttributes![attributeKey] = value.split(',').map(n => parseInt(n))
         } else if (kind === AttributeKind.freeValue) {
           if (type & AttributeTypeMask.number) {
-            token.attributes![attributeKey] = type === AttributeType.float ? parseFloat(value) : parseInt(value)
+            token.encodedAttributes![attributeKey] = type === AttributeType.float ? parseFloat(value) : parseInt(value)
           } else if (attributeSchema.type & AttributeTypeMask.object) {
-            token.attributes![attributeKey] = safeJSONParse<LocalizedStringDictionary>(value)
+            token.encodedAttributes![attributeKey] = safeJSONParse<LocalizedStringDictionary>(value)
           } else {
-            token.attributes![attributeKey] = value
+            token.encodedAttributes![attributeKey] = value
           }
         }
       }
@@ -130,14 +130,46 @@ export const unpackTokenFromProperties = <T extends TokenSchemaUnique>(propertie
   return token
 }
 
-interface DecodedTokenAttributes {
-  [K: number]: string | number | LocalizedStringDictionary | Array<string | number | LocalizedStringDictionary>
-}
-export const decodeTokenAttributes = (token: TokenSchemaUnique, collectionSchema: CollectionSchemaUnique): DecodedTokenAttributes => {
-  const attributes: DecodedTokenAttributes = {}
-  if (!token.attributes) return {}
 
-  const entries = getEntries(token.attributes)
+const decodeTokenUrlOrInfixOrCidWithHashField =  (token: UniqueTokenToCreate, schema: UniqueCollectionSchema, fieldName: string) => {
+
+}
+
+export const decodeToken = <T extends UniqueTokenDecoded>(properties: CollectionProperties, schema: UniqueCollectionSchema): T => {
+  const unpackedToken = unpackTokenFromProperties(properties, schema)
+  const decodedAttributes = decodeTokenAttributes(unpackedToken, schema)
+  const parsedAttributes: T['attributes'] = {}
+
+  for (const entry of getEntries(decodedAttributes)) {
+    const [key, value] = entry
+    parsedAttributes[key] = {
+      name: schema.attributesSchema[key].name,
+      value,
+    }
+  }
+
+  const token: T = {
+    name: unpackedToken.name,
+    description: unpackedToken.description,
+    attributes: parsedAttributes,
+    image: decodeTokenUrlOrInfixOrCidWithHashField(unpackedToken, schema, 'image')
+  }
+  const fields: Array<keyof T> = ['imagePreview', 'video', 'audio', 'spatialObject']
+  for (const fieldName of fields) {
+    token[fieldName]
+  }
+
+  return token
+}
+
+export interface DecodedTokenAttributes {
+  [K: number]: AttributeDecodedValue
+}
+export const decodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchema): DecodedTokenAttributes => {
+  const attributes: DecodedTokenAttributes = {}
+  if (!token.encodedAttributes) return {}
+
+  const entries = getEntries(token.encodedAttributes)
   for (const entry of entries) {
     const [key, value] = entry
 
@@ -159,7 +191,7 @@ export const decodeTokenAttributes = (token: TokenSchemaUnique, collectionSchema
 
     if (schema.kind === AttributeKind.enumMultiple && Array.isArray(value)) {
       attributes[key] = []
-      for (const num in value) {
+      for (const num of value) {
         if (schema.enumValues.hasOwnProperty(num)) {
           ;(attributes[key] as Array<any>).push(schema.enumValues[num])
         }

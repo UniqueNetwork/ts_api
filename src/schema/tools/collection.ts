@@ -1,4 +1,4 @@
-import {CollectionSchemaUnique} from "../types";
+import {UniqueCollectionSchema} from "../types";
 import {
   CollectionProperties,
   CollectionTokenPropertyPermissions,
@@ -8,11 +8,11 @@ import {converters2Layers} from "../schemaUtils";
 import {getKeys} from "../../tsUtils";
 import {validateCollectionTokenPropertyPermissions} from "./validators";
 
-export const packCollectionSchemaToProperties = (schema: CollectionSchemaUnique): CollectionProperties => {
+export const packCollectionSchemaToProperties = (schema: UniqueCollectionSchema): CollectionProperties => {
   return converters2Layers.objectToProperties(schema)
 }
 
-export const unpackCollectionSchemaFromProperties = <T extends CollectionSchemaUnique>(properties: CollectionProperties): any => {
+export const unpackCollectionSchemaFromProperties = <T extends UniqueCollectionSchema>(properties: CollectionProperties): any => {
   return converters2Layers.propertiesToObject(properties) as any
 }
 
@@ -32,7 +32,7 @@ const generateDefaultTPPsForInfixOrUrlOrCidAndHashObject = (permissions: Collect
 export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
-export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: CollectionSchemaUnique, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
+export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: UniqueCollectionSchema, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name
     generateDefaultTPPObjectForKey('d'), // description
@@ -57,7 +57,9 @@ export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: Col
   }
 
   if (schema.attributesSchema) {
-    getKeys(schema.attributesSchema).forEach(key => generateDefaultTPPObjectForKey(`a.${key}`))
+    getKeys(schema.attributesSchema).forEach(key => {
+      permissions.push(generateDefaultTPPObjectForKey(`a.${key}`))
+    })
   }
 
   if (options?.overwriteTPPs) {

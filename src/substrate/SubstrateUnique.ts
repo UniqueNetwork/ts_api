@@ -1,5 +1,3 @@
-import '@unique-nft/types/augment-api'
-
 import {utils} from "../utils";
 import {
   ExtrinsicTransferCoinsOptions,
@@ -54,6 +52,7 @@ import {
   ExtrinsicAddToAllowList,
   ExtrinsicAddToAllowListParams
 } from './extrinsics/unique/ExtrinsicAddToAllowList';
+import {ExtrinsicCreateToken, ExtrinsicCreateTokenParams} from "./extrinsics/unique/ExtrinsicCreateToken";
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
@@ -63,22 +62,44 @@ export interface ConnectToSubstrateOptions {
 }
 
 export class SubstrateUnique extends SubstrateCommon {
+
+  //////////////////////////////////////////
+  // common methods
+  //////////////////////////////////////////
+
   async getBalance(address: string): Promise<bigint> {
     const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
 
     return await super.getBalance(substrateAddress)
   }
 
-  async __getRawCollectionById(collectionId: CollectionId) {
-    const rawCollection = (await this.api.rpc.unique.collectionById(collectionId)).unwrap()
+  async __getRawCollectionById(collectionId: number) {
+    const rawCollection = (await this.api.rpc.unique.collectionById(collectionId)).toHuman()
 
     return rawCollection
   }
 
+  async __getRawTokenById(collectionId: number, tokenId: number) {
+    const tawToken = (await this.api.rpc.unique.tokenData(collectionId, tokenId)).toHuman()
+
+    return tawToken
+  }
+
+
+
+  //////////////////////////////////////////
+  // common extrinsics
+  //////////////////////////////////////////
+
+  //@overrides because it eats ethereum address too
   transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
     const toAddress = utils.address.addressToAsIsOrSubstrateMirror(params.toAddress)
     return super.transferCoins({...params, toAddress}, options)
   }
+
+  //////////////////////////////////////////
+  // collection extrinsics
+  //////////////////////////////////////////
 
   createCollection(params: ExtrinsicCreateCollectionParams, options?: ExtrinsicOptions) {
     return new ExtrinsicCreateCollection(this.api, params, options)
@@ -114,5 +135,13 @@ export class SubstrateUnique extends SubstrateCommon {
 
   removeFromAllowList(params: ExtrinsicRemoveFromAllowListParams, options?: ExtrinsicOptions) {
     return new ExtrinsicRemoveFromAllowList(this.api, params, options)
+  }
+
+  //////////////////////////////////////////
+  // token extrinsics
+  //////////////////////////////////////////
+
+  createToken(params: ExtrinsicCreateTokenParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicCreateToken(this.api, params, options)
   }
 }

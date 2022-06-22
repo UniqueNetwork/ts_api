@@ -46,7 +46,7 @@ export interface AttributeSchema {
   enumValues?: {[K: number]: number | string | LocalizedStringDictionary}
 }
 
-export interface TokenAttributes {
+export interface EncodedTokenAttributes {
   [K: number]: number | Array<number> | string | LocalizedStringDictionary
 }
 
@@ -56,16 +56,19 @@ export type CollectionAttributesSchema = {
 
 export const COLLECTION_SCHEMA_NAME = <const>'unique'
 
-export interface CollectionSchemaUnique {
+export interface UniqueCollectionSchema {
   schemaName: typeof COLLECTION_SCHEMA_NAME
   schemaVersion: string // semver
 
-  imageUrlTemplate: UrlTemplateString
   coverImage: InfixOrUrlOrCidAndHash
   coverImagePreview?: InfixOrUrlOrCidAndHash
 
   attributesSchemaVersion: string
   attributesSchema: CollectionAttributesSchema
+
+  image: {
+    urlTemplate: UrlTemplateString
+  }
 
   imagePreview?: {
     urlTemplate?: UrlTemplateString
@@ -87,13 +90,31 @@ export interface CollectionSchemaUnique {
   }
 }
 
-export interface TokenSchemaUnique {
+interface IToken<GenericInfixUrlOrCidWithHash> {
   name?: string | LocalizedStringDictionary
   description?: string | LocalizedStringDictionary
-  attributes?: TokenAttributes
-  image: InfixOrUrlOrCidAndHash
-  imagePreview?: InfixOrUrlOrCidAndHash
-  video?: InfixOrUrlOrCidAndHash
-  audio?: InfixOrUrlOrCidAndHash
-  spatialObject?: InfixOrUrlOrCidAndHash
+  image: GenericInfixUrlOrCidWithHash
+  imagePreview?: GenericInfixUrlOrCidWithHash
+  video?: GenericInfixUrlOrCidWithHash
+  audio?: GenericInfixUrlOrCidWithHash
+  spatialObject?: GenericInfixUrlOrCidWithHash
+}
+
+export interface UniqueTokenToCreate extends IToken<InfixOrUrlOrCidAndHash>{
+  encodedAttributes?: EncodedTokenAttributes
+}
+
+type AttributeDecodedValue = string | number | LocalizedStringDictionary | Array<string | number | LocalizedStringDictionary>
+
+type DecodedAttributes  = {
+  [K: number]: {
+    name: string | LocalizedStringDictionary
+    value: AttributeDecodedValue
+  }
+}
+
+type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & {fullUrl: string | null}
+
+export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash> {
+  attributes: DecodedAttributes
 }

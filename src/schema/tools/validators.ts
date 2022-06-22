@@ -6,7 +6,7 @@ import {
   AttributeTypeMask,
   COLLECTION_SCHEMA_NAME,
   CollectionAttributesSchema,
-  CollectionSchemaUnique,
+  UniqueCollectionSchema,
   LocalizedStringDictionary,
   InfixOrUrlOrCidAndHash
 } from "../types";
@@ -300,7 +300,7 @@ export const validateCollectionAttributesSchema = (attributes: any, varName: str
   return true
 }
 
-export const validateCollectionSchema = <C extends CollectionSchemaUnique>(schema: any): schema is C => {
+export const validateCollectionSchema = <C extends UniqueCollectionSchema>(schema: any): schema is C => {
   isPlainObject(schema, 'Passed collection schema')
 
   if (schema.schemaName !== COLLECTION_SCHEMA_NAME)
@@ -361,7 +361,7 @@ const validateAttributeEnumKey = (schema: AttributeSchema, num: number, varName:
   }
 }
 
-export const validateToken = <T, C extends CollectionSchemaUnique>(token: any, collectionSchema: C): token is T => {
+export const validateToken = <T, C extends UniqueCollectionSchema>(token: any, collectionSchema: C): token is T => {
   if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME) {
     throw new ValidationError(`schemaName is not valid (passed ${collectionSchema.schemaName})`)
   }

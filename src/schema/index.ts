@@ -5,9 +5,8 @@ import * as collection from './tools/collection'
 import * as token from './tools/token'
 
 export const UniqueSchema = {
-
-    ...collection,
-    ...token,
+  ...collection,
+  ...token,
   ...validators,
   ...types,
 }

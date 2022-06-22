@@ -1,4 +1,3 @@
-import '@unique-nft/types/augment-api'
 import { addressToObject } from '../../../utils/addressUtils'
 
 import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'

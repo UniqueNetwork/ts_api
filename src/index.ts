@@ -1,4 +1,4 @@
-import '@unique-nft/types/augment-api'
+import '@unique-nft/unique-mainnet-types/augment-api'
 
 import * as libs from './libs'
 export {libs}
