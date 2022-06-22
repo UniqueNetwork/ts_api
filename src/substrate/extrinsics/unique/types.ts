@@ -46,6 +46,12 @@ export interface Collection extends CollectionParams {
   id: CollectionId
 }
 
+export interface RawCollection extends Omit<Collection, 'name' | 'description' | 'properties'> {
+  name: number[]
+  description: number[]
+  properties: CollectionProperties
+}
+
 export type CollectionLimits = Required<CollectionParams>['limits']
 export type CollectionPermissions = Required<CollectionParams>['permissions']
 export type CollectionTokenPropertyPermissions = Required<CollectionParams>['tokenPropertyPermissions']

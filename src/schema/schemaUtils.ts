@@ -1,5 +1,12 @@
 import {PropertiesArray} from '../types'
 import {safeJSONParse} from "../tsUtils";
+import {
+  DecodedInfixOrUrlOrCidAndHash,
+  InfixOrUrlOrCidAndHash,
+  UniqueCollectionSchemaDecoded,
+  URL_TEMPLATE_INFIX,
+  UrlTemplateString
+} from "./types";
 
 const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
   if (typeof obj !== "object" || obj === null) {
@@ -60,4 +67,40 @@ export const converters2Layers = {
   propertiesToObject: <T extends object>(arr: PropertiesArray): T => {
     return convertPropertyArrayTo2layerObject(arr, SEPARATOR)
   }
+}
+
+export const decodeTokenUrlOrInfixOrCidWithHashField =  <U extends {urlTemplate?: UrlTemplateString}>(obj: InfixOrUrlOrCidAndHash, urlTemplateObj: U | undefined): DecodedInfixOrUrlOrCidAndHash => {
+  const result: DecodedInfixOrUrlOrCidAndHash = {
+    ...obj,
+    fullUrl: null
+  }
+
+  if (typeof obj.url === 'string') {
+    result.fullUrl = obj.url
+    return result
+  }
+
+  const urlTemplate = urlTemplateObj?.urlTemplate
+
+  if (typeof urlTemplate !== 'string' || urlTemplate.indexOf(URL_TEMPLATE_INFIX) < 0) {
+    if (typeof obj.ipfsCid === 'string') {
+      result.fullUrl = `ipfs://${obj.ipfsCid}`
+    }
+  } else {
+    if (typeof obj.urlInfix === 'string') {
+      result.fullUrl = urlTemplate.replace(URL_TEMPLATE_INFIX, obj.urlInfix)
+    } else if (typeof obj.ipfsCid === 'string') {
+      result.fullUrl = urlTemplate.replace(URL_TEMPLATE_INFIX, obj.ipfsCid)
+    }
+  }
+
+  return result
+}
+
+export type DecodingResult<T> = {
+  isValid: true
+  decoded: T
+} | {
+  isValid: false
+  validationError: Error
 }

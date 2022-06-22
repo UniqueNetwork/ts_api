@@ -62,19 +62,7 @@ export type PropertiesArray = Array<{
   value: string
 }>
 
-type _EXTRINSIC_RESULT_TMP_ = void
-
-export interface IUniqueSDK<CollectionIdFormat extends number | EthereumAddress, Connection> {
-  connect(endpoint: string): Promise<Connection>
-
-  disconnect(): Promise<void>
-
-  transferCoins(to: SubOrEthAddress): Promise<_EXTRINSIC_RESULT_TMP_>
-
-  transferNFT(
-    to: AnyAddress,
-    collectionId: CollectionIdFormat,
-    tokenId: TokenId,
-    fractionalPart: number
-  ): Promise<_EXTRINSIC_RESULT_TMP_>
+export type RawNftToken = {
+  owner: SubOrEthAddressObj
+  properties: PropertiesArray
 }

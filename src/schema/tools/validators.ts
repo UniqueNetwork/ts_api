@@ -6,9 +6,9 @@ import {
   AttributeTypeMask,
   COLLECTION_SCHEMA_NAME,
   CollectionAttributesSchema,
-  UniqueCollectionSchema,
+  UniqueCollectionSchemaToCreate,
   LocalizedStringDictionary,
-  InfixOrUrlOrCidAndHash
+  InfixOrUrlOrCidAndHash, URL_TEMPLATE_INFIX
 } from "../types";
 import {getEnumValues, getKeys, getReversedEnum} from "../../tsUtils";
 import {
@@ -126,8 +126,8 @@ const validateUrlTemplateString = (str: any, varName: string): str is string => 
   const prefix = `TemplateUrlString is not valid, ${varName}`
   if (typeof str !== 'string')
     throw new ValidationError(`${prefix} is not a string, got ${str}`)
-  if (str.indexOf('{infix}') < 0)
-    throw new ValidationError(`${prefix} doesn't contain "{infix}", got ${str}`)
+  if (str.indexOf(URL_TEMPLATE_INFIX) < 0)
+    throw new ValidationError(`${prefix} doesn't contain "${URL_TEMPLATE_INFIX}", got ${str}`)
   return true
 }
 
@@ -300,7 +300,7 @@ export const validateCollectionAttributesSchema = (attributes: any, varName: str
   return true
 }
 
-export const validateCollectionSchema = <C extends UniqueCollectionSchema>(schema: any): schema is C => {
+export const validateCollectionSchema = <C extends UniqueCollectionSchemaToCreate>(schema: any): schema is C => {
   isPlainObject(schema, 'Passed collection schema')
 
   if (schema.schemaName !== COLLECTION_SCHEMA_NAME)
@@ -308,17 +308,18 @@ export const validateCollectionSchema = <C extends UniqueCollectionSchema>(schem
 
   const schemaVersion = validateAndParseSemverString(schema.schemaVersion, 'schemaVersion')
 
-  validateUrlTemplateString(schema.imageUrlTemplate, 'imageUrlTemplate')
+  validateUrlWithHashObject(schema.coverPicture, 'coverPicture')
 
-  validateUrlWithHashObject(schema.coverImage, 'coverImage')
-
-  if (schema.hasOwnProperty('coverImagePreview')) {
-    validateUrlWithHashObject(schema.coverImagePreview, 'coverImagePreview')
+  if (schema.hasOwnProperty('coverPicturePreview')) {
+    validateUrlWithHashObject(schema.coverPicturePreview, 'coverPicturePreview')
   }
 
   const attributesSchemaVersion = validateAndParseSemverString(schema.attributesSchemaVersion, 'attributesSchemaVersion')
 
   validateCollectionAttributesSchema(schema.attributesSchema, 'attributesSchema')
+
+  isPlainObject(schema.image, 'image')
+  validateUrlTemplateString(schema.image.urlTemplate, 'image')
 
   if (schema.hasOwnProperty('imagePreview')) {
     isPlainObject(schema.video, 'video')
@@ -355,13 +356,12 @@ export const validateCollectionSchema = <C extends UniqueCollectionSchema>(schem
 const validateAttributeEnumKey = (schema: AttributeSchema, num: number, varName: string) => {
   validateIntegerNumber(num, varName)
   const enumKeys = getKeys(schema.enumValues || {}).map(n => parseInt(n as any as string))
-  console.log(num, typeof num, enumKeys, enumKeys.map(e => typeof e), enumKeys.includes(num),)
   if (!enumKeys.includes(num)) {
     throw new ValidationError(`${varName} value (${num}) not found in the attribute schema enum keys: [${enumKeys.join()}]`)
   }
 }
 
-export const validateToken = <T, C extends UniqueCollectionSchema>(token: any, collectionSchema: C): token is T => {
+export const validateToken = <T, C extends UniqueCollectionSchemaToCreate>(token: any, collectionSchema: C): token is T => {
   if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME) {
     throw new ValidationError(`schemaName is not valid (passed ${collectionSchema.schemaName})`)
   }
@@ -376,17 +376,17 @@ export const validateToken = <T, C extends UniqueCollectionSchema>(token: any, c
 
   const version = validateAndParseSemverString(collectionSchema.schemaVersion, 'collectionSchema.schemaVersion')
 
-  if (token.attributes) {
-    isPlainObject(token.attributes, 'token.attributes')
+  if (token.encodedAttributes) {
+    isPlainObject(token.encodedAttributes, 'token.encodedAttributes')
 
     for (let key in collectionSchema.attributesSchema) {
       const schema = collectionSchema.attributesSchema[key]
 
-      validateAttributeKey(key, 'token.attributes')
-      const varName = `token.attribute.${key}`
+      validateAttributeKey(key, 'token.encodedAttributes')
+      const varName = `token.encodedAttributes.${key}`
 
-      const attr = token.attributes[key]
-      if (!schema.optional && !token.attributes.hasOwnProperty(key))
+      const attr = token.encodedAttributes[key]
+      if (!schema.optional && !token.encodedAttributes.hasOwnProperty(key))
         throw new ValidationError(`${varName} should be provided, it's not optional attribute`)
 
       if (schema.kind === AttributeKind.freeValue) {

@@ -1,3 +1,5 @@
+import {CollectionId, SubOrEthAddressObj, TokenId} from "../types";
+
 export type InfixOrUrlOrCid =
   { url: string, urlInfix?: undefined, ipfsCid?: undefined }
   |
@@ -5,8 +7,8 @@ export type InfixOrUrlOrCid =
   |
   { ipfsCid: string, url?: undefined, urlInfix?: undefined }
 export type InfixOrUrlOrCidAndHash = InfixOrUrlOrCid & { hash?: string }
-
-export type UrlTemplateString = `${string}{infix}${string}`
+export const URL_TEMPLATE_INFIX = <const>'{infix}'
+export type UrlTemplateString = `${string}${typeof URL_TEMPLATE_INFIX}${string}`
 export const AttributeTypeMask = {
   number: 0x100,
   string: 0x200,
@@ -56,12 +58,12 @@ export type CollectionAttributesSchema = {
 
 export const COLLECTION_SCHEMA_NAME = <const>'unique'
 
-export interface UniqueCollectionSchema {
+export interface UniqueCollectionSchemaToCreate {
   schemaName: typeof COLLECTION_SCHEMA_NAME
   schemaVersion: string // semver
 
-  coverImage: InfixOrUrlOrCidAndHash
-  coverImagePreview?: InfixOrUrlOrCidAndHash
+  coverPicture: InfixOrUrlOrCidAndHash
+  coverPicturePreview?: InfixOrUrlOrCidAndHash
 
   attributesSchemaVersion: string
   attributesSchema: CollectionAttributesSchema
@@ -90,6 +92,11 @@ export interface UniqueCollectionSchema {
   }
 }
 
+export type UniqueCollectionSchemaDecoded = Omit<UniqueCollectionSchemaToCreate, 'coverPicture' | 'coverPicturePreview'> & {
+  coverPicture: DecodedInfixOrUrlOrCidAndHash
+  coverPicturePreview: DecodedInfixOrUrlOrCidAndHash
+}
+
 interface IToken<GenericInfixUrlOrCidWithHash> {
   name?: string | LocalizedStringDictionary
   description?: string | LocalizedStringDictionary
@@ -113,8 +120,13 @@ type DecodedAttributes  = {
   }
 }
 
-type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & {fullUrl: string | null}
+export type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & {fullUrl: string | null}
 
 export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash> {
+  owner: SubOrEthAddressObj,
+  nestingParentToken?: {
+    collectionId: CollectionId
+    tokenId: TokenId
+  }
   attributes: DecodedAttributes
 }

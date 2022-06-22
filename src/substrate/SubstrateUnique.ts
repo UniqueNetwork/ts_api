@@ -1,8 +1,5 @@
 import {utils} from "../utils";
-import {
-  ExtrinsicTransferCoinsOptions,
-  ExtrinsicTransferCoinsParams
-} from "./extrinsics/common/ExtrinsicTransferCoins";
+import {ExtrinsicTransferCoinsOptions, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
 
 import {ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
 
@@ -36,7 +33,6 @@ import {
   ExtrinsicChangeCollectionOwner,
   ExtrinsicChangeCollectionOwnerParams
 } from './extrinsics/unique/ExtrinsicChangeCollectionOwner'
-import { CollectionId } from 'src/types';
 
 import {
   ExtrinsicRemoveCollectionSponsor,
@@ -48,11 +44,19 @@ import {
   ExtrinsicRemoveFromAllowListParams
 } from './extrinsics/unique/ExtrinsicRemoveFromAllowList'
 
+import {ExtrinsicAddToAllowList, ExtrinsicAddToAllowListParams} from './extrinsics/unique/ExtrinsicAddToAllowList';
+import {ExtrinsicCreateNftToken, ExtrinsicCreateNftTokenParams} from "./extrinsics/unique/ExtrinsicCreateNftToken";
 import {
-  ExtrinsicAddToAllowList,
-  ExtrinsicAddToAllowListParams
-} from './extrinsics/unique/ExtrinsicAddToAllowList';
-import {ExtrinsicCreateToken, ExtrinsicCreateTokenParams} from "./extrinsics/unique/ExtrinsicCreateToken";
+  ExtrinsicCreateMultipleNftTokens,
+  ExtrinsicCreateMultipleNftTokensParams
+} from "./extrinsics/unique/ExtrinsicCreateMultipleNftTokens";
+import {vec2str} from "../utils/common";
+import {decodeUniqueCollectionFromProperties} from "../schema/tools/collection";
+import {UniqueCollectionSchemaDecoded} from "../schema";
+import {decodeTokenFromProperties} from "../schema/tools/token";
+import {RawCollection} from "./extrinsics/unique/types";
+import {RawNftToken} from "../types";
+import {ValidationError} from "../utils/errors";
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
@@ -73,18 +77,34 @@ export class SubstrateUnique extends SubstrateCommon {
     return await super.getBalance(substrateAddress)
   }
 
-  async __getRawCollectionById(collectionId: number) {
-    const rawCollection = (await this.api.rpc.unique.collectionById(collectionId)).toHuman()
+  async getCollectionById(collectionId: number) {
+    const collection = (await this.api.rpc.unique.collectionById(collectionId)).toHuman() as any as RawCollection | null
 
-    return rawCollection
+    if (!collection) {
+      return null
+    }
+
+    collection.properties = collection.properties || []
+
+    return {
+      ...collection,
+      id: collectionId,
+      name: vec2str(collection?.name),
+      description: vec2str(collection?.description),
+      uniqueSchema: decodeUniqueCollectionFromProperties(collection.properties),
+      raw: collection
+    }
   }
 
-  async __getRawTokenById(collectionId: number, tokenId: number) {
-    const tawToken = (await this.api.rpc.unique.tokenData(collectionId, tokenId)).toHuman()
+  async getTokenById(collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaDecoded) {
+    const rawToken = (await this.api.rpc.unique.tokenData(collectionId, tokenId)).toHuman() as RawNftToken
+    if (!rawToken) return null
 
-    return tawToken
+    return {
+      ...rawToken,
+      uniqueToken: decodeTokenFromProperties(rawToken, schema)
+    }
   }
-
 
 
   //////////////////////////////////////////
@@ -141,7 +161,11 @@ export class SubstrateUnique extends SubstrateCommon {
   // token extrinsics
   //////////////////////////////////////////
 
-  createToken(params: ExtrinsicCreateTokenParams, options?: ExtrinsicOptions) {
-    return new ExtrinsicCreateToken(this.api, params, options)
+  createNftToken(params: ExtrinsicCreateNftTokenParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicCreateNftToken(this.api, params, options)
+  }
+
+  createMultipleNftTokens(params: ExtrinsicCreateMultipleNftTokensParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicCreateMultipleNftTokens(this.api, params, options)
   }
 }

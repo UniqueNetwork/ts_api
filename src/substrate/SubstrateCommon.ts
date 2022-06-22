@@ -1,6 +1,5 @@
-import {ApiPromise, SubmittableExtrinsic, DefinitionRpc, DefinitionRpcSub} from '../types'
+import {ApiPromise, SubmittableExtrinsic} from '../types'
 import {getPolkadotApi, rpcDefinitions} from '../libs'
-import {utils} from "../utils";
 import {
   ExtrinsicTransferCoins,
   ExtrinsicTransferCoinsOptions,
@@ -11,8 +10,10 @@ import {Coin} from "../coin";
 
 export interface ConnectToSubstrateOptions {
   dontAwaitApiIsReady?: boolean
-  uniqueRpcDefinitions?: Record<string, DefinitionRpc | DefinitionRpcSub>
+  uniqueRpcDefinitionsName?: 'unique' | 'quartz' | 'opal'
 }
+
+//Record<string, DefinitionRpc | DefinitionRpcSub>
 
 export class SubstrateCommon {
   protected _api: ApiPromise | undefined
@@ -43,10 +44,14 @@ export class SubstrateCommon {
 
     const polkadotApi = getPolkadotApi()
 
+    const definitions = options?.uniqueRpcDefinitionsName
+      ? rpcDefinitions[options?.uniqueRpcDefinitionsName]
+      : rpcDefinitions.unique
+
     this._api = new polkadotApi.ApiPromise({
       provider: new polkadotApi.WsProvider(wsEndpoint),
       rpc: {
-        unique: options?.uniqueRpcDefinitions ? options.uniqueRpcDefinitions : rpcDefinitions.opal
+        unique: definitions
       },
     })
 
@@ -87,11 +92,11 @@ export class SubstrateCommon {
     return new TransactionFromRawTx(this.api, tx, options)
   }
 
-  async getBalance(address: string): Promise<bigint>{
+  async getBalance(address: string): Promise<bigint> {
     const result = await this.api.query.system.account(address)
     try {
       return BigInt((result as any).data.free.toString())
-    } catch(err) {
+    } catch (err) {
       throw new Error(`Cannot cast account result to free balance`)
     }
   }

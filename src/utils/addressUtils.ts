@@ -120,7 +120,13 @@ export const is = {
   ethereumAddress(address: string): address is EthereumAddress {
     const ethers = getEthers()
     return ethers.utils.isAddress(address)
-  }
+  },
+  nestingAddress(address: string): boolean {
+    return is.ethereumAddress(address) && address.startsWith(NESTING_PREFIX)
+  },
+  collectionAddress(address: string): boolean {
+    return is.ethereumAddress(address) && address.startsWith(COLLECTION_ADDRESS_PREFIX)
+  },
 }
 
 export const guessAddressAndExtractItNormalizedSafe = (address: string | object): SubOrEthAddress | false => {

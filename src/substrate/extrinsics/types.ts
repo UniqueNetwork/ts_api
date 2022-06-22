@@ -8,7 +8,8 @@ import {ExtrinsicAddToAllowListParams} from "./unique/ExtrinsicAddToAllowList";
 import {ExtrinsicChangeCollectionOwnerParams} from "./unique/ExtrinsicChangeCollectionOwner";
 import {ExtrinsicRemoveCollectionSponsorParams} from "./unique/ExtrinsicRemoveCollectionSponsor";
 import {ExtrinsicRemoveFromAllowListParams} from "./unique/ExtrinsicRemoveFromAllowList";
-import {ExtrinsicCreateTokenParams} from "./unique/ExtrinsicCreateToken";
+import {ExtrinsicCreateNftToken} from "./unique/ExtrinsicCreateNftToken";
+import {ExtrinsicCreateMultipleNftTokensParams} from "./unique/ExtrinsicCreateMultipleNftTokens";
 
 
 export namespace SubstrateMethodsParams {
@@ -22,5 +23,6 @@ export namespace SubstrateMethodsParams {
   export type ChangeCollectionOwner = ExtrinsicChangeCollectionOwnerParams
   export type RemoveCollectionSponsor = ExtrinsicRemoveCollectionSponsorParams
   export type RemoveFromAllowList = ExtrinsicRemoveFromAllowListParams
-  export type CreateToken = ExtrinsicCreateTokenParams
+  export type CreateNftToken = ExtrinsicCreateNftToken
+  export type CreateMultipleNftTokens = ExtrinsicCreateMultipleNftTokensParams
 }
