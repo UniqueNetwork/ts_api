@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
-import {AttributeKind, AttributeType, CollectionAttributesSchema, init, utils} from '../../index'
-import {validateCollectionAttributesSchema} from '../../schema/tools/validators'
+import {AttributeKind, AttributeType, CollectionAttributesSchema, init, utils} from '../index'
+import {validateCollectionAttributesSchema} from '../schema/tools/validators'
 
 describe.concurrent('validateCollectionAttributesSchema tests:', () => {
   test('Right collection attributes', () => {
@@ -9,10 +9,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {en: 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': {en: 'test0'},
+          '1': {en: 'test1'},
+        }
       }
     }
 
@@ -50,17 +50,16 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {en: 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('is not a valid number key')
   })
 
-  //FIXME: should throw an error
   test('Key is NaN', () => {
     const nan = 0 / 0;
     const test_attribute: CollectionAttributesSchema = {}
@@ -69,10 +68,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
       name: {en: 'test'},
       type: AttributeType.localizedStringDictionaryIndex,
       kind: AttributeKind.enum,
-      values: [
-        {number: 0, value: {en: 't1'}},
-        {number: 1, value: {en: 't2'}},
-      ]
+      enumValues: {
+        '0': 'test0',
+        '1': 'test1',
+      }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('is not a valid number key')
@@ -84,12 +83,12 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
     test_attribute[float] = {
       name: {en: 'test'},
-      type: AttributeType.localizedStringDictionaryIndex,
+      type: AttributeType.string,
       kind: AttributeKind.enum,
-      values: [
-        {number: 0, value: {en: 't1'}},
-        {number: 1, value: {en: 't2'}},
-      ]
+      enumValues: {
+        '0': 'test0',
+        '1': 'test1',
+      }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('is not a valid number key')
@@ -141,10 +140,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -157,10 +156,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -173,10 +172,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -189,10 +188,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {1: 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -205,10 +204,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {'ru-RUS': 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -221,10 +220,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {'ru-RUS': 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -238,10 +237,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         optional: 1,
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -254,10 +253,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {en: 'test'},
         type: 'wrong-type',
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -270,10 +269,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {en: 'test'},
         type: 0xff,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
@@ -286,188 +285,145 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         name: {en: 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: 'wrong-kind',
-        values: [
-          {number: 0, value: {en: 't1'}},
-          {number: 1, value: {en: 't2'}},
-        ]
+        enumValues: {
+          '0': 'test0',
+          '1': 'test1',
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid attribute kind')
   })
 
-  test('attributes.values should be array', () => {
+  test('attributes.enumValues typeof(number) !== number', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
-        values: 123
+        enumValues: {
+          'a': {en: 'test'}
+        }
       }
     }
 
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('is not a valid Array')
+    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('is not a valid number')
   })
 
-  test('attributes.values key number not found', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: AttributeKind.enum,
-        values: [
-          {value: {en: 'test'}}
-        ]
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('number not found')
-  })
-
-  test('attributes.values typeof(number) !== number', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: AttributeKind.enum,
-        values: [
-          {number: 'a', value: {en: 'test'}}
-        ]
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('number should be a number')
-  })
-
-  test('attributes.values value not found', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: AttributeKind.enum,
-        values: [
-          {number: 0}
-        ]
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('has no field')
-  })
-
-  test('attributes.values value number type: wrong number', () => {
+  test('attributes.enumValues value number type: wrong number', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.integer,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: 'aaa'}
-        ]
+        enumValues: {
+          '0': 'aaa'
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a number')
   })
 
-  test('attributes.values value boolean type: wrong number', () => {
+  test('attributes.enumValues value boolean type: wrong number', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.boolean,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: 123}
-        ]
+        enumValues: {
+          '0': 123
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a boolean')
   })
 
-  test('attributes.values value string type: wrong isoDate', () => {
+  test('attributes.enumValues value string type: wrong isoDate', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.isoDate,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: '202206:25'}
-        ]
+        enumValues: {
+          '0': '202206:25'
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid ISO Date')
   })
 
-  test('attributes.values value string type: wrong time', () => {
+  test('attributes.enumValues value string type: wrong time', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.time,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: '1:65'}
-        ]
+        enumValues: {
+          '0': '1:65'
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid time in')
   })
 
-  test('attributes.values value string type: rgb', () => {
+  test('attributes.enumValues value string type: rgb', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.colorRgba,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: '#aabbcx'}
-        ]
+        enumValues: {
+          '0': '#aabbcx'
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid rgb or rgba color')
   })
 
-  test('attributes.values value string type: rgba', () => {
+  test('attributes.enumValues value string type: rgba', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.colorRgba,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: '#aabbccdx'}
-        ]
+        enumValues: {
+          '0': '#aabbccdx'
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid rgb or rgba color')
   })
 
-  test('attributes.values value string type: rgb wrong length', () => {
+  test('attributes.enumValues value string type: rgb wrong length', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.colorRgba,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: '#aabbc'}
-        ]
+        enumValues: {
+          '0': '#aabbc'
+        }
       }
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid rgb or rgba color')
   })
 
-  test('attributes.values value string type: rgba wrong length', () => {
+  test('attributes.enumValues value string type: rgba wrong length', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
         type: AttributeType.colorRgba,
         kind: AttributeKind.enum,
-        values: [
-          {number: 0, value: '#aabbccdde'}
-        ]
+        enumValues: {
+          '0': '#aabbccdde'
+        }
       }
     }
 
