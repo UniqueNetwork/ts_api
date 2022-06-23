@@ -5,8 +5,19 @@ import * as collection from './tools/collection'
 import * as token from './tools/token'
 
 export const UniqueSchema = {
-  ...collection,
-  ...token,
-  ...validators,
-  ...types,
+  decode: {
+    collectionSchema: collection.decodeUniqueCollectionFromProperties,
+    token: token.decodeTokenFromProperties
+  },
+  encode: {
+    collectionSchema: collection.encodeCollectionSchemaToProperties,
+    collectionTokenPropertyPermissions: collection.generateTokenPropertyPermissionsFromCollectionSchema,
+    token: token.encodeTokenToProperties,
+  },
+  tools: {
+    ...collection,
+    ...token,
+    ...validators,
+  },
+  types,
 }

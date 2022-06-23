@@ -165,7 +165,7 @@ export const decodeTokenFromProperties = (rawToken: RawNftToken, schema?: Unique
 
   const token: UniqueTokenDecoded = {
     owner: rawToken.owner,
-    attributes: decodeTokenAttributes(unpackedToken, schema),
+    attributes: fullDecodeTokenAttributes(unpackedToken, schema),
     image: decodeTokenUrlOrInfixOrCidWithHashField(unpackedToken.image, schema.image)
   }
   if (token.owner.Ethereum && utils.address.is.nestingAddress(token.owner.Ethereum)) {
@@ -191,7 +191,7 @@ export const decodeTokenFromProperties = (rawToken: RawNftToken, schema?: Unique
   return {isValid: true, decoded: token}
 }
 
-export const decodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate): UniqueTokenDecoded['attributes'] => {
+export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate): UniqueTokenDecoded['attributes'] => {
   const attributes: UniqueTokenDecoded['attributes'] = {}
   if (!token.encodedAttributes) return {}
 

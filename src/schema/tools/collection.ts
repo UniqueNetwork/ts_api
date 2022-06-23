@@ -9,15 +9,14 @@ import {getKeys} from "../../tsUtils";
 import {validateCollectionSchema, validateCollectionTokenPropertyPermissions} from "./validators";
 import {PropertiesArray} from "../../types";
 
-export const packCollectionSchemaToProperties = (schema: UniqueCollectionSchemaToCreate): CollectionProperties => {
+export const encodeCollectionSchemaToProperties = (schema: UniqueCollectionSchemaToCreate): CollectionProperties => {
+  validateCollectionSchema(schema)
   return converters2Layers.objectToProperties(schema)
 }
 
 export const unpackCollectionSchemaFromProperties = <T extends UniqueCollectionSchemaToCreate>(properties: PropertiesArray): any => {
   return converters2Layers.propertiesToObject(properties) as any
 }
-
-
 
 
 export const decodeUniqueCollectionFromProperties = <T extends UniqueCollectionSchemaDecoded>(properties: CollectionProperties): DecodingResult<T> => {
