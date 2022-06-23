@@ -1,10 +1,5 @@
-import '@unique-nft/types/augment-api'
-
 import {utils} from "../utils";
-import {
-  ExtrinsicTransferCoinsOptions,
-  ExtrinsicTransferCoinsParams
-} from "./extrinsics/common/ExtrinsicTransferCoins";
+import {ExtrinsicTransferCoinsOptions, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
 
 import {ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
 
@@ -38,7 +33,6 @@ import {
   ExtrinsicChangeCollectionOwner,
   ExtrinsicChangeCollectionOwnerParams
 } from './extrinsics/unique/ExtrinsicChangeCollectionOwner'
-import { CollectionId } from 'src/types';
 
 import {
   ExtrinsicRemoveCollectionSponsor,
@@ -50,10 +44,19 @@ import {
   ExtrinsicRemoveFromAllowListParams
 } from './extrinsics/unique/ExtrinsicRemoveFromAllowList'
 
+import {ExtrinsicAddToAllowList, ExtrinsicAddToAllowListParams} from './extrinsics/unique/ExtrinsicAddToAllowList';
+import {ExtrinsicCreateNftToken, ExtrinsicCreateNftTokenParams} from "./extrinsics/unique/ExtrinsicCreateNftToken";
 import {
-  ExtrinsicAddToAllowList,
-  ExtrinsicAddToAllowListParams
-} from './extrinsics/unique/ExtrinsicAddToAllowList';
+  ExtrinsicCreateMultipleNftTokens,
+  ExtrinsicCreateMultipleNftTokensParams
+} from "./extrinsics/unique/ExtrinsicCreateMultipleNftTokens";
+import {vec2str} from "../utils/common";
+import {decodeUniqueCollectionFromProperties} from "../schema/tools/collection";
+import {UniqueCollectionSchemaDecoded} from "../schema";
+import {decodeTokenFromProperties} from "../schema/tools/token";
+import {RawCollection} from "./extrinsics/unique/types";
+import {RawNftToken} from "../types";
+import {ValidationError} from "../utils/errors";
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
@@ -63,22 +66,60 @@ export interface ConnectToSubstrateOptions {
 }
 
 export class SubstrateUnique extends SubstrateCommon {
+
+  //////////////////////////////////////////
+  // common methods
+  //////////////////////////////////////////
+
   async getBalance(address: string): Promise<bigint> {
     const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
 
     return await super.getBalance(substrateAddress)
   }
 
-  async __getRawCollectionById(collectionId: CollectionId) {
-    const rawCollection = (await this.api.rpc.unique.collectionById(collectionId)).unwrap()
+  async getCollectionById(collectionId: number) {
+    const collection = (await this.api.rpc.unique.collectionById(collectionId)).toHuman() as any as RawCollection | null
 
-    return rawCollection
+    if (!collection) {
+      return null
+    }
+
+    collection.properties = collection.properties || []
+
+    return {
+      ...collection,
+      id: collectionId,
+      name: vec2str(collection?.name),
+      description: vec2str(collection?.description),
+      uniqueSchema: decodeUniqueCollectionFromProperties(collection.properties),
+      raw: collection
+    }
   }
 
+  async getTokenById(collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaDecoded) {
+    const rawToken = (await this.api.rpc.unique.tokenData(collectionId, tokenId)).toHuman() as RawNftToken
+    if (!rawToken) return null
+
+    return {
+      ...rawToken,
+      uniqueToken: decodeTokenFromProperties(rawToken, schema)
+    }
+  }
+
+
+  //////////////////////////////////////////
+  // common extrinsics
+  //////////////////////////////////////////
+
+  //@overrides because it eats ethereum address too
   transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
     const toAddress = utils.address.addressToAsIsOrSubstrateMirror(params.toAddress)
     return super.transferCoins({...params, toAddress}, options)
   }
+
+  //////////////////////////////////////////
+  // collection extrinsics
+  //////////////////////////////////////////
 
   createCollection(params: ExtrinsicCreateCollectionParams, options?: ExtrinsicOptions) {
     return new ExtrinsicCreateCollection(this.api, params, options)
@@ -114,5 +155,17 @@ export class SubstrateUnique extends SubstrateCommon {
 
   removeFromAllowList(params: ExtrinsicRemoveFromAllowListParams, options?: ExtrinsicOptions) {
     return new ExtrinsicRemoveFromAllowList(this.api, params, options)
+  }
+
+  //////////////////////////////////////////
+  // token extrinsics
+  //////////////////////////////////////////
+
+  createNftToken(params: ExtrinsicCreateNftTokenParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicCreateNftToken(this.api, params, options)
+  }
+
+  createMultipleNftTokens(params: ExtrinsicCreateMultipleNftTokensParams, options?: ExtrinsicOptions) {
+    return new ExtrinsicCreateMultipleNftTokens(this.api, params, options)
   }
 }

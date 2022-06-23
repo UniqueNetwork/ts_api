@@ -1,10 +1,8 @@
-import '@unique-nft/types/augment-api'
-
 import type {KeyringPair, KeyringOptions} from '@polkadot/keyring/types'
 import type {KeypairType, Keypair, Seedpair, Prefix} from '@polkadot/util-crypto/types'
 import type {ApiPromise, SubmittableResult} from '@polkadot/api'
 import type {SubmittableExtrinsic} from '@polkadot/api/promise/types'
-import type {ISubmittableResult} from '@polkadot/types/types'
+import type {ISubmittableResult, DefinitionRpc, DefinitionRpcSub} from '@polkadot/types/types'
 import type {EventRecord} from '@polkadot/types/interfaces/system/types'
 import type {GenericEventData} from '@polkadot/types/generic/Event'
 import type {InjectedAccountWithMeta} from '@polkadot/extension-inject/types'
@@ -24,7 +22,9 @@ export type {
   EventRecord,
   GenericEventData,
   InjectedAccountWithMeta,
-  HexString
+  HexString,
+  DefinitionRpc,
+  DefinitionRpcSub,
 }
 
 
@@ -50,7 +50,9 @@ export type SubOrEthAddressObj =
   EthAddressObj & { Substrate?: never }
 
 export type SubOrEthAddress = SubstrateAddress | EthereumAddress
-export type AnyAddress = SubOrEthAddressObj | SubstrateAddress | EthereumAddress
+export type AnyAddress = SubOrEthAddressObj | SubOrEthAddress
+
+export type AnyInputAddress = { Substrate: string, Ethereum?: undefined } | {Ethereum: string, Substrate?: undefined} | string
 
 export type CollectionId = Nominal<number, 'CollectionId'>
 export type TokenId = Nominal<number, 'TokenId'>
@@ -60,19 +62,7 @@ export type PropertiesArray = Array<{
   value: string
 }>
 
-type _EXTRINSIC_RESULT_TMP_ = void
-
-export interface IUniqueSDK<CollectionIdFormat extends number | EthereumAddress, Connection> {
-  connect(endpoint: string): Promise<Connection>
-
-  disconnect(): Promise<void>
-
-  transferCoins(to: SubOrEthAddress): Promise<_EXTRINSIC_RESULT_TMP_>
-
-  transferNFT(
-    to: AnyAddress,
-    collectionId: CollectionIdFormat,
-    tokenId: TokenId,
-    fractionalPart: number
-  ): Promise<_EXTRINSIC_RESULT_TMP_>
+export type RawNftToken = {
+  owner: SubOrEthAddressObj
+  properties: PropertiesArray
 }

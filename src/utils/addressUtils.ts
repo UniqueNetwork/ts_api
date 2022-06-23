@@ -1,4 +1,3 @@
-import '@unique-nft/types/augment-api'
 import {getEthers, getPolkadotUtilCrypto} from "../libs";
 import {DWORDHexString, UInt8ArrayToHexString} from "./common";
 import {COLLECTION_ADDRESS_PREFIX, NESTING_PREFIX} from "../constants";
@@ -92,11 +91,17 @@ export const nestingAddressToCollectionIdAndTokenId = (address: string): { colle
 }
 
 export const is = {
+  substrateOrEthereumAddressObj(obj: any): obj is SubAddressObj | EthAddressObj {
+    return is.substrateAddressObject(obj) || is.ethereumAddressObject(obj)
+  },
   substrateAddressObject(obj: any): obj is SubAddressObj {
-    return typeof obj === 'object' && typeof obj?.Substrate === 'string'
+    return typeof obj === 'object' && typeof obj?.Substrate === 'string' && is.substrateAddress(obj.Substrate)
   },
   ethereumAddressObject(obj: any): obj is EthAddressObj {
-    return typeof obj === 'object' && typeof obj?.Ethereum === 'string'
+    return typeof obj === 'object' && typeof obj?.Ethereum === 'string' && is.ethereumAddress(obj.Ethereum)
+  },
+  substrateOrEthereumAddress(address: string): address is SubstrateAddress | EthereumAddress  {
+    return is.ethereumAddress(address) || is.substrateAddress(address)
   },
   substrateAddress(address: string): address is SubstrateAddress {
     const {validateAddress, decodeAddress} = getPolkadotUtilCrypto()
@@ -115,7 +120,13 @@ export const is = {
   ethereumAddress(address: string): address is EthereumAddress {
     const ethers = getEthers()
     return ethers.utils.isAddress(address)
-  }
+  },
+  nestingAddress(address: string): boolean {
+    return is.ethereumAddress(address) && address.startsWith(NESTING_PREFIX)
+  },
+  collectionAddress(address: string): boolean {
+    return is.ethereumAddress(address) && address.startsWith(COLLECTION_ADDRESS_PREFIX)
+  },
 }
 
 export const guessAddressAndExtractItNormalizedSafe = (address: string | object): SubOrEthAddress | false => {

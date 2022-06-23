@@ -1,19 +1,44 @@
-import {CollectionSchemaUnique} from "../types";
+import {UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate} from "../types";
 import {
   CollectionProperties,
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
-import {converters2Layers} from "../schemaUtils";
+import {converters2Layers, decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from "../schemaUtils";
 import {getKeys} from "../../tsUtils";
-import {validateCollectionTokenPropertyPermissions} from "./validators";
+import {validateCollectionSchema, validateCollectionTokenPropertyPermissions} from "./validators";
+import {PropertiesArray} from "../../types";
 
-export const packCollectionSchemaToProperties = (schema: CollectionSchemaUnique): CollectionProperties => {
+export const encodeCollectionSchemaToProperties = (schema: UniqueCollectionSchemaToCreate): CollectionProperties => {
+  validateCollectionSchema(schema)
   return converters2Layers.objectToProperties(schema)
 }
 
-export const unpackCollectionSchemaFromProperties = <T extends CollectionSchemaUnique>(properties: CollectionProperties): any => {
+export const unpackCollectionSchemaFromProperties = <T extends UniqueCollectionSchemaToCreate>(properties: PropertiesArray): any => {
   return converters2Layers.propertiesToObject(properties) as any
+}
+
+
+export const decodeUniqueCollectionFromProperties = <T extends UniqueCollectionSchemaDecoded>(properties: CollectionProperties): DecodingResult<T> => {
+  try {
+    const unpackedSchema = unpackCollectionSchemaFromProperties<T>(properties)
+    validateCollectionSchema(unpackedSchema)
+    if (unpackedSchema.coverPicture) {
+      unpackedSchema.coverPicture = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicture, unpackedSchema.image)
+    }
+    if (unpackedSchema.coverPicturePreview) {
+      unpackedSchema.coverPicturePreview = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicturePreview, unpackedSchema.image)
+    }
+    return {
+      isValid: true,
+      decoded: unpackedSchema as T,
+    }
+  } catch(e) {
+    return {
+      isValid: false,
+      validationError: e as Error,
+    }
+  }
 }
 
 
@@ -22,38 +47,44 @@ const generateDefaultTPPObjectForKey = (key: string): TokenPropertyPermissionObj
   permission: {mutable: false, collectionAdmin: true, tokenOwner: false}
 })
 
+const generateDefaultTPPsForInfixOrUrlOrCidAndHashObject = (permissions: CollectionTokenPropertyPermissions, prefix: string) => {
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.i`)) // url infix
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.c`)) // ipfs cid
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.u`)) // url
+  permissions.push(generateDefaultTPPObjectForKey(`${prefix}.h`)) // hash
+}
+
 export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
-export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: CollectionSchemaUnique, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
+export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: UniqueCollectionSchemaToCreate, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name
     generateDefaultTPPObjectForKey('d'), // description
-    generateDefaultTPPObjectForKey('i'), // image url infix
-    generateDefaultTPPObjectForKey('iu'),// image url
-    generateDefaultTPPObjectForKey('ih'),// image hash
-    generateDefaultTPPObjectForKey('p'), // preview image url infix
-    generateDefaultTPPObjectForKey('pu'),// preview image url
-    generateDefaultTPPObjectForKey('ph'),// preview image hash
-    ...getKeys(schema.attributesSchema).map(key => generateDefaultTPPObjectForKey(`a.${key}`))
   ]
 
+  generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'i')     // image url, urlInfix, ipfsCid and hash (i.u, i.i, i.c, i.h)
+
+  if (schema.hasOwnProperty('imagePreview')) {
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'p')    // imagePreview url, urlInfix, ipfsCid and hash (p.u, p.i, p.c, p.h)
+  }
+
   if (schema.hasOwnProperty('video')) {
-    permissions.push(generateDefaultTPPObjectForKey('v'))  // video url infix
-    permissions.push(generateDefaultTPPObjectForKey('vu')) // video url
-    permissions.push(generateDefaultTPPObjectForKey('vh')) // video hash
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'v')    // video url, urlInfix, ipfsCid and hash (v.u, v.i, v.c, v.h)
   }
 
   if (schema.hasOwnProperty('audio')) {
-    permissions.push(generateDefaultTPPObjectForKey('au'))  // audio url infix
-    permissions.push(generateDefaultTPPObjectForKey('auu')) // audio url
-    permissions.push(generateDefaultTPPObjectForKey('auh')) // audio hash
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'au')   // audio url, urlInfix, ipfsCid and hash (au.u, au.i, au.c, au.h)
   }
 
   if (schema.hasOwnProperty('spatialObject')) {
-    permissions.push(generateDefaultTPPObjectForKey('so'))  // spatialObject url infix
-    permissions.push(generateDefaultTPPObjectForKey('sou')) // spatialObject url
-    permissions.push(generateDefaultTPPObjectForKey('soh')) // spatialObject hash
+    generateDefaultTPPsForInfixOrUrlOrCidAndHashObject(permissions, 'so')   // spatialObject url, urlInfix, ipfsCid and hash (so.u, so.i, so.c, so.h)
+  }
+
+  if (schema.attributesSchema) {
+    getKeys(schema.attributesSchema).forEach(key => {
+      permissions.push(generateDefaultTPPObjectForKey(`a.${key}`))
+    })
   }
 
   if (options?.overwriteTPPs) {

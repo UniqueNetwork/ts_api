@@ -1,11 +1,6 @@
-import '@unique-nft/types/augment-api'
-
 import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
-import {utils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
-
-import {CollectionParams} from "./types";
 
 export interface ExtrinsicSetCollectionSponsorParams {
   collectionId: CollectionId

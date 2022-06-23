@@ -1,12 +1,12 @@
-import '@unique-nft/types/augment-api'
-
 import type * as PolkadotApiObjType from '@polkadot/api'
 import type * as PolkadotKeyringObjType from '@polkadot/keyring'
 import type * as PolkadotUtilCryptoObjType from '@polkadot/util-crypto'
 import type * as PolkadotExtensionDappType from '@polkadot/extension-dapp'
 import type * as EthersType from 'ethers'
 
-import {unique as uniqueRpcDefinitions} from '@unique-nft/types/definitions'
+import {unique as opalRpcDefinitions} from '@unique-nft/opal-testnet-types/definitions'
+import {unique as quartzRpcDefinitions} from '@unique-nft/quartz-mainnet-types/definitions'
+import {unique as uniqueRpcDefinitions} from '@unique-nft/unique-mainnet-types/definitions'
 import {getKeys} from './tsUtils'
 
 type PolkadotApi = typeof PolkadotApiObjType
@@ -15,7 +15,11 @@ type PolkadotUtilCrypto = typeof PolkadotUtilCryptoObjType
 type PolkadotExtensionDapp = typeof PolkadotExtensionDappType
 type Ethers = typeof EthersType
 
-export {uniqueRpcDefinitions}
+export const rpcDefinitions = {
+  opal: opalRpcDefinitions.rpc,
+  quartz: quartzRpcDefinitions.rpc,
+  unique: uniqueRpcDefinitions.rpc
+}
 
 interface Libs {
   ethers: Ethers | null

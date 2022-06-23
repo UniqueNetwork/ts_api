@@ -293,7 +293,7 @@ suite('ChangeCollectionOwner tests', async () => {
     expect(changeOwnerResult.isSuccess).toBe(true)
 
     //FIXME: change collectionById method asap
-    const collection = await chain.__getRawCollectionById(collectionId)
+    const collection = await chain.getCollectionById(collectionId)
     expect(keyring2.address).toBe(normalizeSubstrateAddress(collection.owner.toString()))
   })
 })
