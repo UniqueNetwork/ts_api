@@ -150,58 +150,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('empty object')
   })
 
-  test('attributes.name empty object', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: AttributeKind.enum,
-        enumValues: {
-          '0': 'test0',
-          '1': 'test1',
-        }
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('empty object')
-  })
-
-  test('attributes.name empty object', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: AttributeKind.enum,
-        enumValues: {
-          '0': 'test0',
-          '1': 'test1',
-        }
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('empty object')
-  })
-
   test('attributes.name dict key is not a string', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {1: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: AttributeKind.enum,
-        enumValues: {
-          '0': 'test0',
-          '1': 'test1',
-        }
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid Language code')
-  })
-
-  test('attributes.name dict key does not match regex', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {'ru-RUS': 'test'},
         type: AttributeType.localizedStringDictionaryIndex,
         kind: AttributeKind.enum,
         enumValues: {
@@ -393,36 +345,6 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
         kind: AttributeKind.enum,
         enumValues: {
           '0': '#aabbccdx'
-        }
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid rgb or rgba color')
-  })
-
-  test('attributes.enumValues value string type: rgb wrong length', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {en: 'test'},
-        type: AttributeType.colorRgba,
-        kind: AttributeKind.enum,
-        enumValues: {
-          '0': '#aabbc'
-        }
-      }
-    }
-
-    expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be a valid rgb or rgba color')
-  })
-
-  test('attributes.enumValues value string type: rgba wrong length', () => {
-    const test_attribute: CollectionAttributesSchema = {
-      '1': {
-        name: {en: 'test'},
-        type: AttributeType.colorRgba,
-        kind: AttributeKind.enum,
-        enumValues: {
-          '0': '#aabbccdde'
         }
       }
     }
