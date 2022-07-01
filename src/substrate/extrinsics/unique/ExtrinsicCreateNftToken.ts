@@ -28,7 +28,7 @@ export class ExtrinsicCreateNftToken extends AbstractExtrinsic<ExtrinsicCreateNf
   constructor(api: ApiPromise, params: ExtrinsicCreateNftTokenParams, options?: ExtrinsicOptions) {
     const token = validateAndFixTokenOwner(JSON.parse(JSON.stringify(params.token)))
 
-    const tx = api.tx.unique.createItem(params.collectionId, token.owner, {nft: {properties: token.properties}})
+    const tx = api.tx.unique.createItem(params.collectionId, token.owner, {NFT: {properties: token.properties}})
     super(api, tx, params)
   }
 

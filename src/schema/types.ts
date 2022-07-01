@@ -28,6 +28,7 @@ export enum AttributeType {
   colorRgba = 0x206,                           // string // 'rrggbbaa'
   localizedStringDictionary = 0x401,           // object
 }
+export type ATTRIBUTE_TYPE_NAME = keyof typeof AttributeType
 
 
 export interface LocalizedStringDictionary {
@@ -39,6 +40,7 @@ export enum AttributeKind {
   enumMultiple = 1,
   freeValue = 2,
 }
+export type ATTRIBUTE_KIND_NAME = keyof typeof AttributeKind
 
 export interface AttributeSchema {
   name: string | LocalizedStringDictionary
@@ -93,8 +95,15 @@ export interface UniqueCollectionSchemaToCreate {
 }
 
 export type UniqueCollectionSchemaDecoded = Omit<UniqueCollectionSchemaToCreate, 'coverPicture' | 'coverPicturePreview'> & {
+  collectionId: CollectionId
   coverPicture: DecodedInfixOrUrlOrCidAndHash
-  coverPicturePreview: DecodedInfixOrUrlOrCidAndHash
+  coverPicturePreview?: DecodedInfixOrUrlOrCidAndHash
+  oldProperties?: {
+    _old_schemaVersion?: string
+    _old_offchainSchema?: string
+    _old_constOnChainSchema?: string
+    _old_variableOnChainSchema?: string
+  }
 }
 
 interface IToken<GenericInfixUrlOrCidWithHash> {
@@ -113,17 +122,24 @@ export interface UniqueTokenToCreate extends IToken<InfixOrUrlOrCidAndHash>{
 
 type AttributeDecodedValue = string | number | LocalizedStringDictionary | Array<string | number | LocalizedStringDictionary>
 
-type DecodedAttributes  = {
+export type DecodedAttributes  = {
   [K: number]: {
     name: string | LocalizedStringDictionary
     value: AttributeDecodedValue
+    type: AttributeType
+    kind: AttributeKind
+    isArray: boolean
+    typeName: ATTRIBUTE_TYPE_NAME
+    kindName: ATTRIBUTE_KIND_NAME
   }
 }
 
 export type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & {fullUrl: string | null}
 
 export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash> {
-  owner: SubOrEthAddressObj,
+  tokenId: TokenId
+  collectionId: CollectionId
+  owner: SubOrEthAddressObj
   nestingParentToken?: {
     collectionId: CollectionId
     tokenId: TokenId

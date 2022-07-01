@@ -97,12 +97,14 @@ export class SubstrateUnique extends SubstrateCommon {
   }
 
   async getTokenById(collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaDecoded) {
-    const rawToken = (await this.api.rpc.unique.tokenData(collectionId, tokenId)).toHuman() as RawNftToken
-    if (!rawToken) return null
+    const rawToken = await this.api.rpc.unique.tokenData(collectionId, tokenId)
+    const token = (rawToken).toHuman() as RawNftToken
+    if (!token) return null
 
     return {
-      ...rawToken,
-      uniqueToken: decodeTokenFromProperties(rawToken, schema)
+      ...token,
+      raw: rawToken,
+      uniqueToken: decodeTokenFromProperties(token, schema)
     }
   }
 

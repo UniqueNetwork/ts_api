@@ -27,7 +27,7 @@ export const UInt8ArrayToHexString = (array: Uint8Array): string => {
 
 export const vec2str = (arr: Array<number | string>) => {
   return arr
-    .map(x => String.fromCharCode(typeof x === 'number' ? x : parseInt(x)))
+    .map(x => String.fromCharCode(typeof x === 'number' ? x : parseInt(x, 16)))
     .join('')
 }
 
@@ -37,6 +37,19 @@ export const str2vec = (str: string) => {
   }
   return Array.from(str).map(x => x.charCodeAt(0))
 }
+
+export const hexToU8a = (hexString: string): Uint8Array =>
+  Uint8Array.from(((hexString.startsWith('0x') ? hexString.slice(2) : hexString).match(/.{1,2}/g) || []).map((byte) => parseInt(byte, 16)))
+
+
+
+
+export const u8aToHex = (bytes: number[] | Uint8Array): string => {
+  const arr = bytes instanceof Uint8Array ? Array.from(bytes) : bytes
+  return arr.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+}
+
+
 
 export const checkEnvironmentIsBrowser = (safe?: boolean) => {
   if (typeof window === 'undefined') {

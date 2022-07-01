@@ -71,7 +71,9 @@ export class SubstrateCommon {
   }
 
   async disconnect() {
-    await this._api?.disconnect()
+    if (this._api?.isConnected) {
+      await this._api?.disconnect()
+    }
     return this
   }
 

@@ -8,7 +8,7 @@ import {
   CollectionAttributesSchema,
   UniqueCollectionSchemaToCreate,
   LocalizedStringDictionary,
-  InfixOrUrlOrCidAndHash, URL_TEMPLATE_INFIX
+  InfixOrUrlOrCidAndHash, URL_TEMPLATE_INFIX, UrlTemplateString
 } from "../types";
 import {getEnumValues, getKeys, getReversedEnum} from "../../tsUtils";
 import {
@@ -18,10 +18,10 @@ import {
 import {ValidationError} from "../../utils/errors";
 
 
-const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
-const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
-const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
-const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
+export const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
+export const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
+export const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
+export const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
 
 
 const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
@@ -82,7 +82,7 @@ const validateLangCode = (key: string | number | symbol, varName: string): boole
   return true
 }
 
-const validateURL = (url: string, varName: string): boolean => {
+export const validateURL = (url: string, varName: string): boolean => {
   if (typeof url !== 'string') {
     throw new ValidationError(`${varName} should be a string`)
   }
@@ -102,7 +102,7 @@ export const validateAndParseSemverString = (str: string, varName: string): Semv
   return Semver.fromString(str)
 }
 
-const validateStringOrLocalizedStringDictionary = (dict: any, varName: string): dict is string | LocalizedStringDictionary => {
+export const validateStringOrLocalizedStringDictionary = (dict: any, varName: string): dict is string | LocalizedStringDictionary => {
   if (typeof dict === 'string') {
     return true
   }
@@ -122,7 +122,7 @@ const validateStringOrLocalizedStringDictionary = (dict: any, varName: string): 
   return true
 }
 
-const validateUrlTemplateString = (str: any, varName: string): str is string => {
+export const validateUrlTemplateString = (str: any, varName: string): str is string => {
   const prefix = `TemplateUrlString is not valid, ${varName}`
   if (typeof str !== 'string')
     throw new ValidationError(`${prefix} is not a string, got ${str}`)
