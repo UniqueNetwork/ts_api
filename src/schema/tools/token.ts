@@ -14,7 +14,7 @@ import {
   UrlTemplateString,
   UniqueCollectionSchemaDecoded
 } from "../types";
-import {validateToken} from "./validators";
+import {validateStringOrLocalizedStringDictionary, validateToken} from "./validators";
 import {getEntries, getValues, safeJSONParse} from "../../tsUtils";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
 import {decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from "../schemaUtils";
@@ -96,11 +96,25 @@ const fillTokenFieldByKeyPrefix = <T extends UniqueTokenToCreate>(token: T, prop
 export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(properties: CollectionProperties, schema: UniqueCollectionSchemaToCreate): T => {
   const token: T = {} as T
 
-  const name = properties.find(({key}) => key === 'n')
-  if (name) token.name = safeJSONParse<LocalizedStringDictionary>(name.value)
+  const nameProperty = properties.find(({key}) => key === 'n')
+  if (nameProperty) {
+    const parsedName = safeJSONParse<LocalizedStringDictionary>(nameProperty.value)
+    token.name =
+      typeof parsedName === 'object' &&
+      validateStringOrLocalizedStringDictionary(parsedName, 'token.name')
+        ? parsedName
+        : nameProperty.value
+  }
 
-  const description = properties.find(({key}) => key === 'd')
-  if (description) token.description = safeJSONParse<LocalizedStringDictionary>(description.value)
+  const descriptionProperty = properties.find(({key}) => key === 'd')
+  if (descriptionProperty) {
+    const parsedDescription = safeJSONParse<LocalizedStringDictionary>(descriptionProperty.value)
+    token.description =
+      typeof parsedDescription === 'object' &&
+      validateStringOrLocalizedStringDictionary(parsedDescription, 'token.description')
+        ? parsedDescription
+        : descriptionProperty.value
+  }
 
   fillTokenFieldByKeyPrefix(token, properties, 'i', 'image')
   fillTokenFieldByKeyPrefix(token, properties, 'p', 'imagePreview')
