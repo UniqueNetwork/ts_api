@@ -365,9 +365,8 @@ export const validateToken = <T, C extends UniqueCollectionSchemaToCreate>(token
   if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME) {
     throw new ValidationError(`schemaName is not valid (passed ${collectionSchema.schemaName})`)
   }
-
   validateFieldByType(token, 'name', 'string', true, 'token')
-  validateFieldByType(token, 'name', 'description', true, 'token')
+  validateFieldByType(token, 'description', 'string', true, 'token')
   validateUrlWithHashObject(token.image, 'token.image')
 
   if (token.hasOwnProperty('imagePreview')) {
