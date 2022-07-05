@@ -20,7 +20,6 @@ export enum AttributeType {
   float = 0x102,                               // number
   boolean = 0x103,                             // number
   timestamp = 0x104,                           // number // js, milliseconds from epoch
-  localizedStringDictionaryIndex = 0x105,      // number
   string = 0x201,                              // string
   url = 0x203,                                 // string
   isoDate = 0x204,                             // string // ISO Date: YYYY-MM-DD
@@ -129,8 +128,8 @@ export type DecodedAttributes  = {
     type: AttributeType
     kind: AttributeKind
     isArray: boolean
-    typeName: ATTRIBUTE_TYPE_NAME
-    kindName: ATTRIBUTE_KIND_NAME
+    technicalTypeName: ATTRIBUTE_TYPE_NAME
+    technicalKindName: ATTRIBUTE_KIND_NAME
   }
 }
 

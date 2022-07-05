@@ -1,4 +1,4 @@
-import {PropertiesArray, RawNftToken} from "../../types";
+import {CollectionId, PropertiesArray, RawNftToken, TokenId} from "../../types";
 import {
   AttributeKind,
   AttributeType,
@@ -12,12 +12,17 @@ import {
   URL_TEMPLATE_INFIX,
   DecodedInfixOrUrlOrCidAndHash,
   UrlTemplateString,
-  UniqueCollectionSchemaDecoded
+  UniqueCollectionSchemaDecoded, DecodedAttributes
 } from "../types";
 import {validateStringOrLocalizedStringDictionary, validateToken} from "./validators";
 import {getEntries, getValues, safeJSONParse} from "../../tsUtils";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
-import {decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from "../schemaUtils";
+import {
+  ATTRIBUTE_KIND_NAME_BY_VALUE,
+  ATTRIBUTE_TYPE_NAME_BY_VALUE,
+  decodeTokenUrlOrInfixOrCidWithHashField,
+  DecodingResult
+} from "../schemaUtils";
 import {utils} from "../../utils";
 import {ValidationError} from "../../utils/errors";
 
@@ -159,7 +164,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
 
 
-export const decodeTokenFromProperties = (rawToken: RawNftToken, schema?: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): DecodingResult<UniqueTokenDecoded> => {
+export const decodeTokenFromProperties = (rawToken: RawNftToken, collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): DecodingResult<UniqueTokenDecoded> => {
   if (!schema) {
     return  {
       isValid: false,
@@ -179,6 +184,8 @@ export const decodeTokenFromProperties = (rawToken: RawNftToken, schema?: Unique
 
   const token: UniqueTokenDecoded = {
     owner: rawToken.owner,
+    tokenId: tokenId as TokenId,
+    collectionId: collectionId as CollectionId,
     attributes: fullDecodeTokenAttributes(unpackedToken, schema),
     image: decodeTokenUrlOrInfixOrCidWithHashField(unpackedToken.image, schema.image)
   }
@@ -205,7 +212,7 @@ export const decodeTokenFromProperties = (rawToken: RawNftToken, schema?: Unique
   return {isValid: true, decoded: token}
 }
 
-export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate): UniqueTokenDecoded['attributes'] => {
+export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate): DecodedAttributes => {
   const attributes: UniqueTokenDecoded['attributes'] = {}
   if (!token.encodedAttributes) return {}
 
@@ -217,26 +224,42 @@ export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collection
     if (!schema) continue
     const name = schema.name
 
+    const attribute: DecodedAttributes[number] = {
+      name,
+      value,
+      isArray: false,
+      type: schema.type,
+      kind: schema.kind,
+      technicalTypeName: ATTRIBUTE_TYPE_NAME_BY_VALUE[schema.type],
+      technicalKindName: ATTRIBUTE_KIND_NAME_BY_VALUE[schema.kind],
+    }
 
     if (schema.kind === AttributeKind.freeValue) {
-      attributes[key] = {name,value}
+      attributes[key] = attribute
     }
 
     if (!schema.enumValues) continue
 
     if (schema.kind === AttributeKind.enum && typeof value === 'number') {
       if (schema.enumValues.hasOwnProperty(value)) {
-        attributes[key] = {name, value: schema.enumValues[value]}
+        attribute.value =  schema.enumValues[value]
+        attributes[key] = attribute
       }
     }
 
     if (schema.kind === AttributeKind.enumMultiple && Array.isArray(value)) {
-      const attr = attributes[key] = {name, value: [] as Array<any>}
+      attribute.isArray = true
+
+      const cumulativeValue: Array<string | number | LocalizedStringDictionary> = []
+
       for (const num of value) {
         if (schema.enumValues.hasOwnProperty(num)) {
-          attr.value.push(schema.enumValues[num])
+          cumulativeValue.push(schema.enumValues[num])
         }
       }
+      attribute.value = cumulativeValue
+
+      attributes[key] = attribute
     }
   }
   return attributes

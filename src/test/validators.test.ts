@@ -24,7 +24,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
           '0': {en: 'test0'},
@@ -63,9 +63,9 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
   test('Key is string', () => {
     const test_attribute: CollectionAttributesSchema = {
-      'key1': {
+      ['key1' as any as number]: {
         name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
           '0': 'test0',
@@ -83,7 +83,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
     test_attribute[nan] = {
       name: {en: 'test'},
-      type: AttributeType.localizedStringDictionaryIndex,
+      type: AttributeType.localizedStringDictionary,
       kind: AttributeKind.enum,
       enumValues: {
         '0': 'test0',
@@ -113,7 +113,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
   test('attributes is number', () => {
     const test_attribute: CollectionAttributesSchema = {
-      '1': 1
+      '1': 1 as any
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('is not an object')
@@ -121,7 +121,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
   test('attributes is map', () => {
     const test_attribute: CollectionAttributesSchema = {
-      '1': new Map()
+      '1': new Map() as any
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be plain object')
@@ -129,7 +129,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
   test('attributes is set', () => {
     const test_attribute: CollectionAttributesSchema = {
-      '1': new Set()
+      '1': new Set() as any
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be plain object')
@@ -137,7 +137,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
   test('attributes is null', () => {
     const test_attribute: CollectionAttributesSchema = {
-      '1': null
+      '1': null as any
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be valid object')
@@ -145,7 +145,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 
   test('attributes is array', () => {
     const test_attribute: CollectionAttributesSchema = {
-      '1': [1, 2, 3]
+      '1': [1, 2, 3] as any
     }
 
     expect(() => validateCollectionAttributesSchema(test_attribute, 'testVar')).toThrowError('should be plain object')
@@ -155,7 +155,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {},
-        type: AttributeType.localizedStringDictionaryIndex,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
           '0': 'test0',
@@ -171,7 +171,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {1: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
           '0': 'test0',
@@ -187,7 +187,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {'ru-RUS': 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
           '0': 'test0',
@@ -203,8 +203,8 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
-        optional: 1,
-        type: AttributeType.localizedStringDictionaryIndex,
+        optional: 1 as any,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
           '0': 'test0',
@@ -220,7 +220,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
-        type: 'wrong-type',
+        type: 'wrong-type' as any,
         kind: AttributeKind.enum,
         enumValues: {
           '0': 'test0',
@@ -252,8 +252,8 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
-        kind: 'wrong-kind',
+        type: AttributeType.localizedStringDictionary,
+        kind: 'wrong-kind' as any,
         enumValues: {
           '0': 'test0',
           '1': 'test1',
@@ -268,10 +268,10 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     const test_attribute: CollectionAttributesSchema = {
       '1': {
         name: {en: 'test'},
-        type: AttributeType.localizedStringDictionaryIndex,
+        type: AttributeType.localizedStringDictionary,
         kind: AttributeKind.enum,
         enumValues: {
-          'a': {en: 'test'}
+          ['a' as any]: {en: 'test'}
         }
       }
     }
@@ -373,7 +373,7 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
 const dungeonsAndHeroesCollectionAttributesSchema: CollectionAttributesSchema = {
   '0': {
     name: {en: 'class'},
-    type: AttributeType.localizedStringDictionaryIndex,
+    type: AttributeType.localizedStringDictionary,
     kind: AttributeKind.enum,
     enumValues: {
       0: {en: 'knight'},
@@ -384,7 +384,7 @@ const dungeonsAndHeroesCollectionAttributesSchema: CollectionAttributesSchema = 
 
   '1': {
     name: {en: 'weapon'},
-    type: AttributeType.localizedStringDictionaryIndex,
+    type: AttributeType.localizedStringDictionary,
     kind: AttributeKind.enumMultiple,
     enumValues: {
       0:  {en: 'Sword'},
@@ -665,7 +665,7 @@ describe('Integration tests for validateCollectionAttributesSchema', () => {
       keyring1: keyring1,
       keyring2: keyring2,
       collectionId: collectionId,
-      decodedSchema: getCollectionRes?.uniqueSchema.decoded
+      decodedSchema: (getCollectionRes?.uniqueSchema as any).decoded
     }
   })
 

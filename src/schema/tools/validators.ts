@@ -16,12 +16,7 @@ import {
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
 import {ValidationError} from "../../utils/errors";
-
-
-export const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
-export const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
-export const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
-export const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
+import {ATTRIBUTE_TYPE_NAME_BY_VALUE, POSSIBLE_ATTRIBUTE_KINDS, POSSIBLE_ATTRIBUTE_TYPES} from "../schemaUtils";
 
 
 const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
@@ -276,9 +271,7 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
 
       validateValueVsAttributeType(
         attr.enumValues[key],
-        attr.type !== AttributeType.localizedStringDictionaryIndex
-          ? attr.type
-          : AttributeType.localizedStringDictionary
+        attr.type
         ,
         localVarName
       )

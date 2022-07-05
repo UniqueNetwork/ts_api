@@ -104,7 +104,7 @@ export class SubstrateUnique extends SubstrateCommon {
     return {
       ...token,
       raw: rawToken,
-      uniqueToken: decodeTokenFromProperties(token, schema)
+      uniqueToken: decodeTokenFromProperties(token, collectionId, tokenId, schema)
     }
   }
 
