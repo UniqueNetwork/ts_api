@@ -1,6 +1,6 @@
 {
   "name": "@unique-nft/api",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "sideEffects": false,
   "license": "MIT",
   "main": "./dist/index.js",
@@ -19,8 +19,12 @@
   },
   "typesVersions": {
     "*": {
-      ".": ["./dist/index.d.ts"],
-      "schema": ["./dist/schema.d.ts"]
+      ".": [
+        "./dist/index.d.ts"
+      ],
+      "schema": [
+        "./dist/schema.d.ts"
+      ]
     }
   },
   "files": [
