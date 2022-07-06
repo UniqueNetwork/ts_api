@@ -7,6 +7,7 @@ import type {EventRecord} from '@polkadot/types/interfaces/system/types'
 import type {GenericEventData} from '@polkadot/types/generic/Event'
 import type {InjectedAccountWithMeta} from '@polkadot/extension-inject/types'
 import type {HexString} from '@polkadot/util/types'
+import type {UpDataStructsTokenData} from '@unique-nft/unique-mainnet-types/default'
 
 export type {
   KeyringPair,
@@ -62,7 +63,12 @@ export type PropertiesArray = Array<{
   value: string
 }>
 
-export type RawNftToken = {
+export type HumanizedNftToken = {
   owner: SubOrEthAddressObj
   properties: PropertiesArray
+}
+
+export type ComboNftToken = {
+  token: HumanizedNftToken
+  rawToken: UpDataStructsTokenData
 }

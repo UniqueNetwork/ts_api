@@ -1,28 +1,29 @@
-import {UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate} from "../types";
+import {UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate} from '../types'
 import {
   CollectionProperties,
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
-} from "../../substrate/extrinsics/unique/types";
-import {converters2Layers, decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from "../schemaUtils";
-import {getKeys} from "../../tsUtils";
-import {validateCollectionSchema, validateCollectionTokenPropertyPermissions} from "./validators";
-import {PropertiesArray} from "../../types";
+} from '../../substrate/extrinsics/unique/types'
+import {converters2Layers, decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from '../schemaUtils'
+import {getKeys} from '../../tsUtils'
+import {validateUniqueCollectionSchema, validateCollectionTokenPropertyPermissions} from './validators'
+import {CollectionId, PropertiesArray} from '../../types'
 
 export const encodeCollectionSchemaToProperties = (schema: UniqueCollectionSchemaToCreate): CollectionProperties => {
-  validateCollectionSchema(schema)
+  validateUniqueCollectionSchema(schema)
   return converters2Layers.objectToProperties(schema)
 }
 
-export const unpackCollectionSchemaFromProperties = <T extends UniqueCollectionSchemaToCreate>(properties: PropertiesArray): any => {
+export const unpackCollectionSchemaFromProperties = (properties: PropertiesArray): any => {
   return converters2Layers.propertiesToObject(properties) as any
 }
 
-
-export const decodeUniqueCollectionFromProperties = <T extends UniqueCollectionSchemaDecoded>(properties: CollectionProperties): DecodingResult<T> => {
+export const decodeUniqueCollectionFromProperties = async (collectionId: number, properties: CollectionProperties): Promise<DecodingResult<UniqueCollectionSchemaDecoded>> => {
   try {
-    const unpackedSchema = unpackCollectionSchemaFromProperties<T>(properties)
-    validateCollectionSchema(unpackedSchema)
+    const unpackedSchema: UniqueCollectionSchemaDecoded = unpackCollectionSchemaFromProperties(properties)
+    validateUniqueCollectionSchema(unpackedSchema)
+    unpackedSchema.collectionId = collectionId as CollectionId
+
     if (unpackedSchema.coverPicture) {
       unpackedSchema.coverPicture = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicture, unpackedSchema.image)
     }
@@ -31,7 +32,7 @@ export const decodeUniqueCollectionFromProperties = <T extends UniqueCollectionS
     }
     return {
       isValid: true,
-      decoded: unpackedSchema as T,
+      decoded: unpackedSchema,
     }
   } catch(e) {
     return {
@@ -40,7 +41,6 @@ export const decodeUniqueCollectionFromProperties = <T extends UniqueCollectionS
     }
   }
 }
-
 
 const generateDefaultTPPObjectForKey = (key: string): TokenPropertyPermissionObject => ({
   key,

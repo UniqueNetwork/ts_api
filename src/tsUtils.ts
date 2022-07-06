@@ -24,7 +24,7 @@ export const getReversedEnum = <T extends EnumBaseType>(en: T): EnumReverse<T> =
   return result
 }
 
-export const safeJSONParse = <T extends object>(str: string): T | string => {
+export const safeJSONParse = <T>(str: string): T | string => {
   try {
     return JSON.parse(str) as T
   } catch {

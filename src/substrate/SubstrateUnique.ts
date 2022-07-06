@@ -52,10 +52,10 @@ import {
 } from "./extrinsics/unique/ExtrinsicCreateMultipleNftTokens";
 import {vec2str} from "../utils/common";
 import {decodeUniqueCollectionFromProperties} from "../schema/tools/collection";
-import {UniqueCollectionSchemaDecoded} from "../schema";
+import {UniqueCollectionSchemaDecoded, SchemaTools} from "../schema";
 import {decodeTokenFromProperties} from "../schema/tools/token";
 import {RawCollection} from "./extrinsics/unique/types";
-import {RawNftToken} from "../types";
+import {HumanizedNftToken} from "../types";
 import {ValidationError} from "../utils/errors";
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
@@ -91,20 +91,21 @@ export class SubstrateUnique extends SubstrateCommon {
       id: collectionId,
       name: vec2str(collection?.name),
       description: vec2str(collection?.description),
-      uniqueSchema: decodeUniqueCollectionFromProperties(collection.properties),
+      uniqueSchema: await SchemaTools.decode.collectionSchema(collectionId, collection.properties),
       raw: collection
     }
   }
 
   async getTokenById(collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaDecoded) {
     const rawToken = await this.api.rpc.unique.tokenData(collectionId, tokenId)
-    const token = (rawToken).toHuman() as RawNftToken
-    if (!token) return null
+    const token: HumanizedNftToken = (rawToken).toHuman() as any as HumanizedNftToken
+
+    if (!token || !token.owner) return null
 
     return {
       ...token,
       raw: rawToken,
-      uniqueToken: decodeTokenFromProperties(token, schema)
+      uniqueToken: await SchemaTools.decode.token(collectionId, tokenId, {token, rawToken}, schema),
     }
   }
 

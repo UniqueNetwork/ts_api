@@ -20,7 +20,6 @@ export enum AttributeType {
   float = 0x102,                               // number
   boolean = 0x103,                             // number
   timestamp = 0x104,                           // number // js, milliseconds from epoch
-  localizedStringDictionaryIndex = 0x105,      // number
   string = 0x201,                              // string
   url = 0x203,                                 // string
   isoDate = 0x204,                             // string // ISO Date: YYYY-MM-DD
@@ -58,10 +57,13 @@ export type CollectionAttributesSchema = {
   [K: number]: AttributeSchema
 }
 
-export const COLLECTION_SCHEMA_NAME = <const>'unique'
+export enum COLLECTION_SCHEMA_NAME {
+  unique = 'unique',
+  old = '_old_',
+}
 
 export interface UniqueCollectionSchemaToCreate {
-  schemaName: typeof COLLECTION_SCHEMA_NAME
+  schemaName: COLLECTION_SCHEMA_NAME
   schemaVersion: string // semver
 
   coverPicture: InfixOrUrlOrCidAndHash
@@ -129,8 +131,8 @@ export type DecodedAttributes  = {
     type: AttributeType
     kind: AttributeKind
     isArray: boolean
-    typeName: ATTRIBUTE_TYPE_NAME
-    kindName: ATTRIBUTE_KIND_NAME
+    technicalTypeName: ATTRIBUTE_TYPE_NAME
+    technicalKindName: ATTRIBUTE_KIND_NAME
   }
 }
 
@@ -145,4 +147,9 @@ export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash
     tokenId: TokenId
   }
   attributes: DecodedAttributes
+}
+
+export type DecodingImageLinkOptions = {
+  imageUrlTemplate?: UrlTemplateString
+  dummyImageFullUrl?: string
 }

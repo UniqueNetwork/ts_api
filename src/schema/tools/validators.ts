@@ -16,12 +16,7 @@ import {
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
 import {ValidationError} from "../../utils/errors";
-
-
-export const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
-export const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
-export const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
-export const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
+import {ATTRIBUTE_TYPE_NAME_BY_VALUE, POSSIBLE_ATTRIBUTE_KINDS, POSSIBLE_ATTRIBUTE_TYPES} from "../schemaUtils";
 
 
 const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
@@ -102,11 +97,7 @@ export const validateAndParseSemverString = (str: string, varName: string): Semv
   return Semver.fromString(str)
 }
 
-export const validateStringOrLocalizedStringDictionary = (dict: any, varName: string): dict is string | LocalizedStringDictionary => {
-  if (typeof dict === 'string') {
-    return true
-  }
-
+export const validateLocalizedStringDictionary = (dict: any, varName: string): dict is LocalizedStringDictionary => {
   isPlainObject(dict, varName)
 
   if (getKeys(dict).length === 0) {
@@ -223,7 +214,7 @@ export const validateValueVsAttributeType = (value: any, type: AttributeType, va
     isPlainObject(value, varName)
 
     if (type === AttributeType.localizedStringDictionary) {
-      validateStringOrLocalizedStringDictionary(value, varName)
+      validateLocalizedStringDictionary(value, varName)
     }
 
     return true
@@ -256,7 +247,9 @@ export const validateValueVsAttributeType = (value: any, type: AttributeType, va
 export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, varName: string): attr is AttributeSchema => {
   isPlainObject(attr, varName)
 
-  validateStringOrLocalizedStringDictionary(attr.name, `${varName}.name`)
+  if (typeof attr.name !== 'string') {
+    validateLocalizedStringDictionary(attr.name, `${varName}.name`)
+  }
 
   if (attr.hasOwnProperty('optional') && typeof attr.optional !== "boolean")
     throw new ValidationError(`${varName}.optional should be boolean when passed, got ${typeof attr.optional}: ${attr.optional}`)
@@ -276,9 +269,7 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
 
       validateValueVsAttributeType(
         attr.enumValues[key],
-        attr.type !== AttributeType.localizedStringDictionaryIndex
-          ? attr.type
-          : AttributeType.localizedStringDictionary
+        attr.type
         ,
         localVarName
       )
@@ -300,10 +291,10 @@ export const validateCollectionAttributesSchema = (attributes: any, varName: str
   return true
 }
 
-export const validateCollectionSchema = <C extends UniqueCollectionSchemaToCreate>(schema: any): schema is C => {
+export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaToCreate>(schema: any): schema is C => {
   isPlainObject(schema, 'Passed collection schema')
 
-  if (schema.schemaName !== COLLECTION_SCHEMA_NAME)
+  if (schema.schemaName !== COLLECTION_SCHEMA_NAME.unique)
     throw new ValidationError(`schemaName is not valid (passed ${schema.schemaName})`)
 
   const schemaVersion = validateAndParseSemverString(schema.schemaVersion, 'schemaVersion')
@@ -361,9 +352,11 @@ const validateAttributeEnumKey = (schema: AttributeSchema, num: number, varName:
   }
 }
 
-export const validateToken = <T, C extends UniqueCollectionSchemaToCreate>(token: any, collectionSchema: C): token is T => {
-  if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME) {
-    throw new ValidationError(`schemaName is not valid (passed ${collectionSchema.schemaName})`)
+const COLLECTION_SCHEMA_NAME_VALUES = getEnumValues(COLLECTION_SCHEMA_NAME)
+
+export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate>(token: any, collectionSchema: C): token is T => {
+  if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME.unique) {
+    throw new ValidationError(`schemaName is not "unique" (passed ${collectionSchema.schemaName})`)
   }
   validateFieldByType(token, 'name', 'string', true, 'token')
   validateFieldByType(token, 'description', 'string', true, 'token')
@@ -419,3 +412,18 @@ export const validateToken = <T, C extends UniqueCollectionSchemaToCreate>(token
 
   return true
 }
+
+export const checkSafeFactory = <T extends (...args: any) => any>(fn: T) => {
+  const returnFn = (...params: Parameters<T>) => {
+    try {
+      return fn(...params as any)
+    } catch {
+      return false as ReturnType<T>
+    }
+  }
+  return returnFn as T
+}
+
+export const validateUrlTemplateStringSafe = checkSafeFactory(validateUrlTemplateString)
+export const validateURLSafe = checkSafeFactory(validateURL)
+export const validateLocalizedStringDictionarySafe = checkSafeFactory(validateLocalizedStringDictionary)
