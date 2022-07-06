@@ -1209,20 +1209,20 @@
   dependencies:
     "@types/node" "*"
 
-"@unique-nft/opal-testnet-types@0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@unique-nft/opal-testnet-types/-/opal-testnet-types-0.5.2.tgz#6611a837336fa24e455b6534bd9fbcb6e37d4b90"
-  integrity sha512-FXpLDxkSjYsqm1moT+WnMUwl1CxUm4Lx//ZN62Wf+pU5LNajIgZqdJBdrp6H8vIs5awF1n3B1X53m+Bjqwo4ZA==
-
-"@unique-nft/quartz-mainnet-types@0.5.3":
+"@unique-nft/opal-testnet-types@0.5.3":
   version "0.5.3"
-  resolved "https://registry.yarnpkg.com/@unique-nft/quartz-mainnet-types/-/quartz-mainnet-types-0.5.3.tgz#6c22d7453503920548e13c5db582605f37a7ee64"
-  integrity sha512-ZIGuVA6f6henvvGUK7oZHlQjtuFG9PDqAUvZaS18fgZvrbzolbL9W4QLv6z0+9WBfUG0MeaDyeRwk35WpmbQPQ==
+  resolved "https://registry.yarnpkg.com/@unique-nft/opal-testnet-types/-/opal-testnet-types-0.5.3.tgz#2ad348a75de34caa533aa8a1e605e700cbbd54fb"
+  integrity sha512-JKQspSNV3HnWrbFPgLE25CJ+o38sbpI534XXhPEQU2/DUYPxpl1IVMAdJlWQ3j5nElQw+oIqo6PvmyzbKz4PBw==
 
-"@unique-nft/unique-mainnet-types@0.6.2":
-  version "0.6.2"
-  resolved "https://registry.yarnpkg.com/@unique-nft/unique-mainnet-types/-/unique-mainnet-types-0.6.2.tgz#20eeaaeee842b5bc7ea5454afb3b558b5ca2f0bb"
-  integrity sha512-ULyz5iL1tGbHnziabafKvPMA6tuAfyCm6ORBFZiWbN0pp6CkINs6jO91FbEoWG9Eo8M+dViCdfnkpR/dnMas1g==
+"@unique-nft/quartz-mainnet-types@0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@unique-nft/quartz-mainnet-types/-/quartz-mainnet-types-0.6.1.tgz#0c8f1ebeef3542c9ce846239e31f526f17b269ba"
+  integrity sha512-BqjDhq/SS1/Z9jJSZyKge1KDpoN8mT7kV32cSjX03zO1JwFe0CD0JYnLnQaeDEdcGG2hNTIz6FWGghUEv9RYCg==
+
+"@unique-nft/unique-mainnet-types@0.6.3":
+  version "0.6.3"
+  resolved "https://registry.yarnpkg.com/@unique-nft/unique-mainnet-types/-/unique-mainnet-types-0.6.3.tgz#225f733a4faf81b3403ebe630be7cc8c7b725452"
+  integrity sha512-t79RC6FSaqgoQbsVp1FWpWt58gp50FhDJmCVHjNShaq5agIyWk6pGmNlbtI+6zgDNDfAwKBhuQhIp9uvMsnd2A==
 
 "@wessberg/stringutil@^1.0.19":
   version "1.0.19"

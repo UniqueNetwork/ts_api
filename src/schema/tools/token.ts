@@ -1,30 +1,27 @@
-import {CollectionId, PropertiesArray, RawNftToken, TokenId} from "../../types";
+import {CollectionId, PropertiesArray, HumanizedNftToken, TokenId} from '../../types'
 import {
   AttributeKind,
   AttributeType,
   AttributeTypeMask,
-  UniqueCollectionSchemaToCreate,
+  DecodedAttributes,
+  EncodedTokenAttributes,
   InfixOrUrlOrCidAndHash,
   LocalizedStringDictionary,
-  EncodedTokenAttributes,
-  UniqueTokenToCreate,
+  UniqueCollectionSchemaDecoded,
+  UniqueCollectionSchemaToCreate,
   UniqueTokenDecoded,
-  URL_TEMPLATE_INFIX,
-  DecodedInfixOrUrlOrCidAndHash,
-  UrlTemplateString,
-  UniqueCollectionSchemaDecoded, DecodedAttributes
-} from "../types";
-import {validateStringOrLocalizedStringDictionary, validateToken} from "./validators";
-import {getEntries, getValues, safeJSONParse} from "../../tsUtils";
-import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
+  UniqueTokenToCreate
+} from '../types'
+import {validateLocalizedStringDictionary, validateUniqueToken} from './validators'
+import {getEntries, safeJSONParse} from '../../tsUtils'
+import {CollectionProperties} from '../../substrate/extrinsics/unique/types'
 import {
   ATTRIBUTE_KIND_NAME_BY_VALUE,
   ATTRIBUTE_TYPE_NAME_BY_VALUE,
   decodeTokenUrlOrInfixOrCidWithHashField,
   DecodingResult
 } from "../schemaUtils";
-import {utils} from "../../utils";
-import {ValidationError} from "../../utils/errors";
+import {isNestingAddress, nestingAddressToCollectionIdAndTokenId} from '../../utils/common'
 
 const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: InfixOrUrlOrCidAndHash) => {
   if (typeof source.urlInfix === 'string') {
@@ -55,8 +52,8 @@ const addKeyToTokenProperties = (properties: PropertiesArray, key: string, value
   })
 }
 
-export const encodeTokenToProperties = (token: UniqueTokenToCreate, schema: UniqueCollectionSchemaToCreate): PropertiesArray => {
-  validateToken(token, schema)
+export const encodeTokenToProperties = (token: UniqueTokenToCreate, schema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): PropertiesArray => {
+  validateUniqueToken(token, schema)
 
   const properties: PropertiesArray = []
   if (token.name) addKeyToTokenProperties(properties, 'n', token.name)
@@ -105,8 +102,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
   if (nameProperty) {
     const parsedName = safeJSONParse<LocalizedStringDictionary>(nameProperty.value)
     token.name =
-      typeof parsedName === 'object' &&
-      validateStringOrLocalizedStringDictionary(parsedName, 'token.name')
+      validateLocalizedStringDictionary(parsedName, 'token.name')
         ? parsedName
         : nameProperty.value
   }
@@ -115,8 +111,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
   if (descriptionProperty) {
     const parsedDescription = safeJSONParse<LocalizedStringDictionary>(descriptionProperty.value)
     token.description =
-      typeof parsedDescription === 'object' &&
-      validateStringOrLocalizedStringDictionary(parsedDescription, 'token.description')
+      validateLocalizedStringDictionary(parsedDescription, 'token.description')
         ? parsedDescription
         : descriptionProperty.value
   }
@@ -162,19 +157,11 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 }
 
 
-
-
-export const decodeTokenFromProperties = (rawToken: RawNftToken, collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): DecodingResult<UniqueTokenDecoded> => {
-  if (!schema) {
-    return  {
-      isValid: false,
-      validationError: new ValidationError('unable to parse: collection schema was not provided')
-    }
-  }
+export const decodeTokenFromProperties = async (collectionId: number, tokenId: number, rawToken: HumanizedNftToken, schema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): Promise<DecodingResult<UniqueTokenDecoded>> => {
   const unpackedToken = unpackEncodedTokenFromProperties(rawToken.properties, schema)
 
   try {
-    validateToken(unpackedToken, schema)
+    validateUniqueToken(unpackedToken, schema)
   } catch (e) {
     return {
       isValid: false,
@@ -189,8 +176,8 @@ export const decodeTokenFromProperties = (rawToken: RawNftToken, collectionId: n
     attributes: fullDecodeTokenAttributes(unpackedToken, schema),
     image: decodeTokenUrlOrInfixOrCidWithHashField(unpackedToken.image, schema.image)
   }
-  if (token.owner.Ethereum && utils.address.is.nestingAddress(token.owner.Ethereum)) {
-    token.nestingParentToken = utils.address.nestingAddressToCollectionIdAndTokenId(token.owner.Ethereum)
+  if (token.owner.Ethereum && isNestingAddress(token.owner.Ethereum)) {
+    token.nestingParentToken = nestingAddressToCollectionIdAndTokenId(token.owner.Ethereum)
   }
 
   if (unpackedToken.name) token.name = unpackedToken.name
@@ -242,7 +229,7 @@ export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collection
 
     if (schema.kind === AttributeKind.enum && typeof value === 'number') {
       if (schema.enumValues.hasOwnProperty(value)) {
-        attribute.value =  schema.enumValues[value]
+        attribute.value = schema.enumValues[value]
         attributes[key] = attribute
       }
     }

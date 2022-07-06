@@ -1,3 +1,7 @@
+import {CollectionId, EthereumAddress, TokenId} from "../types";
+import {NESTING_PREFIX} from "../constants";
+import {is} from "./addressUtils";
+
 export const parseAndCheckTheNumberIsDWORD = (n: number | string) => {
   const num: number = (typeof n === 'string') ? parseInt(n, 10) : n
 
@@ -61,3 +65,24 @@ export const checkEnvironmentIsBrowser = (safe?: boolean) => {
   }
   return true
 }
+
+
+const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
+
+export const isEthereumAddress = (address: string): address is EthereumAddress => {
+  return typeof address === 'string'&& address.length === 42 && !!address.match(ETH_ADDRESS_REGEX)
+}
+export const isNestingAddress = (address: string): boolean  => {
+  return isEthereumAddress(address) && address.startsWith(NESTING_PREFIX)
+}
+
+export const nestingAddressToCollectionIdAndTokenId = (address: string): { collectionId: CollectionId, tokenId: TokenId } => {
+  if (!isNestingAddress(address)) {
+    throw new Error(`Passed address ${address} is not valid ethereum address`)
+  }
+  return {
+    collectionId: DWORDHexString.toNumber(address.slice(-16, -8)) as CollectionId,
+    tokenId: DWORDHexString.toNumber(address.slice(-8)) as TokenId,
+  }
+}
+

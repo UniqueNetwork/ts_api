@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 import fs from 'fs'
 import { beforeAll, describe, expect, test, suite, Vitest } from 'vitest'
-import { AttributeKind, AttributeType, CollectionAttributesSchema, COLLECTION_SCHEMA_NAME, init, KeyringPair, Substrate, SubstrateUnique, UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate, UniqueSchema, UniqueTokenToCreate } from '../index'
+import { AttributeKind, AttributeType, CollectionAttributesSchema, COLLECTION_SCHEMA_NAME, init, KeyringPair, Substrate, SubstrateUnique, UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate, SchemaTools, UniqueTokenToCreate } from '../index'
 import { validateCollectionAttributesSchema } from '../schema/tools/validators'
 import { addressToObject } from '../utils/addressUtils'
 
@@ -495,13 +495,13 @@ describe('Integration tests for validateCollectionAttributesSchema', () => {
     const keyring1 = Substrate.signer.keyringFromSeed(config.SUB_SEED_1)
     const keyring2 = Substrate.signer.keyringFromSeed(config.SUB_SEED_2)
 
-    const collectionProperties = UniqueSchema.encode.collectionSchema(dungeonsAndHeroesSchema)
-    const tokenPropertyPermissions = UniqueSchema.encode.collectionTokenPropertyPermissions(dungeonsAndHeroesSchema)
-    const knightTokenProperties = UniqueSchema.encode.token(knightToken, dungeonsAndHeroesSchema)
+    const collectionProperties = SchemaTools.encode.collectionSchema(dungeonsAndHeroesSchema)
+    const tokenPropertyPermissions = SchemaTools.encode.collectionTokenPropertyPermissions(dungeonsAndHeroesSchema)
+    const knightTokenProperties = SchemaTools.encode.token(knightToken, dungeonsAndHeroesSchema)
 
 
-    const assassinTokenProperties = UniqueSchema.encode.token(assassinToken, dungeonsAndHeroesSchema)
-    const wizardTokenProperties = UniqueSchema.encode.token(wizardToken, dungeonsAndHeroesSchema)
+    const assassinTokenProperties = SchemaTools.encode.token(assassinToken, dungeonsAndHeroesSchema)
+    const wizardTokenProperties = SchemaTools.encode.token(wizardToken, dungeonsAndHeroesSchema)
     const createCollectionResult = await chain.createCollection({collection: {
         name: 'Dungeons and heroes',
         description: 'Various heroes from the worldwide famous game dungeons and heroes',

@@ -3,7 +3,7 @@ import {
   ApiPromise,
   TokenId,
   AnyInputAddress,
-  PropertiesArray, CollectionId
+  PropertiesArray, CollectionId, SubOrEthAddressObj
 } from '../../../types'
 import {utils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
@@ -19,9 +19,9 @@ export interface ExtrinsicCreateNftTokenParams {
 }
 
 export interface ExtrinsicCreateNftTokenResult extends ExtrinsicResult {
-  collectionId: CollectionId | null
-  tokenId: TokenId | null
-  owner: any
+  collectionId: CollectionId
+  tokenId: TokenId
+  owner: SubOrEthAddressObj
 }
 
 export class ExtrinsicCreateNftToken extends AbstractExtrinsic<ExtrinsicCreateNftTokenParams, ExtrinsicCreateNftTokenResult> {
@@ -37,10 +37,13 @@ export class ExtrinsicCreateNftToken extends AbstractExtrinsic<ExtrinsicCreateNf
 
     const data = findEventDataBySectionAndMethod(txResult, 'common', 'ItemCreated')
 
+    if (!data) {
+      throw new Error(`No event common.ItemCreated found`)
+    }
 
-    const collectionId = (!!data && parseInt(data[0].toString(), 10) as CollectionId) || null
-    const tokenId = (!!data && parseInt(data[1].toString(), 10) as TokenId) || null
-    const owner = (!!data && data[2].toJSON()) || null
+    const collectionId = parseInt(data[0].toString(), 10) as CollectionId
+    const tokenId = parseInt(data[1].toString(), 10) as TokenId
+    const owner = data[2].toJSON() as SubOrEthAddressObj
 
     if (!tokenId) {
       throw new ExtrinsicError(txResult, 'No token id found')

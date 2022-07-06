@@ -11,6 +11,16 @@
     ".": {
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./schema": {
+      "import": "./dist/schema.mjs",
+      "require": "./dist/schema.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": ["./dist/index.d.ts"],
+      "schema": ["./dist/schema.d.ts"]
     }
   },
   "files": [
@@ -27,29 +37,17 @@
     "Polkadot",
     "Kusama"
   ],
-  "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
-    "format": [
-      "esm",
-      "cjs"
-    ],
-    "dts": true,
-    "sourcemap": true,
-    "clean": true
-  },
   "scripts": {
     "ts": "tsc --project tsconfig.json",
     "clean": "rimraf lib && rimraf tsconfig.tsbuildinfo && mkdir lib",
     "build:ts": "yarn clean && yarn ts",
-    "build": "yarn tsup",
+    "build": "yarn tsup --config configs/tsup.config.ts",
     "rollup": "rollup --config rollup.config.ts --configPlugin typescript --sourcemap",
     "analyze": "yarn rollup --analyze",
     "develop": "yarn rollup --watch",
     "esmon": "nodemon --exec \"yarn esno\" ",
-    "release": "dotenv -e .release.env -- release-it",
-    "release_github": "dotenv -e .release.env -- --no-increment --no-git --no-npm --github.release --github.update",
+    "release": "dotenv -e .release.env -- release-it --config ./configs/.release-it.js",
+    "release_github": "dotenv -e .release.env -- release-it --no-increment --no-git --no-npm --github.release --github.update",
     "testrun": "vitest run",
     "test": "vitest"
   },
@@ -83,9 +81,9 @@
     "@polkadot/types": "8.7.1",
     "@polkadot/util": "9.4.1",
     "@polkadot/util-crypto": "9.4.1",
-    "@unique-nft/opal-testnet-types": "0.5.2",
-    "@unique-nft/quartz-mainnet-types": "0.5.3",
-    "@unique-nft/unique-mainnet-types": "0.6.2",
+    "@unique-nft/opal-testnet-types": "0.5.3",
+    "@unique-nft/quartz-mainnet-types": "0.6.1",
+    "@unique-nft/unique-mainnet-types": "0.6.3",
     "ethers": "5.6.8",
     "protobufjs": "^6.11.3"
   }

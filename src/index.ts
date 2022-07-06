@@ -13,7 +13,7 @@ export {utils} from './utils'
 
 export * from './ethereum'
 export * from './substrate'
-export {UniqueSchema} from './schema'
+export {SchemaTools} from './schema'
 export * from './schema/types'
 
 export * as coins from './coin'

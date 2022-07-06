@@ -1,5 +1,11 @@
 import {getEthers, getPolkadotUtilCrypto} from "../libs";
-import {DWORDHexString, UInt8ArrayToHexString} from "./common";
+import {
+  DWORDHexString,
+  isEthereumAddress,
+  isNestingAddress,
+  nestingAddressToCollectionIdAndTokenId,
+  UInt8ArrayToHexString
+} from "./common";
 import {COLLECTION_ADDRESS_PREFIX, NESTING_PREFIX} from "../constants";
 import {
   CollectionId,
@@ -12,18 +18,16 @@ import {
   TokenId,
   HexString
 } from '../types'
-import {decodeAddress} from "@polkadot/util-crypto";
 
 
 export const validateEthereumAddress = (address: string) => {
-  const ethers = getEthers()
-  if (!ethers.utils.isAddress(address)) {
-    throw new Error(`Passed address ${address} is not valid`)
+  if (!is.ethereumAddress(address)) {
+    throw new Error(`Passed address ${address} is not valid ethereum address`)
   }
 }
 
 export const validateSubstrateAddress = (address: string): SubstrateAddress => {
-  const {validateAddress} = getPolkadotUtilCrypto()
+  const {validateAddress, decodeAddress} = getPolkadotUtilCrypto()
   try {
     validateAddress(address)
     decodeAddress(address)
@@ -82,13 +86,7 @@ export const collectionIdAndTokenIdToNestingAddress = (collectionId: number, tok
   )
 }
 
-export const nestingAddressToCollectionIdAndTokenId = (address: string): { collectionId: CollectionId, tokenId: TokenId } => {
-  validateEthereumAddress(address)
-  return {
-    collectionId: DWORDHexString.toNumber(address.slice(-16, -8)) as CollectionId,
-    tokenId: DWORDHexString.toNumber(address.slice(-8)) as TokenId,
-  }
-}
+export {nestingAddressToCollectionIdAndTokenId}
 
 export const is = {
   substrateOrEthereumAddressObj(obj: any): obj is SubAddressObj | EthAddressObj {
@@ -118,11 +116,10 @@ export const is = {
     }
   },
   ethereumAddress(address: string): address is EthereumAddress {
-    const ethers = getEthers()
-    return ethers.utils.isAddress(address)
+    return isEthereumAddress(address)
   },
   nestingAddress(address: string): boolean {
-    return is.ethereumAddress(address) && address.startsWith(NESTING_PREFIX)
+    return isNestingAddress(address)
   },
   collectionAddress(address: string): boolean {
     return is.ethereumAddress(address) && address.startsWith(COLLECTION_ADDRESS_PREFIX)

@@ -57,10 +57,13 @@ export type CollectionAttributesSchema = {
   [K: number]: AttributeSchema
 }
 
-export const COLLECTION_SCHEMA_NAME = <const>'unique'
+export enum COLLECTION_SCHEMA_NAME {
+  unique = 'unique',
+  old = '_old_',
+}
 
 export interface UniqueCollectionSchemaToCreate {
-  schemaName: typeof COLLECTION_SCHEMA_NAME
+  schemaName: COLLECTION_SCHEMA_NAME
   schemaVersion: string // semver
 
   coverPicture: InfixOrUrlOrCidAndHash
@@ -144,4 +147,9 @@ export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash
     tokenId: TokenId
   }
   attributes: DecodedAttributes
+}
+
+export type DecodingImageLinkOptions = {
+  imageUrlTemplate?: UrlTemplateString
+  dummyImageFullUrl?: string
 }
