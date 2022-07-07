@@ -50,6 +50,7 @@
     "analyze": "yarn rollup --analyze",
     "develop": "yarn rollup --watch",
     "esmon": "nodemon --exec \"yarn esno\" ",
+    "patch": "npm run release -- -i patch --ci",
     "release": "dotenv -e .release.env -- release-it --config ./configs/.release-it.js",
     "release_github": "dotenv -e .release.env -- release-it --no-increment --no-git --no-npm --github.release --github.update",
     "testrun": "vitest run",
