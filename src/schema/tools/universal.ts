@@ -1,4 +1,4 @@
-import {PropertiesArray, HumanizedNftToken, ComboNftToken} from "../../types";
+import {HumanizedNftToken, PropertiesArray, UpDataStructsTokenData} from "../../types";
 import {DecodingResult} from "../schemaUtils";
 import {
   COLLECTION_SCHEMA_NAME,
@@ -55,19 +55,20 @@ export const universallyDecodeCollectionSchema = async (collectionId: number, pr
   }
 }
 
-export const universallyDecodeToken = async (collectionId: number, tokenId: number, comboNftToken: ComboNftToken, schema: UniqueCollectionSchemaDecoded | undefined, options?: DecodingImageLinkOptions): Promise<DecodingResult<UniqueTokenDecoded>> => {
+export const universallyDecodeToken = async (collectionId: number, tokenId: number, rawToken: UpDataStructsTokenData, schema: UniqueCollectionSchemaDecoded, options?: DecodingImageLinkOptions): Promise<DecodingResult<UniqueTokenDecoded>> => {
   if (!schema) {
     return {
       isValid: false,
       validationError: new ValidationError('unable to parse: collection schema was not provided')
     }
   }
+  const humanizedToken: HumanizedNftToken = rawToken.toHuman() as HumanizedNftToken
 
   if (schema.schemaName === COLLECTION_SCHEMA_NAME.unique) {
-    return await token.decodeTokenFromProperties(collectionId, tokenId, comboNftToken.token, schema)
+    return await token.decodeTokenFromProperties(collectionId, tokenId, humanizedToken, schema)
   } else if (schema.schemaName === COLLECTION_SCHEMA_NAME.old) {
     const imageLinkOptions = parseImageLinkOptions(options)
-    return await oldSchema.decodeOldSchemaToken(collectionId, tokenId, comboNftToken.rawToken, schema, imageLinkOptions)
+    return await oldSchema.decodeOldSchemaToken(collectionId, tokenId, rawToken, schema, imageLinkOptions)
   }
 
   return {

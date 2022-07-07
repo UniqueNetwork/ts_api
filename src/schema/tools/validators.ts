@@ -113,7 +113,7 @@ export const validateLocalizedStringDictionary = (dict: any, varName: string): d
   return true
 }
 
-export const validateUrlTemplateString = (str: any, varName: string): str is string => {
+export const validateUrlTemplateString = (str: any, varName: string): str is UrlTemplateString => {
   const prefix = `TemplateUrlString is not valid, ${varName}`
   if (typeof str !== 'string')
     throw new ValidationError(`${prefix} is not a string, got ${str}`)

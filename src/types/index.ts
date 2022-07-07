@@ -26,6 +26,7 @@ export type {
   HexString,
   DefinitionRpc,
   DefinitionRpcSub,
+  UpDataStructsTokenData,
 }
 
 
@@ -68,7 +69,3 @@ export type HumanizedNftToken = {
   properties: PropertiesArray
 }
 
-export type ComboNftToken = {
-  token: HumanizedNftToken
-  rawToken: UpDataStructsTokenData
-}

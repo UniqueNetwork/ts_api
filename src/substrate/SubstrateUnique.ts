@@ -105,7 +105,7 @@ export class SubstrateUnique extends SubstrateCommon {
     return {
       ...token,
       raw: rawToken,
-      uniqueToken: await SchemaTools.decode.token(collectionId, tokenId, {token, rawToken}, schema),
+      uniqueToken: await SchemaTools.decode.token(collectionId, tokenId, rawToken, schema as any),
     }
   }
 
