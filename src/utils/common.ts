@@ -39,7 +39,7 @@ export const str2vec = (str: string) => {
   if (typeof str !== 'string') {
     return str
   }
-  return str.split('').map(x => str.charCodeAt(0))
+  return str.split('').map(x => x.charCodeAt(0))
 }
 
 export const hexToU8a = (hexString: string): Uint8Array =>
