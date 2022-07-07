@@ -31,7 +31,7 @@ export const UInt8ArrayToHexString = (array: Uint8Array): string => {
 
 export const vec2str = (arr: Array<number | string>) => {
   return arr
-    .map(x => String.fromCharCode(typeof x === 'number' ? x : parseInt(x, 16)))
+    .map(x => String.fromCharCode(typeof x === 'number' ? x : parseInt(x, 10)))
     .join('')
 }
 
@@ -39,7 +39,7 @@ export const str2vec = (str: string) => {
   if (typeof str !== 'string') {
     return str
   }
-  return Array.from(str).map(x => x.charCodeAt(0))
+  return str.split('').map(x => str.charCodeAt(0))
 }
 
 export const hexToU8a = (hexString: string): Uint8Array =>
