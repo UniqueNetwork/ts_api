@@ -129,7 +129,6 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   const parsedToken: HumanizedNftToken = {
     owner: rawToken.owner.toHuman() as SubOrEthAddressObj,
     properties: rawToken.properties.map(property => {
-      // console.log(`collection ${i} token ${tokenId} property ${property.key.toHuman()}:`, property)
       return {
         key: property.key.toHuman() as string,
         value: property.value.toJSON() as string,
@@ -152,7 +151,6 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   try {
     tokenDecoded = NFTMeta.decode(u8aToken)
     tokenDecodedHuman = tokenDecoded.toJSON()
-    console.log(tokenId, tokenDecodedHuman)
   } catch (err: any) {
     return {
       isValid: false,
