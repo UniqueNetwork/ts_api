@@ -2,6 +2,7 @@ export const getKeys = <T extends Object>(o: T) => Object.keys(o) as Array<keyof
 export const getValues = <T extends Object>(o: T) => Object.values(o) as Array<T[keyof T]>
 export const getEntries = <T extends Object>(o: T) => Object.entries(o) as Array<[keyof T, T[keyof T]]>
 
+export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 type EnumBaseType = Record<string,  number | string>
 

@@ -54,16 +54,33 @@ import {vec2str} from "../utils/common";
 import {decodeUniqueCollectionFromProperties} from "../schema/tools/collection";
 import {UniqueCollectionSchemaDecoded, SchemaTools} from "../schema";
 import {decodeTokenFromProperties} from "../schema/tools/token";
-import {RawCollection} from "./extrinsics/unique/types";
-import {HumanizedNftToken} from "../types";
+import {
+  CollectionLimits,
+  CollectionTokenPropertyPermissions,
+  RawCollection,
+  TokenPropertyPermission
+} from "./extrinsics/unique/types";
+import {HumanizedNftToken, PropertiesArray, SubOrEthAddressObj, SubstrateAddress} from "../types";
 import {ValidationError} from "../utils/errors";
+import type {UpDataStructsCollection} from "@unique-nft/opal-testnet-types/default/types";
+import {UpDataStructsRpcCollection} from "@unique-nft/opal-testnet-types/default/types";
+import {Writeable} from "../tsUtils";
+import {normalizeSubstrateAddress} from "../utils/addressUtils";
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
+export interface IGetCollectionByIdOptions {
+  fetchAll?: boolean
+  fetchEffectiveLimits?: boolean
+  fetchAdmins?: boolean
+  fetchNextTokenId?: boolean
+}
 
 export interface ConnectToSubstrateOptions {
   dontAwaitApiIsReady?: boolean
 }
+
+
 
 export class SubstrateUnique extends SubstrateCommon {
 
@@ -77,22 +94,66 @@ export class SubstrateUnique extends SubstrateCommon {
     return await super.getBalance(substrateAddress)
   }
 
-  async getCollectionById(collectionId: number) {
-    const collection = (await this.api.rpc.unique.collectionById(collectionId)).toHuman() as any as RawCollection | null
+  async getCollectionById(collectionId: number, options?: IGetCollectionByIdOptions) {
+    const rawCollection = await this.api.rpc.unique.collectionById(collectionId) as any as Writeable<UpDataStructsRpcCollection> | null
 
-    if (!collection) {
+    /*
+    +readonly owner: AccountId32;
+    +readonly mode: UpDataStructsCollectionMode;
+    +readonly name: Vec<u16>;
+    +readonly description: Vec<u16>;
+    +readonly tokenPrefix: Bytes;
+    readonly sponsorship: UpDataStructsSponsorshipState;
+    ??readonly limits: UpDataStructsCollectionLimits;
+    ??readonly permissions: UpDataStructsCollectionPermissions;
+    +readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
+    +readonly properties: Vec<UpDataStructsProperty>;
+    +readonly readOnly: bool;
+     */
+    if (!rawCollection) {
       return null
     }
 
-    collection.properties = collection.properties || []
+    const collection = {
+      owner: rawCollection.owner.toHuman() as SubstrateAddress,
+      ownerNormalized: normalizeSubstrateAddress(rawCollection.owner.toHuman()) as SubstrateAddress,
+      name: vec2str(rawCollection.name.toHuman() as number[]),
+      description: vec2str(rawCollection.description.toHuman() as number[]),
+      tokenPrefix: rawCollection.tokenPrefix.toHuman() as string,
+      mode: rawCollection.mode.toHuman() as string,
+      properties: rawCollection.properties ? rawCollection.properties.toHuman() as PropertiesArray : [],
+      tokenPropertyPermissions: rawCollection.tokenPropertyPermissions ? rawCollection.tokenPropertyPermissions.toHuman() as any as CollectionTokenPropertyPermissions : [],
+      readOnly: rawCollection.readOnly.toHuman() as boolean,
+    }
+
+    rawCollection.properties = rawCollection.properties.toHuman()
+
+    const uniqueSchema = await SchemaTools.decode.collectionSchema(collectionId, rawCollection.properties.toHuman())
+
+    let effectiveLimits: CollectionLimits | null = null
+    if (options?.fetchAll || options?.fetchEffectiveLimits) {
+      effectiveLimits = (await this.api.rpc.unique.effectiveCollectionLimits(collectionId)).toHuman() as CollectionLimits
+    }
+
+    let adminList: Array<SubOrEthAddressObj> = []
+    if (options?.fetchAll || options?.fetchAdmins) {
+      adminList = (await this.api.rpc.unique.adminlist(collectionId)).toHuman() as Array<SubOrEthAddressObj>
+    }
+
 
     return {
-      ...collection,
+      ...rawCollection,
       id: collectionId,
-      name: vec2str(collection?.name),
-      description: vec2str(collection?.description),
-      uniqueSchema: await SchemaTools.decode.collectionSchema(collectionId, collection.properties),
-      raw: collection
+      name: vec2str(rawCollection?.name),
+      description: vec2str(rawCollection?.description),
+      uniqueSchema,
+      effectiveLimits,
+      adminList,
+      raw: {
+        get() {
+          return rawCollection
+        }
+      }
     }
   }
 
