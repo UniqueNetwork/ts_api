@@ -1,6 +1,5 @@
 import {CollectionId, EthereumAddress, TokenId} from "../types";
 import {NESTING_PREFIX} from "../constants";
-import {is} from "./addressUtils";
 
 export const parseAndCheckTheNumberIsDWORD = (n: number | string) => {
   const num: number = (typeof n === 'string') ? parseInt(n, 10) : n
@@ -45,14 +44,16 @@ export const str2vec = (str: string) => {
 export const hexToU8a = (hexString: string): Uint8Array =>
   Uint8Array.from(((hexString.startsWith('0x') ? hexString.slice(2) : hexString).match(/.{1,2}/g) || []).map((byte) => parseInt(byte, 16)))
 
-
+export const hexStringToString = (hexString: string): string =>
+  ((hexString.startsWith('0x') ? hexString.slice(2) : hexString).match(/.{1,2}/g) || [])
+    .map(el => String.fromCharCode(parseInt(el, 16)))
+    .join('')
 
 
 export const u8aToHex = (bytes: number[] | Uint8Array): string => {
   const arr = bytes instanceof Uint8Array ? Array.from(bytes) : bytes
   return arr.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
 }
-
 
 
 export const checkEnvironmentIsBrowser = (safe?: boolean) => {
@@ -70,9 +71,9 @@ export const checkEnvironmentIsBrowser = (safe?: boolean) => {
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
 
 export const isEthereumAddress = (address: string): address is EthereumAddress => {
-  return typeof address === 'string'&& address.length === 42 && !!address.match(ETH_ADDRESS_REGEX)
+  return typeof address === 'string' && address.length === 42 && !!address.match(ETH_ADDRESS_REGEX)
 }
-export const isNestingAddress = (address: string): boolean  => {
+export const isNestingAddress = (address: string): boolean => {
   return isEthereumAddress(address) && address.startsWith(NESTING_PREFIX)
 }
 

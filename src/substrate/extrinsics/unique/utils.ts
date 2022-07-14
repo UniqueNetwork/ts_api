@@ -1,5 +1,5 @@
 import {utils} from "../../../utils";
-import {AnyInputAddress, PropertiesArray, SubOrEthAddressObj} from "../../../types";
+import {AnyInputAddress, PropertiesArray} from "../../../types";
 
 export type TokenToMint = {
   owner: AnyInputAddress

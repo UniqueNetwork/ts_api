@@ -655,7 +655,7 @@ describe('Integration tests for validateCollectionAttributesSchema', () => {
       NFT: tokenData
     }).signAndSend(keyring1)
 
-    const getCollectionRes = await chain.getCollectionById(collectionId)
+    const getCollectionRes = await chain.getCollection(collectionId)
 
     expect(getCollectionRes?.uniqueSchema.isValid).toBe(true)
     console.log('Valid collection created, id:', collectionId)
@@ -671,7 +671,7 @@ describe('Integration tests for validateCollectionAttributesSchema', () => {
 
   test('get valid token', async () => {
     const {chain, keyring1, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 1, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 1, decodedSchema)
 
     const expectedProperties = [
         { key: 'n',   value: 'knight (valid token)' },
@@ -692,84 +692,84 @@ describe('Integration tests for validateCollectionAttributesSchema', () => {
 
   test('invalid value a.0 == 1/3', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 2, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 2, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid value a.1 == 1:3', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 3, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 3, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid i.c: object', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 4, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 4, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid v.c: object', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 5, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 5, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid so.c: object', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 6, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 6, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid i.c: array', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 7, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 7, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid v.c: array', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 8, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 8, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid so.c: array', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 9, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 9, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('empty a.1 value', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 10, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 10, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid a.1: string instead of string of numbers', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 11, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 11, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid a.1: object', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 12, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 12, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })
 
   test('invalid n: empty', async () => {
     const {chain, collectionId, decodedSchema} = context!
-    const getTokenRes = await chain.getTokenById(collectionId, 13, decodedSchema)
+    const getTokenRes = await chain.getToken(collectionId, 13, decodedSchema)
 
     expect(getTokenRes?.uniqueToken.isValid).toBe(false)
   })

@@ -1,11 +1,10 @@
-import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
-import {utils} from '../../../utils'
+import {ApiPromise, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
 
 export interface ExtrinsicConfirmSponsorshipParams {
-  collectionId: CollectionId
+  collectionId: number
 }
 
 export interface ExtrinsicConfirmSponsorshipResult extends ExtrinsicResult {

@@ -1,16 +1,7 @@
-import {
-  ISubmittableResult,
-  ApiPromise,
-  TokenId,
-  AnyInputAddress,
-  PropertiesArray, CollectionId, SubOrEthAddressObj
-} from '../../../types'
-import {utils} from '../../../utils'
+import {ApiPromise, ISubmittableResult, SubOrEthAddressObj, TokenId} from '../../../types'
 import {findEventDataBySectionAndMethod, findManyEventsDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
-import {ExtrinsicError} from '../../../utils/errors'
 import {TokenToMint, validateAndFixTokenOwner} from "./utils";
-
 
 
 export interface ExtrinsicCreateMultipleNftTokensParams {
@@ -19,7 +10,7 @@ export interface ExtrinsicCreateMultipleNftTokensParams {
 }
 
 export interface ExtrinsicCreateMultipleNftTokensResult extends ExtrinsicResult {
-  tokens: Array<{tokenId: TokenId, owner: SubOrEthAddressObj}>
+  tokens: Array<{ tokenId: TokenId, owner: SubOrEthAddressObj }>
 }
 
 export class ExtrinsicCreateMultipleNftTokens extends AbstractExtrinsic<ExtrinsicCreateMultipleNftTokensParams, ExtrinsicCreateMultipleNftTokensResult> {

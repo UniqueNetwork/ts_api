@@ -5,7 +5,7 @@ import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
 export interface ExtrinsicRemoveCollectionAdminParams {
-  collectionId: CollectionId
+  collectionId: number
   adminAddress: string
 }
 

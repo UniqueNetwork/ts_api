@@ -1,13 +1,12 @@
-import { addressToObject } from '../../../utils/addressUtils'
+import {addressToObject} from '../../../utils/addressUtils'
 
-import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
-import {utils} from '../../../utils'
+import {ApiPromise, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
 
 export interface ExtrinsicAddToAllowListParams {
-  collectionId: CollectionId
+  collectionId: number
   address: string
 }
 

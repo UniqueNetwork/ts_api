@@ -1,4 +1,4 @@
-import {CollectionId} from "../../../types";
+import {CollectionId, SubstrateAddress} from "../../../types";
 
 export interface TokenPropertyPermission {
   mutable: boolean
@@ -18,22 +18,21 @@ export interface CollectionParams {
 
   mode?: {nft: null}
   access?: 'Normal' | 'AllowList'
-  pendingSponsor?: string
   limits?: {
     accountTokenOwnershipLimit?: number | null
-    sponsoredDataSize?: number | null
-    sponsoredDataRateLimit?: number | null
-    tokenLimit?: number | null
-    sponsorTransferTimeout?: number | null
-    sponsorApproveTimeout?: number | null
-    ownerCanTransfer?: boolean | null
     ownerCanDestroy?: boolean | null
+    ownerCanTransfer?: boolean | null
+    sponsorApproveTimeout?: number | null
+    sponsorTransferTimeout?: number | null
+    sponsoredDataRateLimit?: number | null
+    sponsoredDataSize?: number | null
+    tokenLimit?: number | null
     transfersEnabled?: boolean | null
   }
   permissions?: {
     access?: 'Normal' | 'AllowList'
     mintMode?: boolean
-    nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: Array<number>}
+    nesting?: {tokenOwner: boolean, collectionAdmin: boolean, restricted: Array<number>}
   }
   tokenPropertyPermissions?: Array<TokenPropertyPermissionObject>
   properties?: Array<{
@@ -53,9 +52,11 @@ export interface RawCollection extends Omit<Collection, 'name' | 'description' |
 }
 
 export type CollectionLimits = Required<CollectionParams>['limits']
-export type CollectionPermissions = Required<CollectionParams>['permissions']
+export type CollectionPermissions = Required<Required<CollectionParams>['permissions']>
 export type CollectionTokenPropertyPermissions = Required<CollectionParams>['tokenPropertyPermissions']
 export type CollectionProperties = Required<CollectionParams>['properties']
+
+export type CollectionSponsorship = 'Disabled' | {Confirmed: SubstrateAddress} | {Unconfirmed: SubstrateAddress}
 
 // export interface CollectionParamsWithVectorizedStrings extends Omit<CollectionParams, 'name' | 'tokenPrefix' | 'description'> {
 //   name: number[]

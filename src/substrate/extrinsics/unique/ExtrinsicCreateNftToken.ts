@@ -1,17 +1,8 @@
-import {
-  ISubmittableResult,
-  ApiPromise,
-  TokenId,
-  AnyInputAddress,
-  PropertiesArray, CollectionId, SubOrEthAddressObj
-} from '../../../types'
-import {utils} from '../../../utils'
+import {ApiPromise, CollectionId, ISubmittableResult, SubOrEthAddressObj, TokenId} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 import {ExtrinsicError} from '../../../utils/errors'
 import {TokenToMint, validateAndFixTokenOwner} from "./utils";
-
-
 
 export interface ExtrinsicCreateNftTokenParams {
   collectionId: number

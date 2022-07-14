@@ -1,4 +1,4 @@
-import {ISubmittableResult, ApiPromise} from '../../../types'
+import {ApiPromise, ISubmittableResult} from '../../../types'
 import {utils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from "../AbstractExtrinsic";

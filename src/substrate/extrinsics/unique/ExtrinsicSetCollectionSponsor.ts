@@ -1,9 +1,9 @@
-import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
+import {ApiPromise, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
 export interface ExtrinsicSetCollectionSponsorParams {
-  collectionId: CollectionId
+  collectionId: number
   newSponsorAddress: string
 }
 

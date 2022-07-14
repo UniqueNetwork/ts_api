@@ -50,36 +50,78 @@ import {
   ExtrinsicCreateMultipleNftTokens,
   ExtrinsicCreateMultipleNftTokensParams
 } from "./extrinsics/unique/ExtrinsicCreateMultipleNftTokens";
-import {vec2str} from "../utils/common";
+import {hexStringToString, vec2str} from "../utils/common";
 import {decodeUniqueCollectionFromProperties} from "../schema/tools/collection";
-import {UniqueCollectionSchemaDecoded, SchemaTools} from "../schema";
+import {UniqueCollectionSchemaDecoded, SchemaTools, UniqueTokenDecoded} from "../schema";
 import {decodeTokenFromProperties} from "../schema/tools/token";
 import {
-  CollectionLimits,
+  CollectionLimits, CollectionPermissions, CollectionSponsorship,
   CollectionTokenPropertyPermissions,
   RawCollection,
   TokenPropertyPermission
 } from "./extrinsics/unique/types";
-import {HumanizedNftToken, PropertiesArray, SubOrEthAddressObj, SubstrateAddress} from "../types";
+import {
+  CollectionId,
+  EthereumAddress,
+  HumanizedNftToken,
+  PropertiesArray,
+  SubOrEthAddressObj,
+  SubstrateAddress
+} from "../types";
 import {ValidationError} from "../utils/errors";
-import type {UpDataStructsCollection} from "@unique-nft/opal-testnet-types/default/types";
-import {UpDataStructsRpcCollection} from "@unique-nft/opal-testnet-types/default/types";
+import {UpDataStructsProperty, UpDataStructsRpcCollection} from "@unique-nft/opal-testnet-types/default/types";
 import {Writeable} from "../tsUtils";
-import {normalizeSubstrateAddress} from "../utils/addressUtils";
+import {normalizeEthereumAddress, normalizeSubstrateAddress} from "../utils/addressUtils";
+import {Vec} from "@polkadot/types-codec";
+import {Bytes} from "@polkadot/types";
+import {DecodingResult} from "../schema/schemaUtils";
+
+type TokenOwner = {substrate: string, ethereum?: undefined} | {ethereum: string, substrate?: undefined}
 
 const normalizeSubstrate = utils.address.normalizeSubstrateAddress
 
-export interface IGetCollectionByIdOptions {
+export interface IGetCollectionOptions {
   fetchAll?: boolean
   fetchEffectiveLimits?: boolean
   fetchAdmins?: boolean
   fetchNextTokenId?: boolean
 }
 
+export interface IGetTokenOptions {
+  uniqueSchema?: UniqueCollectionSchemaDecoded | null
+}
+
+export type ParsedCollection = NonNullable<Awaited<ReturnType<SubstrateUnique['getCollection']>>>
+export type ParsedToken = NonNullable<Awaited<ReturnType<SubstrateUnique['getToken']>>>
+
 export interface ConnectToSubstrateOptions {
   dontAwaitApiIsReady?: boolean
 }
 
+const parseBytesToString = (bytes: Bytes): string => {
+  return Array.from(bytes.toU8a()).map(el => String.fromCharCode(el)).join('')
+}
+
+const parseProperties = (rawProperties: PropertiesArray): PropertiesArray => {
+  return rawProperties.map(property => {
+    return {
+      key: hexStringToString(property.key),
+      value: hexStringToString(property.value)
+    }
+  })
+}
+
+const parseTokenPropertyPermissions = (tokenPropertyPermissions: any): CollectionTokenPropertyPermissions => {
+  if (!Array.isArray(tokenPropertyPermissions)) {
+    return []
+  }
+  return tokenPropertyPermissions.map(tpp => {
+    return {
+      key: hexStringToString(tpp.key),
+      permission: tpp.permission
+    }
+  })
+}
 
 
 export class SubstrateUnique extends SubstrateCommon {
@@ -94,80 +136,100 @@ export class SubstrateUnique extends SubstrateCommon {
     return await super.getBalance(substrateAddress)
   }
 
-  async getCollectionById(collectionId: number, options?: IGetCollectionByIdOptions) {
-    const rawCollection = await this.api.rpc.unique.collectionById(collectionId) as any as Writeable<UpDataStructsRpcCollection> | null
-
-    /*
-    +readonly owner: AccountId32;
-    +readonly mode: UpDataStructsCollectionMode;
-    +readonly name: Vec<u16>;
-    +readonly description: Vec<u16>;
-    +readonly tokenPrefix: Bytes;
-    readonly sponsorship: UpDataStructsSponsorshipState;
-    ??readonly limits: UpDataStructsCollectionLimits;
-    ??readonly permissions: UpDataStructsCollectionPermissions;
-    +readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
-    +readonly properties: Vec<UpDataStructsProperty>;
-    +readonly readOnly: bool;
-     */
-    if (!rawCollection) {
+  async getCollection(collectionId: number, options?: IGetCollectionOptions) {
+    const superRawCollection = await this.api.rpc.unique.collectionById(collectionId)
+    if (!superRawCollection) {
       return null
     }
 
+    const rawCollection = superRawCollection.toJSON() as any
+
     const collection = {
-      owner: rawCollection.owner.toHuman() as SubstrateAddress,
-      ownerNormalized: normalizeSubstrateAddress(rawCollection.owner.toHuman()) as SubstrateAddress,
-      name: vec2str(rawCollection.name.toHuman() as number[]),
-      description: vec2str(rawCollection.description.toHuman() as number[]),
-      tokenPrefix: rawCollection.tokenPrefix.toHuman() as string,
-      mode: rawCollection.mode.toHuman() as string,
-      properties: rawCollection.properties ? rawCollection.properties.toHuman() as PropertiesArray : [],
-      tokenPropertyPermissions: rawCollection.tokenPropertyPermissions ? rawCollection.tokenPropertyPermissions.toHuman() as any as CollectionTokenPropertyPermissions : [],
-      readOnly: rawCollection.readOnly.toHuman() as boolean,
+      collectionId: collectionId as CollectionId,
+      owner: rawCollection.owner as SubstrateAddress,
+      ownerNormalized: normalizeSubstrateAddress(rawCollection.owner) as SubstrateAddress,
+      mode: rawCollection.mode as string,
+      name: vec2str(rawCollection.name),
+      description: vec2str(rawCollection.description),
+      tokenPrefix: rawCollection.tokenPrefix as string,
+      sponsorship: rawCollection.sponsorship as CollectionSponsorship,
+      limits: rawCollection.limits as CollectionLimits,
+      permissions: rawCollection.permissions as CollectionPermissions,
+      tokenPropertyPermissions: parseTokenPropertyPermissions(rawCollection.tokenPropertyPermissions),
+      properties: parseProperties(rawCollection.properties || []),
+      readOnly: rawCollection.readOnly as boolean,
+
+
+      effectiveLimits: null as CollectionLimits | null,
+      adminList: [] as Array<SubOrEthAddressObj>,
+      lastTokenId: null as number | null,
+
+      uniqueSchema: null as UniqueCollectionSchemaDecoded | null,
+      uniqueSchemaDecodingError: null as ValidationError | null,
+
+      get raw() {
+        return superRawCollection
+      },
+      get human() {
+        return superRawCollection.toHuman()
+      },
     }
 
-    rawCollection.properties = rawCollection.properties.toHuman()
+    const uniqueSchema = await SchemaTools.decode.collectionSchema(collectionId, collection.properties)
+    if (uniqueSchema.isValid) collection.uniqueSchema = uniqueSchema.decoded
+    else collection.uniqueSchemaDecodingError = uniqueSchema.validationError
 
-    const uniqueSchema = await SchemaTools.decode.collectionSchema(collectionId, rawCollection.properties.toHuman())
-
-    let effectiveLimits: CollectionLimits | null = null
     if (options?.fetchAll || options?.fetchEffectiveLimits) {
-      effectiveLimits = (await this.api.rpc.unique.effectiveCollectionLimits(collectionId)).toHuman() as CollectionLimits
+      collection.effectiveLimits = (await this.api.rpc.unique.effectiveCollectionLimits(collectionId)).toHuman() as CollectionLimits
     }
 
-    let adminList: Array<SubOrEthAddressObj> = []
     if (options?.fetchAll || options?.fetchAdmins) {
-      adminList = (await this.api.rpc.unique.adminlist(collectionId)).toHuman() as Array<SubOrEthAddressObj>
+      collection.adminList = (await this.api.rpc.unique.adminlist(collectionId)).toHuman() as Array<SubOrEthAddressObj>
     }
 
-
-    return {
-      ...rawCollection,
-      id: collectionId,
-      name: vec2str(rawCollection?.name),
-      description: vec2str(rawCollection?.description),
-      uniqueSchema,
-      effectiveLimits,
-      adminList,
-      raw: {
-        get() {
-          return rawCollection
-        }
-      }
+    if (options?.fetchAll || options?.fetchNextTokenId) {
+      collection.lastTokenId = (await this.api.rpc.unique.lastTokenId(collectionId)).toNumber()
     }
+
+    return collection
   }
 
-  async getTokenById(collectionId: number, tokenId: number, schema?: UniqueCollectionSchemaDecoded) {
-    const rawToken = await this.api.rpc.unique.tokenData(collectionId, tokenId)
-    const token: HumanizedNftToken = (rawToken).toHuman() as any as HumanizedNftToken
+  async getToken(collectionId: number, tokenId: number, options?: IGetTokenOptions) {
+    const superRawToken = await this.api.rpc.unique.tokenData(collectionId, tokenId)
 
-    if (!token || !token.owner) return null
+    if (!superRawToken || !superRawToken.owner) return null
 
-    return {
-      ...token,
-      raw: rawToken,
-      uniqueToken: await SchemaTools.decode.token(collectionId, tokenId, rawToken, schema as any),
+    const rawToken = superRawToken.toJSON() as {owner: TokenOwner, properties: PropertiesArray}
+
+    const owner: SubOrEthAddressObj = rawToken.owner.substrate
+        ? {Substrate: rawToken.owner.substrate as SubstrateAddress}
+        : {Ethereum: rawToken.owner.ethereum as EthereumAddress}
+
+    const ownerNormalized: SubOrEthAddressObj = rawToken.owner.substrate
+        ? {Substrate: normalizeSubstrateAddress(rawToken.owner.substrate)}
+        : {Ethereum: rawToken.owner.ethereum as EthereumAddress}
+
+    const uniqueToken: DecodingResult<UniqueTokenDecoded> = options?.uniqueSchema
+        ? await SchemaTools.decode.token(collectionId, tokenId, superRawToken, options?.uniqueSchema)
+        : {isValid: false, validationError: new ValidationError('token parsing: no schema passed')}
+
+    const token = {
+      collectionId,
+      tokenId,
+      owner,
+      ownerNormalized,
+      properties: parseProperties(rawToken.properties),
+      uniqueToken: uniqueToken.isValid ? uniqueToken.decoded : null,
+      uniqueTokenDecodingError: uniqueToken.isValid ? null : uniqueToken.validationError,
+      get raw() {
+        return superRawToken
+      },
+      get human() {
+        return superRawToken.toHuman()
+      },
     }
+
+    return token
   }
 
 

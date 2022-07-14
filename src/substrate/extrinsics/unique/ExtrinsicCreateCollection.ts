@@ -11,7 +11,7 @@ export interface ExtrinsicCreateCollectionParams {
 }
 
 export interface ExtrinsicCreateCollectionResult extends ExtrinsicResult {
-  collectionId: CollectionId
+  collectionId: number
 }
 
 export class ExtrinsicCreateCollection extends AbstractExtrinsic<ExtrinsicCreateCollectionParams, ExtrinsicCreateCollectionResult> {
