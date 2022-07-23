@@ -1,5 +1,5 @@
-import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
-import {utils} from '../../../utils'
+import {ISubmittableResult, ApiPromise} from '../../../types'
+import {StringUtils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 import {ExtrinsicError} from '../../../utils/errors'
@@ -23,7 +23,7 @@ export class ExtrinsicCreateCollection extends AbstractExtrinsic<ExtrinsicCreate
     }
 
     for (const fieldName of ['name', 'description', 'tokenPrefix']) {
-      ;(collection as any)[fieldName] = utils.common.str2vec((collection as any)[fieldName])
+      ;(collection as any)[fieldName] = StringUtils.str2vec((collection as any)[fieldName])
     }
 
     const tx = api.tx.unique.createCollectionEx(collection)
@@ -36,7 +36,7 @@ export class ExtrinsicCreateCollection extends AbstractExtrinsic<ExtrinsicCreate
     const data = findEventDataBySectionAndMethod(txResult, 'common', 'CollectionCreated')
     // console.log('data', data, data?.toHuman())
 
-    const collectionId = (!!data && parseInt(data[0].toString(), 10) as CollectionId) || null
+    const collectionId = (!!data && parseInt(data[0].toString(), 10)) || null
 
     if (!collectionId) {
       throw new ExtrinsicError(txResult, 'No collection id found')

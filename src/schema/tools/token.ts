@@ -1,12 +1,10 @@
-import {CollectionId, PropertiesArray, HumanizedNftToken, TokenId} from '../../types'
+import {HumanizedNftToken, PropertiesArray} from '../../types'
 import {
   AttributeKind,
   AttributeType,
-  AttributeTypeMask,
   DecodedAttributes,
   EncodedTokenAttributes,
-  InfixOrUrlOrCidAndHash,
-  LocalizedStringDictionary,
+  InfixOrUrlOrCidAndHash, LocalizedStringWithDefault,
   UniqueCollectionSchemaDecoded,
   UniqueCollectionSchemaToCreate,
   UniqueTokenDecoded,
@@ -16,12 +14,10 @@ import {validateLocalizedStringDictionary, validateUniqueToken} from './validato
 import {getEntries, safeJSONParse} from '../../tsUtils'
 import {CollectionProperties} from '../../substrate/extrinsics/unique/types'
 import {
-  ATTRIBUTE_KIND_NAME_BY_VALUE,
-  ATTRIBUTE_TYPE_NAME_BY_VALUE,
   decodeTokenUrlOrInfixOrCidWithHashField,
   DecodingResult
 } from "../schemaUtils";
-import {isNestingAddress, nestingAddressToCollectionIdAndTokenId} from '../../utils/common'
+import {UniqueUtils} from "../../utils";
 
 const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: InfixOrUrlOrCidAndHash) => {
   if (typeof source.urlInfix === 'string') {
@@ -38,13 +34,7 @@ const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: stri
 }
 
 const addKeyToTokenProperties = (properties: PropertiesArray, key: string, value: string | number | object) => {
-  let strValue = typeof value === 'object'
-    ? JSON.stringify(value)
-    : String(value)
-
-  if (Array.isArray(value)) {
-    strValue = strValue.slice(1, -1) // cut off brackets: "[1,5,30]" -> "1,5,30"
-  }
+  let strValue = JSON.stringify(value)
 
   properties.push({
     key,
@@ -53,7 +43,7 @@ const addKeyToTokenProperties = (properties: PropertiesArray, key: string, value
 }
 
 export const encodeTokenToProperties = (token: UniqueTokenToCreate, schema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): PropertiesArray => {
-  validateUniqueToken(token, schema)
+  validateUniqueToken(token, schema as UniqueCollectionSchemaToCreate)
 
   const properties: PropertiesArray = []
   if (token.name) addKeyToTokenProperties(properties, 'n', token.name)
@@ -100,7 +90,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
   const nameProperty = properties.find(({key}) => key === 'n')
   if (nameProperty) {
-    const parsedName = safeJSONParse<LocalizedStringDictionary>(nameProperty.value)
+    const parsedName = safeJSONParse<LocalizedStringWithDefault>(nameProperty.value)
     token.name =
       validateLocalizedStringDictionary(parsedName, 'token.name')
         ? parsedName
@@ -109,7 +99,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
   const descriptionProperty = properties.find(({key}) => key === 'd')
   if (descriptionProperty) {
-    const parsedDescription = safeJSONParse<LocalizedStringDictionary>(descriptionProperty.value)
+    const parsedDescription = safeJSONParse<LocalizedStringWithDefault>(descriptionProperty.value)
     token.description =
       validateLocalizedStringDictionary(parsedDescription, 'token.description')
         ? parsedDescription
@@ -136,7 +126,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
         if (kind === AttributeKind.enum) {
           attrs[attributeKey] = parseInt(value)
-        } else if (kind === AttributeKind.enumMultiple) {
+        } else if (kind === AttributeKind.multiEnum) {
           attrs[attributeKey] = value.split(',').map(n => parseInt(n))
         } else if (kind === AttributeKind.freeValue) {
           if (type & AttributeTypeMask.number) {
@@ -171,13 +161,13 @@ export const decodeTokenFromProperties = async (collectionId: number, tokenId: n
 
   const token: UniqueTokenDecoded = {
     owner: rawToken.owner,
-    tokenId: tokenId as TokenId,
-    collectionId: collectionId as CollectionId,
+    tokenId,
+    collectionId,
     attributes: fullDecodeTokenAttributes(unpackedToken, schema),
     image: decodeTokenUrlOrInfixOrCidWithHashField(unpackedToken.image, schema.image)
   }
-  if (token.owner.Ethereum && isNestingAddress(token.owner.Ethereum)) {
-    token.nestingParentToken = nestingAddressToCollectionIdAndTokenId(token.owner.Ethereum)
+  if (token.owner.Ethereum && UniqueUtils.Address.is.nestingAddress(token.owner.Ethereum)) {
+    token.nestingParentToken = UniqueUtils.Address.nesting.addressToIds(token.owner.Ethereum)
   }
 
   if (unpackedToken.name) token.name = unpackedToken.name
@@ -234,7 +224,7 @@ export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collection
       }
     }
 
-    if (schema.kind === AttributeKind.enumMultiple && Array.isArray(value)) {
+    if (schema.kind === AttributeKind.multiEnum && Array.isArray(value)) {
       attribute.isArray = true
 
       const cumulativeValue: Array<string | number | LocalizedStringDictionary> = []

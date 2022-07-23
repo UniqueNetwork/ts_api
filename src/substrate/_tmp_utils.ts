@@ -1,20 +1,11 @@
-import {
-  AnyAddress,
-  CollectionId,
-  EventRecord,
-  ISubmittableResult,
-  SubOrEthAddress,
-  SubstrateAddress,
-  TokenId
-} from "../types";
-import {utils} from "../utils";
+import {CrossAccountId, CrossAccountIdOrString, EventRecord, ISubmittableResult} from "../types";
+import {UniqueUtils} from "../utils";
 
 interface IReturnableToken {
   collectionId: number,
   tokenId: number,
-  owner: SubstrateAddress
+  owner: CrossAccountId
 }
-
 
 export const extractCollectionIdFromCreationResult = (txResult: ISubmittableResult, label: string = 'new collection') => {
   const wrappedLabel = label ? ` (${label})` : ''
@@ -50,7 +41,7 @@ export const extractTokensFromCreationResult = (txResult: ISubmittableResult, la
       tokens.push({
         collectionId: parseInt(data[0].toString(), 10),
         tokenId: parseInt(data[1].toString(), 10),
-        owner: data[2].toJSON() as SubstrateAddress
+        owner: data[2].toJSON() as CrossAccountId
       });
     }
   });
@@ -69,7 +60,7 @@ export const extractTokensFromBurnResult = (txResult: ISubmittableResult, label 
       tokens.push({
         collectionId: parseInt(data[0].toString(), 10),
         tokenId: parseInt(data[1].toString(), 10),
-        owner: data[2].toJSON() as SubstrateAddress
+        owner: data[2].toJSON() as CrossAccountId
       });
     }
   });
@@ -90,26 +81,26 @@ export const findCollectionInEvents = (events: EventRecord[], collectionId: numb
   return collectionIdFromEvent === collectionId;
 }
 
-export const isTokenTransferSuccess = (events: EventRecord[], collectionId: number, tokenId: number, fromAddressObj: AnyAddress, toAddressObj: AnyAddress) => {
-  const normalizeAddress = utils.address.guessAddressAndExtractItNormalized
-  const fromAddress = utils.address.guessAddressAndExtractItNormalized(fromAddressObj)
-  const toAddress = utils.address.guessAddressAndExtractItNormalized(toAddressObj)
+export const isTokenTransferSuccess = (events: EventRecord[], collectionId: number, tokenId: number, fromAddressObj: CrossAccountIdOrString, toAddressObj: CrossAccountIdOrString) => {
+  const normalizeAddress = UniqueUtils.Address.guessAddressAndExtractItNormalized
+  const fromAddress = UniqueUtils.Address.guessAddressAndExtractItNormalized(fromAddressObj)
+  const toAddress = UniqueUtils.Address.guessAddressAndExtractItNormalized(toAddressObj)
 
   let transfer = {
-    collectionId: null as CollectionId | null,
-    tokenId: null as TokenId | null,
-    from: null as SubOrEthAddress | null,
-    to: null as SubOrEthAddress | null,
+    collectionId: null as number | null,
+    tokenId: null as number | null,
+    from: null as string | null,
+    to: null as string | null,
     amount: 1
   }
   events.forEach(({event: {data, method, section}}) => {
     if ((section === 'common') && (method === 'Transfer')) {
       let hData = data.toHuman() as string [];
       transfer = {
-        collectionId: parseInt(hData[0]) as CollectionId,
-        tokenId: parseInt(hData[1]) as TokenId,
-        from: utils.address.guessAddressAndExtractItNormalized(hData[2]),
-        to: utils.address.guessAddressAndExtractItNormalized(hData[3]),
+        collectionId: parseInt(hData[0])!,
+        tokenId: parseInt(hData[1])!,
+        from: UniqueUtils.Address.guessAddressAndExtractItNormalized(hData[2]),
+        to: UniqueUtils.Address.guessAddressAndExtractItNormalized(hData[3]),
         amount: parseInt(hData[4])
       }
     }

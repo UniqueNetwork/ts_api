@@ -8,7 +8,7 @@ import {
   SubmittableResult
 } from '../types'
 import {getPolkadotExtensionDapp} from '../libs'
-import {utils} from '../utils'
+import {UniqueUtils} from '../utils'
 import {ExtrinsicError} from '../utils/errors'
 
 const signerIs = {
@@ -17,7 +17,7 @@ const signerIs = {
   },
   extensionAccount(signer: ISigner): signer is InjectedAccountWithMeta {
     const address = (signer as InjectedAccountWithMeta).address
-    return utils.address.is.substrateAddress(address) && typeof signer.meta.source === "string"
+    return UniqueUtils.Address.is.substrateAddress(address) && typeof signer.meta.source === "string"
   },
 }
 

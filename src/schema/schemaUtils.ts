@@ -1,19 +1,14 @@
 import {PropertiesArray} from '../types'
-import {getEnumValues, getReversedEnum, safeJSONParse} from "../tsUtils";
+import {getEnumValues, safeJSONParse} from "../tsUtils";
 import {
-  AttributeKind,
   AttributeType,
   DecodedInfixOrUrlOrCidAndHash,
   InfixOrUrlOrCidAndHash,
-  UniqueCollectionSchemaDecoded,
   URL_TEMPLATE_INFIX,
   UrlTemplateString
 } from "./types";
 
-export const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
-export const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
-export const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
-export const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
+export const AttributeTypeValues = getEnumValues(AttributeType)
 
 const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
   if (typeof obj !== "object" || obj === null) {

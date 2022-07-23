@@ -1,4 +1,4 @@
-import {utils} from "../utils";
+import {Address, UniqueUtils, string} from "../utils";
 import {ExtrinsicTransferCoinsOptions, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
 
 import {ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
@@ -50,35 +50,21 @@ import {
   ExtrinsicCreateMultipleNftTokens,
   ExtrinsicCreateMultipleNftTokensParams
 } from "./extrinsics/unique/ExtrinsicCreateMultipleNftTokens";
-import {hexStringToString, vec2str} from "../utils/common";
-import {decodeUniqueCollectionFromProperties} from "../schema/tools/collection";
-import {UniqueCollectionSchemaDecoded, SchemaTools, UniqueTokenDecoded} from "../schema";
-import {decodeTokenFromProperties} from "../schema/tools/token";
+import {StringUtils} from "../utils";
+import {SchemaTools, UniqueCollectionSchemaDecoded, UniqueTokenDecoded} from "../schema";
 import {
-  CollectionLimits, CollectionPermissions, CollectionSponsorship,
-  CollectionTokenPropertyPermissions,
-  RawCollection,
-  TokenPropertyPermission
+  CollectionLimits,
+  CollectionPermissions,
+  CollectionSponsorship,
+  CollectionTokenPropertyPermissions
 } from "./extrinsics/unique/types";
-import {
-  CollectionId,
-  EthereumAddress,
-  HumanizedNftToken,
-  PropertiesArray,
-  SubOrEthAddressObj,
-  SubstrateAddress
-} from "../types";
+import {CrossAccountId, PropertiesArray,} from "../types";
 import {ValidationError} from "../utils/errors";
-import {UpDataStructsProperty, UpDataStructsRpcCollection} from "@unique-nft/opal-testnet-types/default/types";
-import {Writeable} from "../tsUtils";
-import {normalizeEthereumAddress, normalizeSubstrateAddress} from "../utils/addressUtils";
-import {Vec} from "@polkadot/types-codec";
 import {Bytes} from "@polkadot/types";
 import {DecodingResult} from "../schema/schemaUtils";
+import {substrateNormalizedWithMirrorIfEthereum} from "../utils/address/crossAccountId";
 
-type TokenOwner = {substrate: string, ethereum?: undefined} | {ethereum: string, substrate?: undefined}
-
-const normalizeSubstrate = utils.address.normalizeSubstrateAddress
+type TokenOwner = { substrate: string, ethereum?: undefined } | { ethereum: string, substrate?: undefined }
 
 export interface IGetCollectionOptions {
   fetchAll?: boolean
@@ -105,8 +91,8 @@ const parseBytesToString = (bytes: Bytes): string => {
 const parseProperties = (rawProperties: PropertiesArray): PropertiesArray => {
   return rawProperties.map(property => {
     return {
-      key: hexStringToString(property.key),
-      value: hexStringToString(property.value)
+      key: StringUtils.hexStringToString(property.key),
+      value: StringUtils.hexStringToString(property.value)
     }
   })
 }
@@ -117,7 +103,7 @@ const parseTokenPropertyPermissions = (tokenPropertyPermissions: any): Collectio
   }
   return tokenPropertyPermissions.map(tpp => {
     return {
-      key: hexStringToString(tpp.key),
+      key: StringUtils.hexStringToString(tpp.key),
       permission: tpp.permission
     }
   })
@@ -131,7 +117,7 @@ export class SubstrateUnique extends SubstrateCommon {
   //////////////////////////////////////////
 
   async getBalance(address: string): Promise<bigint> {
-    const substrateAddress = utils.address.addressToAsIsOrSubstrateMirror(address)
+    const substrateAddress = UniqueUtils.Address.to.substrateNormalizedOrMirrorIfEthereum(address)
 
     return await super.getBalance(substrateAddress)
   }
@@ -145,13 +131,14 @@ export class SubstrateUnique extends SubstrateCommon {
     const rawCollection = superRawCollection.toJSON() as any
 
     const collection = {
-      collectionId: collectionId as CollectionId,
-      owner: rawCollection.owner as SubstrateAddress,
-      ownerNormalized: normalizeSubstrateAddress(rawCollection.owner) as SubstrateAddress,
+      id: collectionId,
+      collectionId,
+      owner: rawCollection.owner as string,
+      ownerNormalized: Address.normalize.substrateAddress(rawCollection.owner) as string,
       mode: rawCollection.mode as string,
-      name: vec2str(rawCollection.name),
-      description: vec2str(rawCollection.description),
-      tokenPrefix: rawCollection.tokenPrefix as string,
+      name: StringUtils.vec2str(rawCollection.name),
+      description: StringUtils.vec2str(rawCollection.description),
+      tokenPrefix: StringUtils.hexStringToString(rawCollection.tokenPrefix),
       sponsorship: rawCollection.sponsorship as CollectionSponsorship,
       limits: rawCollection.limits as CollectionLimits,
       permissions: rawCollection.permissions as CollectionPermissions,
@@ -159,9 +146,8 @@ export class SubstrateUnique extends SubstrateCommon {
       properties: parseProperties(rawCollection.properties || []),
       readOnly: rawCollection.readOnly as boolean,
 
-
       effectiveLimits: null as CollectionLimits | null,
-      adminList: [] as Array<SubOrEthAddressObj>,
+      adminList: [] as Array<CrossAccountId>,
       lastTokenId: null as number | null,
 
       uniqueSchema: null as UniqueCollectionSchemaDecoded | null,
@@ -184,7 +170,7 @@ export class SubstrateUnique extends SubstrateCommon {
     }
 
     if (options?.fetchAll || options?.fetchAdmins) {
-      collection.adminList = (await this.api.rpc.unique.adminlist(collectionId)).toHuman() as Array<SubOrEthAddressObj>
+      collection.adminList = (await this.api.rpc.unique.adminlist(collectionId)).toHuman() as Array<CrossAccountId>
     }
 
     if (options?.fetchAll || options?.fetchNextTokenId) {
@@ -199,19 +185,14 @@ export class SubstrateUnique extends SubstrateCommon {
 
     if (!superRawToken || !superRawToken.owner) return null
 
-    const rawToken = superRawToken.toJSON() as {owner: TokenOwner, properties: PropertiesArray}
+    const rawToken = superRawToken.toJSON() as { owner: TokenOwner, properties: PropertiesArray }
 
-    const owner: SubOrEthAddressObj = rawToken.owner.substrate
-        ? {Substrate: rawToken.owner.substrate as SubstrateAddress}
-        : {Ethereum: rawToken.owner.ethereum as EthereumAddress}
-
-    const ownerNormalized: SubOrEthAddressObj = rawToken.owner.substrate
-        ? {Substrate: normalizeSubstrateAddress(rawToken.owner.substrate)}
-        : {Ethereum: rawToken.owner.ethereum as EthereumAddress}
+    const owner: CrossAccountId = Address.extract.crossAccountIdFromObject(rawToken.owner)
+    const ownerNormalized: CrossAccountId = Address.extract.crossAccountIdFromObjectNormalized(rawToken.owner)
 
     const uniqueToken: DecodingResult<UniqueTokenDecoded> = options?.uniqueSchema
-        ? await SchemaTools.decode.token(collectionId, tokenId, superRawToken, options?.uniqueSchema)
-        : {isValid: false, validationError: new ValidationError('token parsing: no schema passed')}
+      ? await SchemaTools.decode.token(collectionId, tokenId, superRawToken, options?.uniqueSchema)
+      : {isValid: false, validationError: new ValidationError('token parsing: no schema passed')}
 
     const token = {
       collectionId,
@@ -239,7 +220,7 @@ export class SubstrateUnique extends SubstrateCommon {
 
   //@overrides because it eats ethereum address too
   transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
-    const toAddress = utils.address.addressToAsIsOrSubstrateMirror(params.toAddress)
+    const toAddress = UniqueUtils.Address.to.substrateNormalizedOrMirrorIfEthereum(params.toAddress)
     return super.transferCoins({...params, toAddress}, options)
   }
 

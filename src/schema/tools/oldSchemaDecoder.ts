@@ -12,13 +12,12 @@ import {
 import {validateLocalizedStringDictionarySafe, validateURLSafe} from "./validators";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
 import {ATTRIBUTE_KIND_NAME_BY_VALUE, ATTRIBUTE_TYPE_NAME_BY_VALUE, DecodingResult} from "../schemaUtils";
-import {CollectionId, HumanizedNftToken, SubOrEthAddressObj, TokenId} from "../../types";
-import {Root} from 'protobufjs'
+import {HumanizedNftToken} from "../../types";
 import type {Message, Type} from 'protobufjs'
+import {Root} from 'protobufjs'
 import {ValidationError} from "../../utils/errors";
-import {hexToU8a} from "../../utils/common";
 import {getEntries, safeJSONParse} from "../../tsUtils";
-import {isNestingAddress, nestingAddressToCollectionIdAndTokenId} from '../../utils/common'
+import {StringUtils, UniqueUtils} from "../../utils";
 
 
 const isOffchainSchemaAValidUrl = (offchainSchema: string | undefined): offchainSchema is string => {
@@ -45,7 +44,7 @@ export const decodeOldSchemaCollection = async (collectionId: number, properties
   const schema: UniqueCollectionSchemaDecoded = {
     schemaName: COLLECTION_SCHEMA_NAME.old,
 
-    collectionId: collectionId as CollectionId,
+    collectionId,
     coverPicture: {
       url: dummyImageFullUrl,
       fullUrl: null
@@ -104,7 +103,10 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   const constOnchainSchema = schema.oldProperties?._old_constOnChainSchema
 
   if (!constOnchainSchema) {
-    return {isValid: false, validationError: new ValidationError(`collection doesn't contain _old_constOnChainSchema field`)}
+    return {
+      isValid: false,
+      validationError: new ValidationError(`collection doesn't contain _old_constOnChainSchema field`)
+    }
   }
 
   let root: Root = {} as any
@@ -145,7 +147,7 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
     }
   }
 
-  const u8aToken = hexToU8a(constDataProp.value)
+  const u8aToken = StringUtils.hexToU8a(constDataProp.value)
   let tokenDecoded: Message<{}> = {} as any
   let tokenDecodedHuman: Record<string, any> = {}
   try {
@@ -181,7 +183,7 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
         value = rawValue
 
         isArray = true
-        kind = AttributeKind.enumMultiple
+        kind = AttributeKind.multiEnum
 
         const parsedValues = rawValue.map((v: any) => safeJSONParse(enumOptions?.[v] || v))
         const isLocalizedStringDictionary = parsedValues.every((parsedValue, index) => validateLocalizedStringDictionarySafe(parsedValue, `attributes.${name}[${index}]`))
@@ -244,15 +246,15 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   }
 
   const decodedToken: UniqueTokenDecoded = {
-    collectionId: collectionId as CollectionId,
-    tokenId: tokenId as TokenId,
+    collectionId,
+    tokenId,
     owner: parsedToken.owner,
     image,
     attributes: tokenAttributesResult,
   }
 
-  if (parsedToken.owner.Ethereum && isNestingAddress(parsedToken.owner.Ethereum)) {
-    decodedToken.nestingParentToken = nestingAddressToCollectionIdAndTokenId(parsedToken.owner.Ethereum)
+  if (parsedToken.owner.Ethereum && UniqueUtils.Address.is.nestingAddress(parsedToken.owner.Ethereum)) {
+    decodedToken.nestingParentToken = UniqueUtils.Address.nesting.addressToIds(parsedToken.owner.Ethereum)
   }
 
   return {isValid: true, decoded: decodedToken}

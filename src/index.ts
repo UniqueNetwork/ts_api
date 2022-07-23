@@ -9,7 +9,7 @@ export * from './types'
 export * as constants from './constants'
 export {WS_RPC} from './constants'
 
-export {utils} from './utils'
+export {UniqueUtils} from './utils'
 
 export * from './ethereum'
 export * from './substrate'

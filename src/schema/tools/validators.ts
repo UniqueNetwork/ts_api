@@ -1,22 +1,20 @@
-import {Semver} from '../../utils/semver'
+import {Semver} from '../../utils'
 import {
-  AttributeKind,
   AttributeSchema,
   AttributeType,
-  AttributeTypeMask,
   COLLECTION_SCHEMA_NAME,
   CollectionAttributesSchema,
   UniqueCollectionSchemaToCreate,
-  LocalizedStringDictionary,
-  InfixOrUrlOrCidAndHash, URL_TEMPLATE_INFIX, UrlTemplateString
+  InfixOrUrlOrCidAndHash, URL_TEMPLATE_INFIX, UrlTemplateString,
+  LocalizedStringWithDefault,
 } from "../types";
-import {getEnumValues, getKeys, getReversedEnum} from "../../tsUtils";
+import {getEnumValues, getKeys} from "../../tsUtils";
 import {
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
 import {ValidationError} from "../../utils/errors";
-import {ATTRIBUTE_TYPE_NAME_BY_VALUE, POSSIBLE_ATTRIBUTE_KINDS, POSSIBLE_ATTRIBUTE_TYPES} from "../schemaUtils";
+import {AttributeTypeValues} from "../schemaUtils";
 
 
 const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
@@ -97,7 +95,7 @@ export const validateAndParseSemverString = (str: string, varName: string): Semv
   return Semver.fromString(str)
 }
 
-export const validateLocalizedStringDictionary = (dict: any, varName: string): dict is LocalizedStringDictionary => {
+export const LocalizedStringWithDefault = (dict: LocalizedStringWithDefault, varName: string): dict is LocalizedStringDictionary => {
   isPlainObject(dict, varName)
 
   if (getKeys(dict).length === 0) {
@@ -244,7 +242,7 @@ export const validateValueVsAttributeType = (value: any, type: AttributeType, va
   throw new ValidationError(`${varName}: unknown attribute type: ${type} (${ATTRIBUTE_TYPE_NAME_BY_VALUE[type]})`)
 }
 
-export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, varName: string): attr is AttributeSchema => {
+export const validateAttributesSchemaSingleAttribute = (key: number, attr: AttributeSchema, varName: string): attr is AttributeSchema => {
   isPlainObject(attr, varName)
 
   if (typeof attr.name !== 'string') {
@@ -254,13 +252,11 @@ export const validateAttributesSchemaSingleAttribute = (key: number, attr: any, 
   if (attr.hasOwnProperty('optional') && typeof attr.optional !== "boolean")
     throw new ValidationError(`${varName}.optional should be boolean when passed, got ${typeof attr.optional}: ${attr.optional}`)
 
-  if (typeof attr.type !== 'number' || !POSSIBLE_ATTRIBUTE_TYPES.includes(attr.type))
+  if (!AttributeTypeValues.includes(attr.type))
     throw new ValidationError(`${varName}.type should be a valid attribute type, got ${typeof attr.type}: ${attr.type}`)
 
-  if (typeof attr.kind !== 'number' || !POSSIBLE_ATTRIBUTE_KINDS.includes(attr.kind))
-    throw new ValidationError(`${varName}.kind should be a valid attribute kind, got ${typeof attr.kind}: ${attr.kind}`)
 
-  if ([AttributeKind.enum, AttributeKind.enumMultiple].includes(attr.kind)) {
+  if ([AttributeKind.enum, AttributeKind.multiEnum].includes(attr.kind)) {
     isPlainObject(attr.enumValues, `${varName}.enumValues`)
 
     for (const key in attr.enumValues) {
@@ -383,7 +379,7 @@ export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate>
 
       if (schema.kind === AttributeKind.freeValue) {
         validateValueVsAttributeType(attr, schema.type, varName)
-      } else if (schema.kind === AttributeKind.enumMultiple) {
+      } else if (schema.kind === AttributeKind.multiEnum) {
         if (!Array.isArray(attr))
           throw new ValidationError(`${varName} should be an array, because it's kind is enumMultiple`)
 

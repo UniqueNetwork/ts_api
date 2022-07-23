@@ -1,5 +1,3 @@
-import {CollectionId, SubstrateAddress} from "../../../types";
-
 export interface TokenPropertyPermission {
   mutable: boolean
   collectionAdmin: boolean
@@ -16,7 +14,7 @@ export interface CollectionParams {
   description: string
   tokenPrefix: string
 
-  mode?: {nft: null}
+  mode?: { nft: null }
   access?: 'Normal' | 'AllowList'
   limits?: {
     accountTokenOwnershipLimit?: number | null
@@ -32,7 +30,7 @@ export interface CollectionParams {
   permissions?: {
     access?: 'Normal' | 'AllowList'
     mintMode?: boolean
-    nesting?: {tokenOwner: boolean, collectionAdmin: boolean, restricted: Array<number>}
+    nesting?: { tokenOwner: boolean, collectionAdmin: boolean, restricted: Array<number> }
   }
   tokenPropertyPermissions?: Array<TokenPropertyPermissionObject>
   properties?: Array<{
@@ -42,7 +40,7 @@ export interface CollectionParams {
 }
 
 export interface Collection extends CollectionParams {
-  id: CollectionId
+  id: number
 }
 
 export interface RawCollection extends Omit<Collection, 'name' | 'description' | 'properties'> {
@@ -56,7 +54,7 @@ export type CollectionPermissions = Required<Required<CollectionParams>['permiss
 export type CollectionTokenPropertyPermissions = Required<CollectionParams>['tokenPropertyPermissions']
 export type CollectionProperties = Required<CollectionParams>['properties']
 
-export type CollectionSponsorship = 'Disabled' | {Confirmed: SubstrateAddress} | {Unconfirmed: SubstrateAddress}
+export type CollectionSponsorship = 'Disabled' | { Confirmed: string } | { Unconfirmed: string }
 
 // export interface CollectionParamsWithVectorizedStrings extends Omit<CollectionParams, 'name' | 'tokenPrefix' | 'description'> {
 //   name: number[]

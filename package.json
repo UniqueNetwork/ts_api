@@ -89,6 +89,7 @@
     "@unique-nft/opal-testnet-types": "0.5.3",
     "@unique-nft/quartz-mainnet-types": "0.6.1",
     "@unique-nft/unique-mainnet-types": "0.6.3",
+    "base-x": "^4.0.0",
     "ethers": "5.6.8",
     "protobufjs": "^6.11.3"
   }
