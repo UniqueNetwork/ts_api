@@ -1,10 +1,10 @@
 import {describe, expect, test} from 'vitest'
-import {utils} from '../../index'
+import {UniqueUtils} from '../../index'
 import {getEntries} from "../../tsUtils";
 import {Semver} from "../../utils/semver";
 
 describe('semver', () => {
-  const Semver = utils.semver.Semver
+  const Semver = UniqueUtils.Semver
 
   const strings = {
     v100: '1.0.0',

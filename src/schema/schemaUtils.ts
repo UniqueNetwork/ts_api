@@ -1,19 +1,11 @@
 import {PropertiesArray} from '../types'
-import {getEnumValues, getReversedEnum, safeJSONParse} from "../tsUtils";
+import {safeJSONParse} from "../tsUtils";
 import {
-  AttributeKind,
-  AttributeType,
   DecodedInfixOrUrlOrCidAndHash,
   InfixOrUrlOrCidAndHash,
-  UniqueCollectionSchemaDecoded,
   URL_TEMPLATE_INFIX,
   UrlTemplateString
 } from "./types";
-
-export const POSSIBLE_ATTRIBUTE_TYPES = getEnumValues(AttributeType)
-export const POSSIBLE_ATTRIBUTE_KINDS = getEnumValues(AttributeKind)
-export const ATTRIBUTE_TYPE_NAME_BY_VALUE = getReversedEnum(AttributeType)
-export const ATTRIBUTE_KIND_NAME_BY_VALUE = getReversedEnum(AttributeKind)
 
 const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
   if (typeof obj !== "object" || obj === null) {
@@ -105,9 +97,9 @@ export const decodeTokenUrlOrInfixOrCidWithHashField =  <U extends {urlTemplate?
 }
 
 export type DecodingResult<T> = {
-  isValid: true
-  decoded: T
+  result: T
+  error: null
 } | {
-  isValid: false
-  validationError: Error
+  result: null
+  error: Error
 }

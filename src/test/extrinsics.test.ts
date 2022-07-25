@@ -2,7 +2,7 @@ import {afterAll, beforeAll, expect, suite, test} from 'vitest'
 import * as dotenv from 'dotenv'
 import fs from 'fs'
 import {init, KeyringPair, Substrate, SubstrateUnique} from "../index";
-import { normalizeSubstrateAddress } from '../utils/addressUtils';
+import { Address } from '../utils';
 
 declare module 'vitest' {
   export interface Suite {
@@ -294,7 +294,8 @@ suite('ChangeCollectionOwner tests', async () => {
 
     //FIXME: change collectionById method asap
     const collection = await chain.getCollection(collectionId)
-    expect(keyring2.address).toBe(normalizeSubstrateAddress(collection.owner.toString()))
+    expect(collection).not.toBeFalsy()
+    expect(keyring2.address).toBe(Address.normalize.substrateAddress(collection!.owner.toString()))
   })
 })
 

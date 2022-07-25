@@ -1,4 +1,5 @@
-import {CollectionId, SubOrEthAddressObj, TokenId} from "../types";
+import {CrossAccountId} from "../types";
+import {getEnumValues} from "../tsUtils";
 
 export type InfixOrUrlOrCid =
   { url: string, urlInfix?: undefined, ipfsCid?: undefined }
@@ -9,48 +10,53 @@ export type InfixOrUrlOrCid =
 export type InfixOrUrlOrCidAndHash = InfixOrUrlOrCid & { hash?: string }
 export const URL_TEMPLATE_INFIX = <const>'{infix}'
 export type UrlTemplateString = `${string}${typeof URL_TEMPLATE_INFIX}${string}`
-export const AttributeTypeMask = {
-  number: 0x100,
-  string: 0x200,
-  object: 0x400,
-}
+
 
 export enum AttributeType {
-  integer = 0x101,                             // number
-  float = 0x102,                               // number
-  boolean = 0x103,                             // number
-  timestamp = 0x104,                           // number // js, milliseconds from epoch
-  string = 0x201,                              // string
-  url = 0x203,                                 // string
-  isoDate = 0x204,                             // string // ISO Date: YYYY-MM-DD
-  time = 0x205,                                // string // 24h time: HH:mm:ss
-  colorRgba = 0x206,                           // string // 'rrggbbaa'
-  localizedStringDictionary = 0x401,           // object
+  integer = "integer",    // number
+  float = "float",      // number
+  boolean = "boolean",    // number
+  timestamp = "timestamp",  // number // js, milliseconds from epoch
+  string = "string",     // string
+  url = "url",        // string
+  isoDate = "isoDate",    // string // ISO Date: YYYY-MM-DD
+  time = "time",       // string // 24h time: HH:mm:ss
+  colorRgba = "colorRgba",  // string // 'rrggbbaa'
 }
-export type ATTRIBUTE_TYPE_NAME = keyof typeof AttributeType
+
+export const NumberAttributeTypes = [
+  AttributeType.integer, AttributeType.float, AttributeType.boolean, AttributeType.timestamp,
+]
+export const IntegerAttributeTypes = [
+  AttributeType.integer, AttributeType.boolean, AttributeType.timestamp,
+]
+export const StringAttributeTypes = [
+  AttributeType.string, AttributeType.url, AttributeType.isoDate, AttributeType.time, AttributeType.colorRgba,
+]
+export const AttributeTypeValues = getEnumValues(AttributeType)
 
 
-export interface LocalizedStringDictionary {
+export type BoxedNumberWithDefault = {
+  _: number
+}
+export type LocalizedStringWithDefault = {
+  _: string
   [K: string]: string
 }
-
-export enum AttributeKind {
-  enum = 0,
-  enumMultiple = 1,
-  freeValue = 2,
-}
-export type ATTRIBUTE_KIND_NAME = keyof typeof AttributeKind
+export type LocalizedStringOrBoxedNumberWithDefault = BoxedNumberWithDefault | LocalizedStringWithDefault
 
 export interface AttributeSchema {
-  name: string | LocalizedStringDictionary
+  name: LocalizedStringWithDefault
   optional?: boolean
+  isArray?: boolean
   type: AttributeType
-  kind: AttributeKind
-  enumValues?: {[K: number]: number | string | LocalizedStringDictionary}
+  enumValues?: { [K: number]: LocalizedStringOrBoxedNumberWithDefault }
 }
 
+type EncodedEnumAttributeValue = number | Array<number>
+
 export interface EncodedTokenAttributes {
-  [K: number]: number | Array<number> | string | LocalizedStringDictionary
+  [K: number]: EncodedEnumAttributeValue | LocalizedStringOrBoxedNumberWithDefault | LocalizedStringOrBoxedNumberWithDefault[]
 }
 
 export type CollectionAttributesSchema = {
@@ -60,10 +66,11 @@ export type CollectionAttributesSchema = {
 export enum COLLECTION_SCHEMA_NAME {
   unique = 'unique',
   old = '_old_',
+  ERC721Metadata = 'ERC721Metadata'
 }
 
 export interface UniqueCollectionSchemaToCreate {
-  schemaName: COLLECTION_SCHEMA_NAME
+  schemaName: COLLECTION_SCHEMA_NAME.unique
   schemaVersion: string // semver
 
   coverPicture: InfixOrUrlOrCidAndHash
@@ -96,8 +103,11 @@ export interface UniqueCollectionSchemaToCreate {
   }
 }
 
-export type UniqueCollectionSchemaDecoded = Omit<UniqueCollectionSchemaToCreate, 'coverPicture' | 'coverPicturePreview'> & {
-  collectionId: CollectionId
+export type UniqueCollectionSchemaDecoded =
+  Omit<UniqueCollectionSchemaToCreate, 'schemaName' | 'coverPicture' | 'coverPicturePreview'>
+  & {
+  schemaName: COLLECTION_SCHEMA_NAME
+  collectionId: number
   coverPicture: DecodedInfixOrUrlOrCidAndHash
   coverPicturePreview?: DecodedInfixOrUrlOrCidAndHash
   oldProperties?: {
@@ -109,8 +119,8 @@ export type UniqueCollectionSchemaDecoded = Omit<UniqueCollectionSchemaToCreate,
 }
 
 interface IToken<GenericInfixUrlOrCidWithHash> {
-  name?: string | LocalizedStringDictionary
-  description?: string | LocalizedStringDictionary
+  name?: LocalizedStringWithDefault
+  description?: LocalizedStringWithDefault
   image: GenericInfixUrlOrCidWithHash
   imagePreview?: GenericInfixUrlOrCidWithHash
   video?: GenericInfixUrlOrCidWithHash
@@ -118,33 +128,28 @@ interface IToken<GenericInfixUrlOrCidWithHash> {
   spatialObject?: GenericInfixUrlOrCidWithHash
 }
 
-export interface UniqueTokenToCreate extends IToken<InfixOrUrlOrCidAndHash>{
+export interface UniqueTokenToCreate extends IToken<InfixOrUrlOrCidAndHash> {
   encodedAttributes?: EncodedTokenAttributes
 }
 
-type AttributeDecodedValue = string | number | LocalizedStringDictionary | Array<string | number | LocalizedStringDictionary>
-
-export type DecodedAttributes  = {
+export type DecodedAttributes = {
   [K: number]: {
-    name: string | LocalizedStringDictionary
-    value: AttributeDecodedValue
+    name: LocalizedStringWithDefault
+    value: LocalizedStringOrBoxedNumberWithDefault | Array<LocalizedStringOrBoxedNumberWithDefault>
     type: AttributeType
-    kind: AttributeKind
     isArray: boolean
-    technicalTypeName: ATTRIBUTE_TYPE_NAME
-    technicalKindName: ATTRIBUTE_KIND_NAME
   }
 }
 
-export type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & {fullUrl: string | null}
+export type DecodedInfixOrUrlOrCidAndHash = InfixOrUrlOrCidAndHash & { fullUrl: string | null }
 
 export interface UniqueTokenDecoded extends IToken<DecodedInfixOrUrlOrCidAndHash> {
-  tokenId: TokenId
-  collectionId: CollectionId
-  owner: SubOrEthAddressObj
+  tokenId: number
+  collectionId: number
+  owner: CrossAccountId
   nestingParentToken?: {
-    collectionId: CollectionId
-    tokenId: TokenId
+    collectionId: number
+    tokenId: number
   }
   attributes: DecodedAttributes
 }

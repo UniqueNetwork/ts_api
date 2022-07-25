@@ -1,4 +1,4 @@
-import {ApiPromise, CollectionId, ISubmittableResult, SubOrEthAddressObj, TokenId} from '../../../types'
+import {ApiPromise, CrossAccountId, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 import {ExtrinsicError} from '../../../utils/errors'
@@ -10,9 +10,9 @@ export interface ExtrinsicCreateNftTokenParams {
 }
 
 export interface ExtrinsicCreateNftTokenResult extends ExtrinsicResult {
-  collectionId: CollectionId
-  tokenId: TokenId
-  owner: SubOrEthAddressObj
+  collectionId: number
+  tokenId: number
+  owner: CrossAccountId
 }
 
 export class ExtrinsicCreateNftToken extends AbstractExtrinsic<ExtrinsicCreateNftTokenParams, ExtrinsicCreateNftTokenResult> {
@@ -32,9 +32,9 @@ export class ExtrinsicCreateNftToken extends AbstractExtrinsic<ExtrinsicCreateNf
       throw new Error(`No event common.ItemCreated found`)
     }
 
-    const collectionId = parseInt(data[0].toString(), 10) as CollectionId
-    const tokenId = parseInt(data[1].toString(), 10) as TokenId
-    const owner = data[2].toJSON() as SubOrEthAddressObj
+    const collectionId = parseInt(data[0].toString(), 10)
+    const tokenId = parseInt(data[1].toString(), 10)
+    const owner = data[2].toJSON() as CrossAccountId
 
     if (!tokenId) {
       throw new ExtrinsicError(txResult, 'No token id found')

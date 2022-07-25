@@ -6,8 +6,8 @@ import {
 } from '../../substrate/extrinsics/unique/types'
 import {converters2Layers, decodeTokenUrlOrInfixOrCidWithHashField, DecodingResult} from '../schemaUtils'
 import {getKeys} from '../../tsUtils'
-import {validateUniqueCollectionSchema, validateCollectionTokenPropertyPermissions} from './validators'
-import {CollectionId, PropertiesArray} from '../../types'
+import {validateCollectionTokenPropertyPermissions, validateUniqueCollectionSchema} from './validators'
+import {PropertiesArray} from '../../types'
 
 export const encodeCollectionSchemaToProperties = (schema: UniqueCollectionSchemaToCreate): CollectionProperties => {
   validateUniqueCollectionSchema(schema)
@@ -22,7 +22,7 @@ export const decodeUniqueCollectionFromProperties = async (collectionId: number,
   try {
     const unpackedSchema: UniqueCollectionSchemaDecoded = unpackCollectionSchemaFromProperties(properties)
     validateUniqueCollectionSchema(unpackedSchema)
-    unpackedSchema.collectionId = collectionId as CollectionId
+    unpackedSchema.collectionId = collectionId as number
 
     if (unpackedSchema.coverPicture) {
       unpackedSchema.coverPicture = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicture, unpackedSchema.image)
@@ -31,13 +31,13 @@ export const decodeUniqueCollectionFromProperties = async (collectionId: number,
       unpackedSchema.coverPicturePreview = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicturePreview, unpackedSchema.image)
     }
     return {
-      isValid: true,
-      decoded: unpackedSchema,
+      result: unpackedSchema,
+      error: null,
     }
-  } catch(e) {
+  } catch (e) {
     return {
-      isValid: false,
-      validationError: e as Error,
+      result: null,
+      error: e as Error,
     }
   }
 }
@@ -57,6 +57,7 @@ const generateDefaultTPPsForInfixOrUrlOrCidAndHashObject = (permissions: Collect
 export interface ICollectionSchemaToTokenPropertyPermissionsOptions {
   overwriteTPPs?: CollectionTokenPropertyPermissions
 }
+
 export const generateTokenPropertyPermissionsFromCollectionSchema = (schema: UniqueCollectionSchemaToCreate, options?: ICollectionSchemaToTokenPropertyPermissionsOptions): CollectionTokenPropertyPermissions => {
   const permissions: CollectionTokenPropertyPermissions = [
     generateDefaultTPPObjectForKey('n'), // name

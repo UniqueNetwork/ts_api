@@ -1,4 +1,4 @@
-import {ApiPromise, ISubmittableResult, SubOrEthAddressObj, TokenId} from '../../../types'
+import {ApiPromise, CrossAccountId, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod, findManyEventsDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 import {TokenToMint, validateAndFixTokenOwner} from "./utils";
@@ -10,7 +10,7 @@ export interface ExtrinsicCreateMultipleNftTokensParams {
 }
 
 export interface ExtrinsicCreateMultipleNftTokensResult extends ExtrinsicResult {
-  tokens: Array<{ tokenId: TokenId, owner: SubOrEthAddressObj }>
+  tokens: Array<{ tokenId: number, owner: CrossAccountId }>
 }
 
 export class ExtrinsicCreateMultipleNftTokens extends AbstractExtrinsic<ExtrinsicCreateMultipleNftTokensParams, ExtrinsicCreateMultipleNftTokensResult> {
@@ -36,8 +36,8 @@ export class ExtrinsicCreateMultipleNftTokens extends AbstractExtrinsic<Extrinsi
     const tokenDataElements = findManyEventsDataBySectionAndMethod(txResult, 'common', 'ItemCreated')
 
     const tokens = tokenDataElements.map(data => {
-      const tokenId = (!!data && parseInt(data[1].toString(), 10) as TokenId)
-      const owner = (!!data && data[2].toJSON()) as SubOrEthAddressObj
+      const tokenId = (!!data && parseInt(data[1].toString(), 10))
+      const owner = (!!data && data[2].toJSON()) as CrossAccountId
       return {tokenId, owner}
     })
 

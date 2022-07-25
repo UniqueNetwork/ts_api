@@ -1,4 +1,4 @@
-import {addressToObject} from '../../../utils/addressUtils'
+import {Address} from '../../../utils'
 
 import {ApiPromise, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
@@ -16,7 +16,7 @@ export interface ExtrinsicAddToAllowListResult extends ExtrinsicResult {
 
 export class ExtrinsicAddToAllowList extends AbstractExtrinsic<ExtrinsicAddToAllowListParams, ExtrinsicAddToAllowListResult> {
   constructor(api: ApiPromise, params: ExtrinsicAddToAllowListParams, options?: ExtrinsicOptions) {
-    const tx = api.tx.unique.addToAllowList(params.collectionId, addressToObject(params.address))
+    const tx = api.tx.unique.addToAllowList(params.collectionId, Address.to.crossAccountId(params.address))
     super(api, tx, params)
   }
 
@@ -28,8 +28,6 @@ export class ExtrinsicAddToAllowList extends AbstractExtrinsic<ExtrinsicAddToAll
     const isSuccess = !!data &&
       !isNaN((parseInt(data[0].toString(), 10))) &&
       !!data[1].toString()
-
-    // console.log(!!data ? JSON.parse(data[1].toString()) : 'null')
 
     return {
       ...result,

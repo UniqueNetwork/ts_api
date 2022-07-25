@@ -1,4 +1,4 @@
-import {addressToObject} from '../../../utils/addressUtils'
+import {Address} from '../../../utils'
 
 import {ApiPromise, ISubmittableResult} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
@@ -16,7 +16,7 @@ export interface ExtrinsicAddCollectionAdminResult extends ExtrinsicResult {
 export class ExtrinsicAddCollectionAdmin extends AbstractExtrinsic<ExtrinsicAddCollectionAdminParams, ExtrinsicAddCollectionAdminResult> {
   constructor(api: ApiPromise, params: ExtrinsicAddCollectionAdminParams, options?: ExtrinsicOptions) {
 
-    const tx = api.tx.unique.addCollectionAdmin(params.collectionId, addressToObject(params.newAdminAddress))
+    const tx = api.tx.unique.addCollectionAdmin(params.collectionId, Address.to.crossAccountId(params.newAdminAddress))
 
     super(api, tx, params)
   }

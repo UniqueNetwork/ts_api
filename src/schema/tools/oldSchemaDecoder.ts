@@ -1,24 +1,25 @@
 import {
-  AttributeKind,
+  AttributeSchema,
   AttributeType,
   COLLECTION_SCHEMA_NAME,
+  CollectionAttributesSchema,
   DecodedAttributes,
   DecodedInfixOrUrlOrCidAndHash,
   DecodingImageLinkOptions,
+  LocalizedStringWithDefault,
   UniqueCollectionSchemaDecoded,
   UniqueTokenDecoded,
   UrlTemplateString
 } from "../types";
-import {validateLocalizedStringDictionarySafe, validateURLSafe} from "./validators";
+import {validateURLSafe} from "./validators";
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
-import {ATTRIBUTE_KIND_NAME_BY_VALUE, ATTRIBUTE_TYPE_NAME_BY_VALUE, DecodingResult} from "../schemaUtils";
-import {CollectionId, HumanizedNftToken, SubOrEthAddressObj, TokenId} from "../../types";
-import {Root} from 'protobufjs'
+import {DecodingResult} from "../schemaUtils";
+import {CrossAccountId, HumanizedNftToken} from "../../types";
 import type {Message, Type} from 'protobufjs'
+import {Root} from 'protobufjs'
 import {ValidationError} from "../../utils/errors";
-import {hexToU8a} from "../../utils/common";
-import {getEntries, safeJSONParse} from "../../tsUtils";
-import {isNestingAddress, nestingAddressToCollectionIdAndTokenId} from '../../utils/common'
+import {getEntries, getKeys, getValues, safeJSONParse} from "../../tsUtils";
+import {StringUtils, UniqueUtils} from "../../utils";
 
 
 const isOffchainSchemaAValidUrl = (offchainSchema: string | undefined): offchainSchema is string => {
@@ -45,7 +46,7 @@ export const decodeOldSchemaCollection = async (collectionId: number, properties
   const schema: UniqueCollectionSchemaDecoded = {
     schemaName: COLLECTION_SCHEMA_NAME.old,
 
-    collectionId: collectionId as CollectionId,
+    collectionId,
     coverPicture: {
       url: dummyImageFullUrl,
       fullUrl: null
@@ -78,16 +79,63 @@ export const decodeOldSchemaCollection = async (collectionId: number, properties
   }
 
 
-  if (constOnchainSchema) {
-    try {
-      Root.fromJSON(JSON.parse(constOnchainSchema))
-    } catch (err: any) {
-      return {
-        isValid: false,
-        validationError: err as Error,
-      }
+  let root: Root = {} as any
+  let NFTMeta: Type = {} as any
+  try {
+    root = Root.fromJSON(JSON.parse(constOnchainSchema))
+    NFTMeta = root.lookupType('onChainMetaData.NFTMeta')
+  } catch (err: any) {
+    return {
+      result: null,
+      error: err as Error,
     }
   }
+
+  const attributesSchema: CollectionAttributesSchema = {}
+
+  let i = 0;
+  for (const field of NFTMeta.fieldsArray) {
+    if (field.name === 'ipfsJson') {
+      continue
+    }
+
+    const options = root.lookupEnum(field.type).options
+    const parsedOptions: LocalizedStringWithDefault[] = options
+      ? getValues(options)
+        .map(v => safeJSONParse<{en: string | undefined}>(v))
+        .filter(v => typeof v !== 'string' && typeof v.en === 'string')
+        .map(v => {
+          const result: any = {...(v as any)}
+          if (typeof result._ === 'string') return result
+
+          result._ = result.en || result[getKeys(result)[0]] || undefined
+
+          if (typeof result._ !== 'string') return null
+        })
+        .filter(v => !!v)
+      : []
+
+    const attr: AttributeSchema = {
+      type: AttributeType.string,
+      name: {_: field.name},
+      isArray: field.repeated,
+      optional: !field.required,
+    }
+    if (parsedOptions.length) {
+      attr.enumValues = parsedOptions.reduce(
+        (acc, el, index) => {
+          acc[index] = el
+          return acc
+        },
+        {} as {[K: number]: LocalizedStringWithDefault}
+      )
+    }
+
+    attributesSchema[i++] = attr
+  }
+
+  schema.attributesSchema = attributesSchema
+  schema.attributesSchemaVersion = '1.0.0'
 
   schema.oldProperties = {
     _old_schemaVersion: schemaVersion,
@@ -96,7 +144,7 @@ export const decodeOldSchemaCollection = async (collectionId: number, properties
     _old_variableOnChainSchema: variableOnchainSchema,
   }
 
-  return {isValid: true, decoded: schema}
+  return {result: schema, error: null}
 }
 
 //todo: replace rawToken type with humanized token after core team's fix
@@ -104,7 +152,10 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   const constOnchainSchema = schema.oldProperties?._old_constOnChainSchema
 
   if (!constOnchainSchema) {
-    return {isValid: false, validationError: new ValidationError(`collection doesn't contain _old_constOnChainSchema field`)}
+    return {
+      result: null,
+      error: new ValidationError(`collection doesn't contain _old_constOnChainSchema field`)
+    }
   }
 
   let root: Root = {} as any
@@ -114,20 +165,20 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
     NFTMeta = root.lookupType('onChainMetaData.NFTMeta')
   } catch (err: any) {
     return {
-      isValid: false,
-      validationError: err as Error,
+      result: null,
+      error: err as Error,
     }
   }
 
   if (!rawToken) {
     return {
-      isValid: false,
-      validationError: new ValidationError(`parsing token with old schema: no token passed`)
+      result: null,
+      error: new ValidationError(`parsing token with old schema: no token passed`)
     }
   }
 
   const parsedToken: HumanizedNftToken = {
-    owner: rawToken.owner.toHuman() as SubOrEthAddressObj,
+    owner: rawToken.owner.toHuman() as CrossAccountId,
     properties: rawToken.properties.map(property => {
       return {
         key: property.key.toHuman() as string,
@@ -140,12 +191,12 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   const constDataProp = parsedToken.properties.find(({key}) => key === '_old_constData')
   if (!constDataProp) {
     return {
-      isValid: false,
-      validationError: new ValidationError('no _old_constData property found')
+      result: null,
+      error: new ValidationError('no _old_constData property found')
     }
   }
 
-  const u8aToken = hexToU8a(constDataProp.value)
+  const u8aToken = StringUtils.hexToU8a(constDataProp.value)
   let tokenDecoded: Message<{}> = {} as any
   let tokenDecodedHuman: Record<string, any> = {}
   try {
@@ -153,8 +204,8 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
     tokenDecodedHuman = tokenDecoded.toJSON()
   } catch (err: any) {
     return {
-      isValid: false,
-      validationError: err
+      result: null,
+      error: err
     }
   }
 
@@ -169,45 +220,40 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
     }
 
     let value = rawValue
-
     let isArray = false
-    let kind = AttributeKind.freeValue
-    let type = AttributeType.string
 
     const field = tokenDecoded.$type.fields[name]
     if (!['string', 'number'].includes(field.type)) {
       const enumOptions = root.lookupEnum(field.type).options
       if (field.rule === 'repeated' && Array.isArray(rawValue)) {
-        value = rawValue
+        const parsedValues = rawValue
+          .map((v: any) => {
+            const parsed = safeJSONParse<any>(enumOptions?.[v] || v)
+            if (typeof parsed !== 'string') {
+              parsed._ = parsed.en
+              return parsed
+            } else {
+              return null
+            }
+          })
+          .filter(v => typeof v?._ === 'string')
 
+
+        value = parsedValues
         isArray = true
-        kind = AttributeKind.enumMultiple
-
-        const parsedValues = rawValue.map((v: any) => safeJSONParse(enumOptions?.[v] || v))
-        const isLocalizedStringDictionary = parsedValues.every((parsedValue, index) => validateLocalizedStringDictionarySafe(parsedValue, `attributes.${name}[${index}]`))
-
-        if (isLocalizedStringDictionary) {
-          type = AttributeType.localizedStringDictionary
-          value = parsedValues
-        }
       } else {
-        kind = AttributeKind.enum
         value = safeJSONParse(enumOptions?.[rawValue] || rawValue)
-
-        if (validateLocalizedStringDictionarySafe(value, `attributes.${name}`)) {
-          type = AttributeType.localizedStringDictionary
+        if (typeof value !== 'string') {
+          value._ = value.en || getValues(value)[0]
         }
       }
     }
 
     tokenAttributesResult[i++] = {
-      name,
+      name: {_: name},
+      type: field.type === 'number' ? AttributeType.float : AttributeType.string,
       value,
       isArray,
-      kind,
-      type,
-      technicalKindName: ATTRIBUTE_KIND_NAME_BY_VALUE[kind],
-      technicalTypeName: ATTRIBUTE_TYPE_NAME_BY_VALUE[type],
     }
   }
 
@@ -244,16 +290,19 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
   }
 
   const decodedToken: UniqueTokenDecoded = {
-    collectionId: collectionId as CollectionId,
-    tokenId: tokenId as TokenId,
+    collectionId,
+    tokenId,
     owner: parsedToken.owner,
     image,
     attributes: tokenAttributesResult,
   }
 
-  if (parsedToken.owner.Ethereum && isNestingAddress(parsedToken.owner.Ethereum)) {
-    decodedToken.nestingParentToken = nestingAddressToCollectionIdAndTokenId(parsedToken.owner.Ethereum)
+  if (parsedToken.owner.Ethereum && UniqueUtils.Address.is.nestingAddress(parsedToken.owner.Ethereum)) {
+    decodedToken.nestingParentToken = UniqueUtils.Address.nesting.addressToIds(parsedToken.owner.Ethereum)
   }
 
-  return {isValid: true, decoded: decodedToken}
+  return {
+    result: decodedToken,
+    error: null,
+  }
 }

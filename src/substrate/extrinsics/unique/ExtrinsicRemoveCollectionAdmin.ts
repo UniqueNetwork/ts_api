@@ -1,6 +1,6 @@
-import { addressToObject } from '../../../utils/addressUtils'
+import { Address } from '../../../utils'
 
-import {ISubmittableResult, ApiPromise, CollectionId} from '../../../types'
+import {ISubmittableResult, ApiPromise} from '../../../types'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from '../AbstractExtrinsic'
 
@@ -16,7 +16,7 @@ export interface ExtrinsicRemoveCollectionAdminResult extends ExtrinsicResult {
 export class ExtrinsicRemoveCollectionAdmin extends AbstractExtrinsic<ExtrinsicRemoveCollectionAdminParams, ExtrinsicRemoveCollectionAdminResult> {
   constructor(api: ApiPromise, params: ExtrinsicRemoveCollectionAdminParams, options?: ExtrinsicOptions) {
 
-    const tx = api.tx.unique.removeCollectionAdmin(params.collectionId, addressToObject(params.adminAddress))
+    const tx = api.tx.unique.removeCollectionAdmin(params.collectionId, Address.to.crossAccountId(params.adminAddress))
 
     super(api, tx, params)
   }

@@ -3,7 +3,7 @@ import fs from 'fs'
 import { beforeAll, describe, expect, test, suite, Vitest } from 'vitest'
 import { AttributeKind, AttributeType, CollectionAttributesSchema, COLLECTION_SCHEMA_NAME, init, KeyringPair, Substrate, SubstrateUnique, UniqueCollectionSchemaDecoded, UniqueCollectionSchemaToCreate, SchemaTools, UniqueTokenToCreate } from '../index'
 import { validateCollectionAttributesSchema } from '../schema/tools/validators'
-import { addressToObject } from '../utils/addressUtils'
+import { Address } from '../utils'
 
 declare module 'vitest' {
   export interface Suite {
@@ -385,7 +385,7 @@ const dungeonsAndHeroesCollectionAttributesSchema: CollectionAttributesSchema = 
   '1': {
     name: {en: 'weapon'},
     type: AttributeType.localizedStringDictionary,
-    kind: AttributeKind.enumMultiple,
+    kind: AttributeKind.multiEnum,
     enumValues: {
       0:  {en: 'Sword'},
       1:  {en: 'Dagger'},
@@ -515,7 +515,7 @@ describe('Integration tests for validateCollectionAttributesSchema', () => {
 
     const tokenData = [
       {
-        owner: addressToObject(keyring1.address),
+        owner: Address.to.crossAccountId(keyring1.address),
         properties: [
           { key: 'n',   value: 'knight (valid token)' },
           { key: 'a.0', value: '0'      },

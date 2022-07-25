@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest'
-import {init, utils} from '../../index'
+import {init, UniqueUtils} from '../../index'
 
 describe('addresses', async () => {
   await init()
@@ -14,100 +14,100 @@ describe('addresses', async () => {
   const subMirrorOfEthAddress = '5EctGy9Wyoa8XT8fV8hrJHL6ywaSb2ui29vs47Ybe8jfMYHR'
 
   test.concurrent('is', () => {
-    expect(utils.address.is.substrateAddress(opal)).toBe(true)
-    expect(utils.address.is.substrateAddress(ethAddress)).toBe(false)
-    expect(utils.address.is.substrateAddress('123')).toBe(false)
+    expect(UniqueUtils.Address.is.substrateAddress(opal)).toBe(true)
+    expect(UniqueUtils.Address.is.substrateAddress(ethAddress)).toBe(false)
+    expect(UniqueUtils.Address.is.substrateAddress('123')).toBe(false)
 
-    expect(utils.address.is.ethereumAddress(opal)).toBe(false)
-    expect(utils.address.is.ethereumAddress(ethAddress)).toBe(true)
-    expect(utils.address.is.ethereumAddress('123')).toBe(false)
+    expect(UniqueUtils.Address.is.ethereumAddress(opal)).toBe(false)
+    expect(UniqueUtils.Address.is.ethereumAddress(ethAddress)).toBe(true)
+    expect(UniqueUtils.Address.is.ethereumAddress('123')).toBe(false)
   })
 
   test.concurrent('subToEthMirror', () => {
-    expect(utils.address.subToEthMirror(opal)).toBe(ethMirror)
+    expect(UniqueUtils.Address.subToEthMirror(opal)).toBe(ethMirror)
     expect(() => {
-      utils.address.subToEthMirror('123')
+      UniqueUtils.Address.subToEthMirror('123')
     }).toThrowError()
   })
 
   test.concurrent('ethToSubMirror', () => {
-    expect(utils.address.ethToSubMirror(ethMirror)).toBe(doubleMirror)
-    expect(utils.address.ethToSubMirror(ethAddress)).toBe(subMirrorOfEthAddress)
+    expect(UniqueUtils.Address.ethToSubMirror(ethMirror)).toBe(doubleMirror)
+    expect(UniqueUtils.Address.ethToSubMirror(ethAddress)).toBe(subMirrorOfEthAddress)
     expect(() => {
-      utils.address.ethToSubMirror('123')
+      UniqueUtils.Address.ethToSubMirror('123')
     }).toThrowError()
   })
 
   test.concurrent('normalizeSubstrateAddress', () => {
-    expect(utils.address.normalizeSubstrateAddress(quartz)).toBe(opal)
-    expect(utils.address.normalizeSubstrateAddress(quartz, 7391)).toBe(unique)
+    expect(UniqueUtils.Address.normalizeSubstrateAddress(quartz)).toBe(opal)
+    expect(UniqueUtils.Address.normalizeSubstrateAddress(quartz, 7391)).toBe(unique)
     expect(() => {
-      utils.address.normalizeSubstrateAddress('123')
+      UniqueUtils.Address.normalizeSubstrateAddress('123')
     }).toThrowError()
   })
 
   test.concurrent('normalizeEthereumAddress', () => {
-    expect(utils.address.normalizeEthereumAddress(ethMirror.toLowerCase())).toBe(ethMirror)
+    expect(UniqueUtils.Address.normalizeEthereumAddress(ethMirror.toLowerCase())).toBe(ethMirror)
     expect(() => {
-      utils.address.normalizeEthereumAddress('123')
+      UniqueUtils.Address.normalizeEthereumAddress('123')
     }).toThrowError()
   })
 
   test.concurrent('Collection address ', () => {
-    expect(utils.address.collectionIdToEthAddress(127))
+    expect(UniqueUtils.Address.collectionIdToEthAddress(127))
       .toBe('0x17c4e6453cC49aAAAeACa894E6d9683E0000007f')
 
     expect(() => {
-      utils.address.collectionIdToEthAddress(2 ** 32)
+      UniqueUtils.Address.collectionIdToEthAddress(2 ** 32)
     }).toThrow()
 
-    expect(utils.address.ethAddressToCollectionId('0x17c4E6453CC49AAAAEAca894E6D9683e000000fF'))
+    expect(UniqueUtils.Address.ethAddressToCollectionId('0x17c4E6453CC49AAAAEAca894E6D9683e000000fF'))
       .toBe(255)
 
     expect(() => {
-      utils.address.ethAddressToCollectionId('0x17c4E6453CC49AAAAEAca894E6D9683e000000f')
+      UniqueUtils.Address.ethAddressToCollectionId('0x17c4E6453CC49AAAAEAca894E6D9683e000000f')
     }).toThrow()
   })
 
   test.concurrent('Nesting address', () => {
-    expect(utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238cCfFf8Ed887463Fd5E00000000000000000'))
+    expect(UniqueUtils.Address.nestingAddressToCollectionIdAndTokenId('0xF8238cCfFf8Ed887463Fd5E00000000000000000'))
       .toEqual({collectionId: 0, tokenId: 0})
 
-    expect(utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238CCFfF8ed887463fd5E0000000fE0000007F'))
+    expect(UniqueUtils.Address.nestingAddressToCollectionIdAndTokenId('0xF8238CCFfF8ed887463fd5E0000000fE0000007F'))
       .toEqual({collectionId: 254, tokenId: 127})
 
-    expect(utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238CcFFF8ed887463fD5E0fffffFFFFFfFFffF'))
+    expect(UniqueUtils.Address.nestingAddressToCollectionIdAndTokenId('0xF8238CcFFF8ed887463fD5E0fffffFFFFFfFFffF'))
       .toEqual({collectionId: 2 ** 32 - 1, tokenId: 2 ** 32 - 1})
 
-    expect(() => {utils.address.nestingAddressToCollectionIdAndTokenId('0xF8238CCFfF8ed887463fd5E0000000fE0000007')})
+    expect(() => {UniqueUtils.Address.nestingAddressToCollectionIdAndTokenId('0xF8238CCFfF8ed887463fd5E0000000fE0000007')})
       .toThrow()
 
-    expect(utils.address.collectionIdAndTokenIdToNestingAddress(0, 0))
+    expect(UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(0, 0))
       .toBe('0xF8238cCfFf8Ed887463Fd5E00000000000000000')
 
-    expect(utils.address.collectionIdAndTokenIdToNestingAddress(254, 127))
+    expect(UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(254, 127))
       .toBe('0xF8238CCFfF8ed887463fd5E0000000fE0000007F')
 
-    expect(utils.address.collectionIdAndTokenIdToNestingAddress(2 ** 32 - 1, 2 ** 32 - 1))
+    expect(UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(2 ** 32 - 1, 2 ** 32 - 1))
       .toBe('0xF8238CcFFF8ed887463fD5E0fffffFFFFFfFFffF')
 
     expect(() => {
-      utils.address.collectionIdAndTokenIdToNestingAddress(-1, 0)
+      UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(-1, 0)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenIdToNestingAddress(2 ** 32, 0)
+      UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(2 ** 32, 0)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenIdToNestingAddress(0, -1)
+      UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(0, -1)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenIdToNestingAddress(0, 2 ** 32)
+      UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(0, 2 ** 32)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenIdToNestingAddress(-1, -1)
+      UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(-1, -1)
     }).toThrow()
     expect(() => {
-      utils.address.collectionIdAndTokenIdToNestingAddress(2 ** 32, 2 ** 32)
+      UniqueUtils.Address.collectionIdAndTokenIdToNestingAddress(2 ** 32, 2 ** 32)
     }).toThrow()
   })
 })
