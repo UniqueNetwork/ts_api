@@ -1,4 +1,4 @@
-import {Address, UniqueUtils, string} from "../utils";
+import {Address} from '../utils'
 import {ExtrinsicTransferCoinsOptions, ExtrinsicTransferCoinsParams} from "./extrinsics/common/ExtrinsicTransferCoins";
 
 import {ExtrinsicOptions} from "./extrinsics/AbstractExtrinsic";
@@ -117,7 +117,7 @@ export class SubstrateUnique extends SubstrateCommon {
   //////////////////////////////////////////
 
   async getBalance(address: string): Promise<bigint> {
-    const substrateAddress = UniqueUtils.Address.to.substrateNormalizedOrMirrorIfEthereum(address)
+    const substrateAddress = Address.to.substrateNormalizedOrMirrorIfEthereum(address)
 
     return await super.getBalance(substrateAddress)
   }
@@ -162,8 +162,8 @@ export class SubstrateUnique extends SubstrateCommon {
     }
 
     const uniqueSchema = await SchemaTools.decode.collectionSchema(collectionId, collection.properties)
-    if (uniqueSchema.isValid) collection.uniqueSchema = uniqueSchema.decoded
-    else collection.uniqueSchemaDecodingError = uniqueSchema.validationError
+    collection.uniqueSchema = uniqueSchema.result
+    collection.uniqueSchemaDecodingError = uniqueSchema.error
 
     if (options?.fetchAll || options?.fetchEffectiveLimits) {
       collection.effectiveLimits = (await this.api.rpc.unique.effectiveCollectionLimits(collectionId)).toHuman() as CollectionLimits
@@ -192,7 +192,7 @@ export class SubstrateUnique extends SubstrateCommon {
 
     const uniqueToken: DecodingResult<UniqueTokenDecoded> = options?.uniqueSchema
       ? await SchemaTools.decode.token(collectionId, tokenId, superRawToken, options?.uniqueSchema)
-      : {isValid: false, validationError: new ValidationError('token parsing: no schema passed')}
+      : {result: null, error: new ValidationError('token parsing: no schema passed')}
 
     const token = {
       collectionId,
@@ -200,8 +200,8 @@ export class SubstrateUnique extends SubstrateCommon {
       owner,
       ownerNormalized,
       properties: parseProperties(rawToken.properties),
-      uniqueToken: uniqueToken.isValid ? uniqueToken.decoded : null,
-      uniqueTokenDecodingError: uniqueToken.isValid ? null : uniqueToken.validationError,
+      uniqueToken: uniqueToken.result,
+      uniqueTokenDecodingError: uniqueToken.error,
       get raw() {
         return superRawToken
       },
@@ -220,7 +220,7 @@ export class SubstrateUnique extends SubstrateCommon {
 
   //@overrides because it eats ethereum address too
   transferCoins(params: ExtrinsicTransferCoinsParams, options?: ExtrinsicTransferCoinsOptions) {
-    const toAddress = UniqueUtils.Address.to.substrateNormalizedOrMirrorIfEthereum(params.toAddress)
+    const toAddress = Address.to.substrateNormalizedOrMirrorIfEthereum(params.toAddress)
     return super.transferCoins({...params, toAddress}, options)
   }
 

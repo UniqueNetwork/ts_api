@@ -1,7 +1,6 @@
 import * as Address from './address'
-import {Semver} from './semver'
 
-const StringUtils = Address.string
+const StringUtils = Address.StringUtils
 
 const Browser = {
   checkEnvironmentIsBrowser: (safe?: boolean) => {
@@ -16,12 +15,11 @@ const Browser = {
   }
 }
 
-export {Address, StringUtils, Semver, Browser}
+export {Address, StringUtils, Browser}
 
 
 export const UniqueUtils = {
   Browser,
   StringUtils,
   Address,
-  Semver,
 }

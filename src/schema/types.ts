@@ -1,4 +1,5 @@
 import {CrossAccountId} from "../types";
+import {getEnumValues} from "../tsUtils";
 
 export type InfixOrUrlOrCid =
   { url: string, urlInfix?: undefined, ipfsCid?: undefined }
@@ -26,9 +27,14 @@ export enum AttributeType {
 export const NumberAttributeTypes = [
   AttributeType.integer, AttributeType.float, AttributeType.boolean, AttributeType.timestamp,
 ]
+export const IntegerAttributeTypes = [
+  AttributeType.integer, AttributeType.boolean, AttributeType.timestamp,
+]
 export const StringAttributeTypes = [
   AttributeType.string, AttributeType.url, AttributeType.isoDate, AttributeType.time, AttributeType.colorRgba,
 ]
+export const AttributeTypeValues = getEnumValues(AttributeType)
+
 
 export type BoxedNumberWithDefault = {
   _: number
@@ -42,17 +48,15 @@ export type LocalizedStringOrBoxedNumberWithDefault = BoxedNumberWithDefault | L
 export interface AttributeSchema {
   name: LocalizedStringWithDefault
   optional?: boolean
-  isArray: boolean
-  enum?: {
-    type: AttributeType
-    values: { [K: number]: LocalizedStringOrBoxedNumberWithDefault }
-  }
+  isArray?: boolean
+  type: AttributeType
+  enumValues?: { [K: number]: LocalizedStringOrBoxedNumberWithDefault }
 }
 
 type EncodedEnumAttributeValue = number | Array<number>
 
 export interface EncodedTokenAttributes {
-  [K: number]: EncodedEnumAttributeValue | LocalizedStringOrBoxedNumberWithDefault
+  [K: number]: EncodedEnumAttributeValue | LocalizedStringOrBoxedNumberWithDefault | LocalizedStringOrBoxedNumberWithDefault[]
 }
 
 export type CollectionAttributesSchema = {

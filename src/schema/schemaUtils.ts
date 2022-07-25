@@ -1,14 +1,11 @@
 import {PropertiesArray} from '../types'
-import {getEnumValues, safeJSONParse} from "../tsUtils";
+import {safeJSONParse} from "../tsUtils";
 import {
-  AttributeType,
   DecodedInfixOrUrlOrCidAndHash,
   InfixOrUrlOrCidAndHash,
   URL_TEMPLATE_INFIX,
   UrlTemplateString
 } from "./types";
-
-export const AttributeTypeValues = getEnumValues(AttributeType)
 
 const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
   if (typeof obj !== "object" || obj === null) {
@@ -100,9 +97,9 @@ export const decodeTokenUrlOrInfixOrCidWithHashField =  <U extends {urlTemplate?
 }
 
 export type DecodingResult<T> = {
-  isValid: true
-  decoded: T
+  result: T
+  error: null
 } | {
-  isValid: false
-  validationError: Error
+  result: null
+  error: Error
 }

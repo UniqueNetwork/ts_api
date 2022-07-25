@@ -1,24 +1,28 @@
-import {Semver} from '../../utils'
+import {Semver} from '../../utils/semver'
 import {
   AttributeSchema,
   AttributeType,
+  AttributeTypeValues,
+  BoxedNumberWithDefault,
   COLLECTION_SCHEMA_NAME,
   CollectionAttributesSchema,
+  InfixOrUrlOrCidAndHash,
+  IntegerAttributeTypes, LocalizedStringWithDefault,
+  NumberAttributeTypes,
+  StringAttributeTypes, UniqueCollectionSchemaDecoded,
   UniqueCollectionSchemaToCreate,
-  InfixOrUrlOrCidAndHash, URL_TEMPLATE_INFIX, UrlTemplateString,
-  LocalizedStringWithDefault,
+  URL_TEMPLATE_INFIX,
+  UrlTemplateString,
 } from "../types";
-import {getEnumValues, getKeys} from "../../tsUtils";
+import {getKeys} from "../../tsUtils";
 import {
   CollectionTokenPropertyPermissions,
   TokenPropertyPermissionObject
 } from "../../substrate/extrinsics/unique/types";
 import {ValidationError} from "../../utils/errors";
-import {AttributeTypeValues} from "../schemaUtils";
 
-
-const RGB_REGEX = /^#?[A-Fa-f0-9]{6}$/
-const RGBA_REGEX = /^#?[A-Fa-f0-9]{8}$/
+const RGB_REGEX = /^#[A-Fa-f0-9]{6}$/
+const RGBA_REGEX = /^#[A-Fa-f0-9]{8}$/
 
 
 //
@@ -40,9 +44,12 @@ const isPlainObject = (obj: any, varName: string): obj is Object => {
   return true
 }
 
-const validateIntegerNumber = (num: any, varName: string): num is number => {
+const validateNumber = (num: any, shouldBeInteger: boolean, varName: string): num is number => {
   if (typeof num !== 'number' || isNaN(num)) {
     throw new ValidationError(`${varName} is not a valid number, got ${num}`)
+  }
+  if (shouldBeInteger && num !== Math.round(num)) {
+    throw new ValidationError(`${varName} is not an integer number, got ${num}`)
   }
   return true
 }
@@ -95,17 +102,54 @@ export const validateAndParseSemverString = (str: string, varName: string): Semv
   return Semver.fromString(str)
 }
 
-export const LocalizedStringWithDefault = (dict: LocalizedStringWithDefault, varName: string): dict is LocalizedStringDictionary => {
+export const validateLocalizedStringWithDefault = (dict: any, canHaveLocalization: boolean, varName: string): dict is LocalizedStringWithDefault => {
+  isPlainObject(dict, varName)
+
+  const keys = getKeys(dict)
+
+  if (keys.length === 0) {
+    throw new ValidationError(`${varName} is an empty object, should have at least one key`)
+  }
+
+  if (!dict.hasOwnProperty('_')) {
+    throw new ValidationError(`${varName} is doesn't contain field "_"`)
+  }
+
+  if (typeof dict._ !== 'string') {
+    throw new ValidationError(`${varName}._ is not a string`)
+  }
+
+  if (!canHaveLocalization && keys.length !== 1) {
+    throw new ValidationError(`${varName} cannot have localization strings, got object with keys ["${keys.join('", "')}"]`)
+  }
+
+  for (const key in dict) {
+    if (key === '_') continue
+
+    validateLangCode(key, `${varName}["${key}"]`)
+    if (typeof dict[key] !== 'string') {
+      throw new ValidationError(`${varName}["${key}"] should be a string, got ${typeof key}: ${key}`)
+    }
+  }
+
+  return true
+}
+
+export const validateBoxedNumberWithDefault = (dict: BoxedNumberWithDefault, shouldBeInteger: boolean, varName: string): dict is BoxedNumberWithDefault => {
   isPlainObject(dict, varName)
 
   if (getKeys(dict).length === 0) {
     throw new ValidationError(`${varName} is an empty object, should have at least one key`)
   }
+
+  if (!dict.hasOwnProperty('_')) {
+    throw new ValidationError(`${varName} is doesn't contain field "_"`)
+  }
+
+  validateNumber(dict._, shouldBeInteger, `${varName}._`)
+
   for (const key in dict) {
-    validateLangCode(key, `${varName}["${key}"]`)
-    if (typeof dict[key] !== 'string') {
-      throw new ValidationError(`${varName}["${key}"] should be a string, got ${typeof key}: ${key}`)
-    }
+    if (key === '_') continue
   }
 
   return true
@@ -180,7 +224,6 @@ export const validateCollectionTokenPropertyPermissions = (tpps: any, varName: s
   if (!Array.isArray(tpps))
     throw new ValidationError(`${varName} should be an array, got ${typeof tpps}: ${tpps}`)
 
-
   tpps.forEach((tpp, index) => {
     validateSingleTokenPropertyPermission(tpp, `${varName}[${index}]`)
   })
@@ -194,84 +237,69 @@ export const validateCollectionTokenPropertyPermissions = (tpps: any, varName: s
 //
 
 export const validateValueVsAttributeType = (value: any, type: AttributeType, varName: string): value is typeof type => {
-  if (type & AttributeTypeMask.number) {
-    if (typeof value !== "number") {
-      throw new ValidationError(`${varName}: should be a number, got ${typeof value}: ${value}, type: ${type} (${ATTRIBUTE_TYPE_NAME_BY_VALUE[type]})`)
-    }
-    if ([AttributeType.integer, AttributeType.timestamp].includes(type) && value !== Math.round(value)) {
-      throw new ValidationError(`${varName}: should be an integer number, got ${value}`)
-    }
-    if (type === AttributeType.boolean && ![0, 1].includes(value)) {
-      throw new ValidationError(`${varName}: should be a boolean integer: 0 or 1, got ${value}`)
+  isPlainObject(value, varName)
+
+  if (NumberAttributeTypes.includes(type)) {
+    const shouldBeInteger = IntegerAttributeTypes.includes(type)
+    validateBoxedNumberWithDefault(value, shouldBeInteger, varName)
+    if (type === AttributeType.boolean && ![0, 1].includes(value._)) {
+      throw new ValidationError(`${varName}: should be a boolean integer: 0 or 1, got ${value._}`)
     }
 
     return true
   }
 
-  if (type & AttributeTypeMask.object) {
-    isPlainObject(value, varName)
+  if (StringAttributeTypes.includes(type)) {
+    const canHaveLocalization = type === AttributeType.string
+    validateLocalizedStringWithDefault(value, canHaveLocalization, varName)
 
-    if (type === AttributeType.localizedStringDictionary) {
-      validateLocalizedStringDictionary(value, varName)
+    if (type === AttributeType.isoDate && isNaN(new Date(value._).valueOf())) {
+      throw new ValidationError(`${varName}: should be a valid ISO Date (YYYY-MM-DD), got ${value._}`)
+    }
+
+    if (type === AttributeType.time && isNaN(new Date('1970-01-01T' + value._).valueOf())) {
+      throw new ValidationError(`${varName}: should be a valid time in (hh:mm or hh:mm:ss), got ${value._}`)
+    }
+
+    if (type === AttributeType.colorRgba && (!value._.match(RGB_REGEX) && !value._.match(RGBA_REGEX))) {
+      throw new ValidationError(`${varName}: should be a valid rgb or rgba color (like "#ff00ff00"), got ${value._}`)
     }
 
     return true
   }
 
-  // all other types are deriving from string (isoDate and so on)
-  if (type & AttributeTypeMask.string) {
-    if (typeof value !== "string") {
-      throw new ValidationError(`${varName}: should be a string, got ${typeof value}: ${value}`)
-    }
-
-    if (type === AttributeType.isoDate && isNaN(new Date(value).valueOf())) {
-      throw new ValidationError(`${varName}: should be a valid ISO Date (YYYY-MM-DD), got ${value}`)
-    }
-
-    if (type === AttributeType.time && isNaN(new Date('1970-01-01T' + value).valueOf())) {
-      throw new ValidationError(`${varName}: should be a valid time in (hh:mm or hh:mm:ss), got ${value}`)
-    }
-
-    if (type === AttributeType.colorRgba && (!value.match(RGB_REGEX) && !value.match(RGBA_REGEX))) {
-      throw new ValidationError(`${varName}: should be a valid rgb or rgba color (like "#ff00ff00"), got ${value}`)
-    }
-
-    return true
-  }
-
-  throw new ValidationError(`${varName}: unknown attribute type: ${type} (${ATTRIBUTE_TYPE_NAME_BY_VALUE[type]})`)
+  throw new ValidationError(`${varName}: unknown attribute type: ${type}`)
 }
 
-export const validateAttributesSchemaSingleAttribute = (key: number, attr: AttributeSchema, varName: string): attr is AttributeSchema => {
+export const validateAttributesSchemaSingleAttribute = (attr: AttributeSchema, varName: string): attr is AttributeSchema => {
   isPlainObject(attr, varName)
 
-  if (typeof attr.name !== 'string') {
-    validateLocalizedStringDictionary(attr.name, `${varName}.name`)
-  }
+  validateLocalizedStringWithDefault(attr.name, true,`${varName}.name`)
 
-  if (attr.hasOwnProperty('optional') && typeof attr.optional !== "boolean")
+  if (attr.hasOwnProperty('optional') && typeof attr.optional !== 'boolean')
     throw new ValidationError(`${varName}.optional should be boolean when passed, got ${typeof attr.optional}: ${attr.optional}`)
+
+  if (attr.hasOwnProperty('isArray') && typeof attr.isArray !== 'boolean') {
+    throw new ValidationError(`${varName}.optional should be boolean when passed, got ${typeof attr.optional}: ${attr.optional}`)
+  }
 
   if (!AttributeTypeValues.includes(attr.type))
     throw new ValidationError(`${varName}.type should be a valid attribute type, got ${typeof attr.type}: ${attr.type}`)
 
-
-  if ([AttributeKind.enum, AttributeKind.multiEnum].includes(attr.kind)) {
+  if (attr.hasOwnProperty('enumValues')) {
     isPlainObject(attr.enumValues, `${varName}.enumValues`)
 
     for (const key in attr.enumValues) {
       const localVarName = `${varName}.enumValues[${key}]`
-      validateIntegerNumber(parseInt(key), localVarName)
+      const intKey = parseInt(key)
+      validateNumber(intKey, true, localVarName)
 
       validateValueVsAttributeType(
-        attr.enumValues[key],
-        attr.type
-        ,
+        attr.enumValues[intKey],
+        attr.type,
         localVarName
       )
     }
-  } else if (attr.kind !== AttributeKind.freeValue) {
-    throw new ValidationError(`${varName}.kind is not known, got ${attr.kind}`)
   }
 
   return true
@@ -281,7 +309,7 @@ export const validateCollectionAttributesSchema = (attributes: any, varName: str
   isPlainObject(attributes, varName)
   for (const key in attributes) {
     validateAttributeKey(key, varName)
-    validateAttributesSchemaSingleAttribute(parseInt(key), attributes[key], `${varName}["${key}"]`)
+    validateAttributesSchemaSingleAttribute(attributes[key], `${varName}["${key}"]`)
   }
 
   return true
@@ -341,16 +369,14 @@ export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaT
 //
 
 const validateAttributeEnumKey = (schema: AttributeSchema, num: number, varName: string) => {
-  validateIntegerNumber(num, varName)
+  validateNumber(num, true, varName)
   const enumKeys = getKeys(schema.enumValues || {}).map(n => parseInt(n as any as string))
   if (!enumKeys.includes(num)) {
     throw new ValidationError(`${varName} value (${num}) not found in the attribute schema enum keys: [${enumKeys.join()}]`)
   }
 }
 
-const COLLECTION_SCHEMA_NAME_VALUES = getEnumValues(COLLECTION_SCHEMA_NAME)
-
-export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate>(token: any, collectionSchema: C): token is T => {
+export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded>(token: any, collectionSchema: C): token is T => {
   if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME.unique) {
     throw new ValidationError(`schemaName is not "unique" (passed ${collectionSchema.schemaName})`)
   }
@@ -362,7 +388,7 @@ export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate>
     validateUrlWithHashObject(token.imagePreview, 'token.imagePreview')
   }
 
-  const version = validateAndParseSemverString(collectionSchema.schemaVersion, 'collectionSchema.schemaVersion')
+  const schemaVersion = validateAndParseSemverString(collectionSchema.schemaVersion, 'collectionSchema.schemaVersion')
 
   if (token.encodedAttributes) {
     isPlainObject(token.encodedAttributes, 'token.encodedAttributes')
@@ -374,22 +400,27 @@ export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate>
       const varName = `token.encodedAttributes.${key}`
 
       const attr = token.encodedAttributes[key]
+
       if (!schema.optional && !token.encodedAttributes.hasOwnProperty(key))
         throw new ValidationError(`${varName} should be provided, it's not optional attribute`)
 
-      if (schema.kind === AttributeKind.freeValue) {
-        validateValueVsAttributeType(attr, schema.type, varName)
-      } else if (schema.kind === AttributeKind.multiEnum) {
-        if (!Array.isArray(attr))
-          throw new ValidationError(`${varName} should be an array, because it's kind is enumMultiple`)
+      if (schema.isArray && !Array.isArray(attr)) {
+        throw new ValidationError(`${varName} is not array, while schema requires an array`)
+      }
+      if (!schema.isArray && Array.isArray(attr)) {
+        throw new ValidationError(`${varName} is an array, while schema requires to be not an array`)
+      }
 
-        attr.forEach((num, index) => {
+      const attrs = schema.isArray ? attr : [attr]
+
+      if (schema.enumValues) {
+        attrs.forEach((num: any, index: number) => {
           validateAttributeEnumKey(schema, num, `${varName}[${index}]`)
         })
-      } else if (schema.kind === AttributeKind.enum) {
-        validateAttributeEnumKey(schema, attr, varName)
       } else {
-        throw new ValidationError(`${varName}: attribute schema kind is unknown: ${schema.kind}`)
+        attrs.forEach((attrElem: any, index: number) => {
+          validateValueVsAttributeType(attrElem, schema.type, `${varName}[${index}]`)
+        })
       }
     }
   }
@@ -422,4 +453,4 @@ export const checkSafeFactory = <T extends (...args: any) => any>(fn: T) => {
 
 export const validateUrlTemplateStringSafe = checkSafeFactory(validateUrlTemplateString)
 export const validateURLSafe = checkSafeFactory(validateURL)
-export const validateLocalizedStringDictionarySafe = checkSafeFactory(validateLocalizedStringDictionary)
+export const validateLocalizedStringWithDefaultSafe = checkSafeFactory(validateLocalizedStringWithDefault)

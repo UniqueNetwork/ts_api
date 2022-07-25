@@ -1,13 +1,13 @@
-import {UniqueUtils} from "../../../utils";
-import {AnyInputAddress, PropertiesArray} from "../../../types";
+import {Address, UniqueUtils} from "../../../utils";
+import {CrossAccountId, PropertiesArray} from "../../../types";
 
 export type TokenToMint = {
-  owner: AnyInputAddress
+  owner: CrossAccountId
   properties: PropertiesArray
 }
 
 export const validateAndFixTokenOwner = (token: TokenToMint): TokenToMint => {
-  let owner = UniqueUtils.Address.is.substrateOrEthereumAddressObj(token.owner) ? token.owner : null
+  let owner = Address.is.crossAccountId(token.owner) ? token.owner : null
 
   if (owner === null) {
     if (typeof token.owner !== 'string') {

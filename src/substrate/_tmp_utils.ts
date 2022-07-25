@@ -15,7 +15,6 @@ export const extractCollectionIdFromCreationResult = (txResult: ISubmittableResu
 
   let collectionId = null
   txResult.events.forEach((event) => {
-    console.log(event.toHuman())
     const {data, method, section} = event.event
     if ((section === 'common') && (method === 'CollectionCreated')) {
       collectionId = parseInt(data[0].toString(), 10);
@@ -82,9 +81,8 @@ export const findCollectionInEvents = (events: EventRecord[], collectionId: numb
 }
 
 export const isTokenTransferSuccess = (events: EventRecord[], collectionId: number, tokenId: number, fromAddressObj: CrossAccountIdOrString, toAddressObj: CrossAccountIdOrString) => {
-  const normalizeAddress = UniqueUtils.Address.guessAddressAndExtractItNormalized
-  const fromAddress = UniqueUtils.Address.guessAddressAndExtractItNormalized(fromAddressObj)
-  const toAddress = UniqueUtils.Address.guessAddressAndExtractItNormalized(toAddressObj)
+  const fromAddress = UniqueUtils.Address.extract.normalizedAddressFromObject(fromAddressObj)
+  const toAddress = UniqueUtils.Address.extract.normalizedAddressFromObject(toAddressObj)
 
   let transfer = {
     collectionId: null as number | null,
@@ -99,8 +97,8 @@ export const isTokenTransferSuccess = (events: EventRecord[], collectionId: numb
       transfer = {
         collectionId: parseInt(hData[0])!,
         tokenId: parseInt(hData[1])!,
-        from: UniqueUtils.Address.guessAddressAndExtractItNormalized(hData[2]),
-        to: UniqueUtils.Address.guessAddressAndExtractItNormalized(hData[3]),
+        from: UniqueUtils.Address.extract.normalizedAddressFromObject(hData[2]),
+        to: UniqueUtils.Address.extract.normalizedAddressFromObject(hData[3]),
         amount: parseInt(hData[4])
       }
     }

@@ -1,8 +1,9 @@
 import {base58, blake2b} from './imports'
-import {validate} from './index'
+import {DecodeSubstrateAddressResult, validate} from './index'
 import {normalizeEthereumAddress} from './ethereum'
 import {hexToU8a, u8aToHex} from './stringUtils'
 import * as string from "./stringUtils";
+import {SubAddressObj} from "../../types";
 
 const blake2AsU8a = (u8a: Uint8Array, dkLen: 8 | 16 | 32 | 48 | 64 = 32): Uint8Array => {
   return blake2b(u8a, {dkLen})
@@ -59,7 +60,6 @@ export const normalizeSubstrateAddress = (address: string, prefix: number = 42):
   return encodeSubstrateAddress(decodeSubstrateAddress(address).u8a, prefix)
 }
 
-type DecodeSubstrateAddressResult = {u8a: Uint8Array, hex: string, bigint: bigint}
 
 export function encodeSubstrateAddress (key: Uint8Array | string | bigint, ss58Format: number = 42): string {
   const u8a :Uint8Array = typeof key === 'string'
@@ -130,6 +130,27 @@ export function decodeSubstrateAddress (address: string, ignoreChecksum?: boolea
     throw realError
       ? realError
       : new Error(`Decoding ${address}: ${(error as Error).message}`)
+  }
+}
+
+export const compareSubstrateAddresses = (address1: string | SubAddressObj | object, address2: string | SubAddressObj | object): boolean => {
+  const addr1 = typeof address1 === 'string'
+    ? address1
+    : ((address1 as SubAddressObj).Substrate || (address1 as any).substrate) as string | undefined
+  const addr2 = typeof address2 === 'string'
+    ? address2
+    : ((address2 as SubAddressObj).Substrate || (address2 as any).substrate) as string | undefined
+
+  if (!addr1 || !addr2) {
+    return false
+  }
+
+  try {
+    const decoded1 = decodeSubstrateAddress(addr1)
+    const decoded2 = decodeSubstrateAddress(addr2)
+    return decoded1.bigint === decoded2.bigint
+  } catch(e) {
+    return false
   }
 }
 

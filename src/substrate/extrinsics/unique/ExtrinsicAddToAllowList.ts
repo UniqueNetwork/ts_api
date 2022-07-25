@@ -29,8 +29,6 @@ export class ExtrinsicAddToAllowList extends AbstractExtrinsic<ExtrinsicAddToAll
       !isNaN((parseInt(data[0].toString(), 10))) &&
       !!data[1].toString()
 
-    // console.log(!!data ? JSON.parse(data[1].toString()) : 'null')
-
     return {
       ...result,
       isSuccess,

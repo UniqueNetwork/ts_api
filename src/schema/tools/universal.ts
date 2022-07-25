@@ -50,16 +50,16 @@ export const universallyDecodeCollectionSchema = async (collectionId: number, pr
   }
 
   return {
-    isValid: false,
-    validationError: new ValidationError(`Unknown collection schema`)
+    result: null,
+    error: new ValidationError(`Unknown collection schema`)
   }
 }
 
 export const universallyDecodeToken = async (collectionId: number, tokenId: number, rawToken: UpDataStructsTokenData, schema: UniqueCollectionSchemaDecoded, options?: DecodingImageLinkOptions): Promise<DecodingResult<UniqueTokenDecoded>> => {
   if (!schema) {
     return {
-      isValid: false,
-      validationError: new ValidationError('unable to parse: collection schema was not provided')
+      result: null,
+      error: new ValidationError('unable to parse: collection schema was not provided')
     }
   }
   const humanizedToken: HumanizedNftToken = rawToken.toHuman() as HumanizedNftToken
@@ -72,7 +72,7 @@ export const universallyDecodeToken = async (collectionId: number, tokenId: numb
   }
 
   return {
-    isValid: false,
-    validationError: new ValidationError(`unable to parse: collection schemaName is unknown (passed ${schema.schemaName}`)
+    result: null,
+    error: new ValidationError(`unable to parse: collection schemaName is unknown (passed ${schema.schemaName}`)
   }
 }

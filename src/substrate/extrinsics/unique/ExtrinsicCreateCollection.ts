@@ -34,7 +34,6 @@ export class ExtrinsicCreateCollection extends AbstractExtrinsic<ExtrinsicCreate
     const result = await this.getBaseResult(txResult, options)
 
     const data = findEventDataBySectionAndMethod(txResult, 'common', 'CollectionCreated')
-    // console.log('data', data, data?.toHuman())
 
     const collectionId = (!!data && parseInt(data[0].toString(), 10)) || null
 

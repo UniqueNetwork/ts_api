@@ -2,7 +2,6 @@ import {getPolkadotExtensionDapp} from "../libs";
 import {UniqueUtils} from "../utils";
 
 export const connectAs = async (appName: string) => {
-  // console.log('Enabling polkadot.js extension', appName)
   UniqueUtils.Browser.checkEnvironmentIsBrowser()
   const extension = getPolkadotExtensionDapp()
   await extension.web3Enable(appName)

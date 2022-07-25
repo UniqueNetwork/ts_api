@@ -31,13 +31,13 @@ export const decodeUniqueCollectionFromProperties = async (collectionId: number,
       unpackedSchema.coverPicturePreview = decodeTokenUrlOrInfixOrCidWithHashField(unpackedSchema.coverPicturePreview, unpackedSchema.image)
     }
     return {
-      isValid: true,
-      decoded: unpackedSchema,
+      result: unpackedSchema,
+      error: null,
     }
   } catch (e) {
     return {
-      isValid: false,
-      validationError: e as Error,
+      result: null,
+      error: e as Error,
     }
   }
 }

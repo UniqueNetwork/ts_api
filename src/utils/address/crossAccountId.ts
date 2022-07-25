@@ -3,21 +3,21 @@ import {normalizeSubstrateAddress} from "./substrate";
 import {CrossAccountId} from "../../types";
 import {is, mirror, normalize} from "./index";
 
-export const guessAddressAndExtractItNormalizedSafe = (address: string | object): string | false => {
+export const guessAddressAndExtractItNormalizedSafe = (address: string | object): string | null => {
   if (typeof address === 'object') {
     if (is.substrateAddressObject(address)) return normalize.substrateAddress(address.Substrate)
     else if (is.substrateAddressObjectUncapitalized(address)) return normalize.substrateAddress(address.substrate)
     else if (is.ethereumAddressObject(address)) return normalizeEthereumAddress(address.Ethereum)
     else if (is.ethereumAddressObjectUncapitalized(address)) return normalizeEthereumAddress(address.ethereum)
-    else return false
+    else return null
   }
   if (typeof address === 'string') {
     if (is.substrateAddress(address)) return normalizeSubstrateAddress(address)
     else if (is.ethereumAddress(address)) return normalizeEthereumAddress(address)
-    else return false
+    else return null
   }
 
-  return false
+  return null
 }
 
 export const guessAddressAndExtractItNormalized = (address: string | object): string => {

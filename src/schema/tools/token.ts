@@ -1,16 +1,15 @@
 import {HumanizedNftToken, PropertiesArray} from '../../types'
 import {
-  AttributeKind,
   AttributeType,
   DecodedAttributes,
   EncodedTokenAttributes,
-  InfixOrUrlOrCidAndHash, LocalizedStringWithDefault,
+  InfixOrUrlOrCidAndHash, LocalizedStringOrBoxedNumberWithDefault, LocalizedStringWithDefault,
   UniqueCollectionSchemaDecoded,
   UniqueCollectionSchemaToCreate,
   UniqueTokenDecoded,
   UniqueTokenToCreate
 } from '../types'
-import {validateLocalizedStringDictionary, validateUniqueToken} from './validators'
+import {validateLocalizedStringWithDefaultSafe, validateUniqueToken} from './validators'
 import {getEntries, safeJSONParse} from '../../tsUtils'
 import {CollectionProperties} from '../../substrate/extrinsics/unique/types'
 import {
@@ -85,25 +84,17 @@ const fillTokenFieldByKeyPrefix = <T extends UniqueTokenToCreate>(token: T, prop
 }
 
 
-export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(properties: CollectionProperties, schema: UniqueCollectionSchemaToCreate): T => {
+export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(properties: CollectionProperties, schema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): T => {
   const token: T = {} as T
 
   const nameProperty = properties.find(({key}) => key === 'n')
   if (nameProperty) {
-    const parsedName = safeJSONParse<LocalizedStringWithDefault>(nameProperty.value)
-    token.name =
-      validateLocalizedStringDictionary(parsedName, 'token.name')
-        ? parsedName
-        : nameProperty.value
+    token.name = safeJSONParse<LocalizedStringWithDefault>(nameProperty.value) as any
   }
 
   const descriptionProperty = properties.find(({key}) => key === 'd')
   if (descriptionProperty) {
-    const parsedDescription = safeJSONParse<LocalizedStringWithDefault>(descriptionProperty.value)
-    token.description =
-      validateLocalizedStringDictionary(parsedDescription, 'token.description')
-        ? parsedDescription
-        : descriptionProperty.value
+    token.description = safeJSONParse<LocalizedStringWithDefault>(descriptionProperty.value) as any
   }
 
   fillTokenFieldByKeyPrefix(token, properties, 'i', 'image')
@@ -118,25 +109,11 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
     for (const attrProp of attributeProperties) {
       const {key, value} = attrProp
-
+      const parsed = safeJSONParse<any>(value)
       const attributeKey = parseInt(key.split('.')[1] || '')
-      if (!isNaN(attributeKey) || !schema.attributesSchema.hasOwnProperty(attributeKey)) {
-        const attributeSchema = schema.attributesSchema[attributeKey]
-        const {type, kind} = attributeSchema
 
-        if (kind === AttributeKind.enum) {
-          attrs[attributeKey] = parseInt(value)
-        } else if (kind === AttributeKind.multiEnum) {
-          attrs[attributeKey] = value.split(',').map(n => parseInt(n))
-        } else if (kind === AttributeKind.freeValue) {
-          if (type & AttributeTypeMask.number) {
-            attrs[attributeKey] = type === AttributeType.float ? parseFloat(value) : parseInt(value)
-          } else if (attributeSchema.type & AttributeTypeMask.object) {
-            attrs[attributeKey] = safeJSONParse<LocalizedStringDictionary>(value)
-          } else {
-            attrs[attributeKey] = value
-          }
-        }
+      if (!isNaN(attributeKey) && schema.attributesSchema.hasOwnProperty(attributeKey)) {
+        attrs[attributeKey] = parsed
       }
     }
 
@@ -154,8 +131,8 @@ export const decodeTokenFromProperties = async (collectionId: number, tokenId: n
     validateUniqueToken(unpackedToken, schema)
   } catch (e) {
     return {
-      isValid: false,
-      validationError: e as Error
+      result: null,
+      error: e as Error,
     }
   }
 
@@ -186,57 +163,42 @@ export const decodeTokenFromProperties = async (collectionId: number, tokenId: n
     token.spatialObject = decodeTokenUrlOrInfixOrCidWithHashField(unpackedToken.spatialObject, schema.spatialObject)
   }
 
-  return {isValid: true, decoded: token}
+  return {
+    result: token,
+    error: null,
+  }
 }
 
-export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate): DecodedAttributes => {
+export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): DecodedAttributes => {
   const attributes: UniqueTokenDecoded['attributes'] = {}
   if (!token.encodedAttributes) return {}
 
   const entries = getEntries(token.encodedAttributes)
   for (const entry of entries) {
-    const [key, value] = entry
+    const [key, rawValue] = entry
 
     const schema = collectionSchema.attributesSchema[key]
     if (!schema) continue
-    const name = schema.name
 
-    const attribute: DecodedAttributes[number] = {
-      name,
-      value,
-      isArray: false,
-      type: schema.type,
-      kind: schema.kind,
-      technicalTypeName: ATTRIBUTE_TYPE_NAME_BY_VALUE[schema.type],
-      technicalKindName: ATTRIBUTE_KIND_NAME_BY_VALUE[schema.kind],
-    }
+    let value: any = rawValue
 
-    if (schema.kind === AttributeKind.freeValue) {
-      attributes[key] = attribute
-    }
-
-    if (!schema.enumValues) continue
-
-    if (schema.kind === AttributeKind.enum && typeof value === 'number') {
-      if (schema.enumValues.hasOwnProperty(value)) {
-        attribute.value = schema.enumValues[value]
-        attributes[key] = attribute
-      }
-    }
-
-    if (schema.kind === AttributeKind.multiEnum && Array.isArray(value)) {
-      attribute.isArray = true
-
-      const cumulativeValue: Array<string | number | LocalizedStringDictionary> = []
-
-      for (const num of value) {
-        if (schema.enumValues.hasOwnProperty(num)) {
-          cumulativeValue.push(schema.enumValues[num])
+    if (schema.enumValues) {
+      if (schema.isArray && Array.isArray(rawValue)) {
+        value = rawValue
+          .map(v => typeof v === 'number' ? schema.enumValues?.[v] : null)
+          .filter(v => !!v)
+      } else {
+        if (typeof rawValue === 'number') {
+          value = schema.enumValues[rawValue]
         }
       }
-      attribute.value = cumulativeValue
+    }
 
-      attributes[key] = attribute
+    attributes[key] = {
+      name: schema.name,
+      value: value as LocalizedStringOrBoxedNumberWithDefault | Array<LocalizedStringOrBoxedNumberWithDefault>,
+      isArray: schema.isArray || false,
+      type: schema.type,
     }
   }
   return attributes

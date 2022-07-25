@@ -1,5 +1,5 @@
 import {ApiPromise, ISubmittableResult} from '../../../types'
-import {UniqueUtils} from '../../../utils'
+import {Address, UniqueUtils} from '../../../utils'
 import {findEventDataBySectionAndMethod} from '../../extrinsicTools'
 import {AbstractExtrinsic, ExtrinsicOptions, ExtrinsicResult, ExtrinsicSendOptions} from "../AbstractExtrinsic";
 
@@ -30,8 +30,8 @@ export class ExtrinsicTransferCoins extends AbstractExtrinsic<ExtrinsicTransferC
     const data = findEventDataBySectionAndMethod(txResult, 'balances', 'Transfer')
 
     const isSuccess = !!data &&
-      UniqueUtils.Address.compareSubstrateAddresses(this.tx.signer.toString(), data[0].toString()) &&
-      UniqueUtils.Address.compareSubstrateAddresses(this.params.toAddress, data[1].toString()) &&
+      UniqueUtils.Address.compare.substrateAddresses(this.tx.signer.toString(), data[0].toString()) &&
+      UniqueUtils.Address.compare.substrateAddresses(this.params.toAddress, data[1].toString()) &&
       data[2].eq(this.params.amountInWei)
 
     return {

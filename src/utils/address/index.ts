@@ -1,7 +1,7 @@
 import {COLLECTION_ADDRESS_PREFIX, NESTING_PREFIX} from './constants'
 
 import {
-  addressToEvm,
+  addressToEvm, compareSubstrateAddresses,
   decodeSubstrateAddress,
   evmToAddress,
   normalizeSubstrateAddress
@@ -9,7 +9,7 @@ import {
 
 import {
   collectionIdAndTokenIdToNestingAddress,
-  collectionIdToEthAddress,
+  collectionIdToEthAddress, compareEthereumAddresses,
   ethAddressToCollectionId,
   nestingAddressToCollectionIdAndTokenId,
   normalizeEthereumAddress
@@ -26,11 +26,17 @@ import {
   guessAddressAndExtractItNormalizedSafe
 } from "./crossAccountId";
 
-export * as string from './stringUtils'
+export * as StringUtils from './stringUtils'
 export * as algorithms from './imports'
 export * as constants from './constants'
 
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
+
+export type DecodeSubstrateAddressResult = {
+  u8a: Uint8Array,
+  hex: string,
+  bigint: bigint
+}
 
 export const validate = {
   substrateAddress: (address: string) => {
@@ -131,8 +137,8 @@ export const to = {
 }
 
 export const extract = {
-  fromObject: guessAddressAndExtractItNormalized,
-  fromObjectSafe: guessAddressAndExtractItNormalizedSafe,
+  normalizedAddressFromObject: guessAddressAndExtractItNormalized,
+  normalizedAddressFromObjectSafe: guessAddressAndExtractItNormalizedSafe,
   crossAccountIdFromObject: (obj: any): CrossAccountId => {
     return addressToCrossAccountId(guessAddressAndExtractItNormalized(obj))
   },
@@ -147,6 +153,11 @@ export const mirror = {
 }
 
 export const normalize = {
-  ethereumAddress: normalizeEthereumAddress,
   substrateAddress: normalizeSubstrateAddress,
+  ethereumAddress: normalizeEthereumAddress,
+}
+
+export const compare = {
+  substrateAddresses: compareSubstrateAddresses,
+  ethereumAddresses: compareEthereumAddresses,
 }
