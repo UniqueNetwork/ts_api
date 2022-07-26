@@ -322,6 +322,9 @@ export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaT
     throw new ValidationError(`schemaName is not valid (passed ${schema.schemaName})`)
 
   const schemaVersion = validateAndParseSemverString(schema.schemaVersion, 'schemaVersion')
+  if (!schemaVersion.isEqual('1.0.0')) {
+    throw new ValidationError(`collection schema has unsupported type: ${schemaVersion.toString()}`)
+  }
 
   validateUrlWithHashObject(schema.coverPicture, 'coverPicture')
 
@@ -330,6 +333,9 @@ export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaT
   }
 
   const attributesSchemaVersion = validateAndParseSemverString(schema.attributesSchemaVersion, 'attributesSchemaVersion')
+  if (!schemaVersion.isEqual('1.0.0')) {
+    throw new ValidationError(`collection attributes schema has unsupported type: ${attributesSchemaVersion.toString()}`)
+  }
 
   validateCollectionAttributesSchema(schema.attributesSchema, 'attributesSchema')
 
@@ -380,8 +386,13 @@ export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate 
   if (collectionSchema.schemaName !== COLLECTION_SCHEMA_NAME.unique) {
     throw new ValidationError(`schemaName is not "unique" (passed ${collectionSchema.schemaName})`)
   }
-  validateFieldByType(token, 'name', 'string', true, 'token')
-  validateFieldByType(token, 'description', 'string', true, 'token')
+  if (token.hasOwnProperty('name')) {
+    validateLocalizedStringWithDefault(token.name, true, 'token.name')
+  }
+  if (token.hasOwnProperty('description')) {
+    validateLocalizedStringWithDefault(token.description, true, 'token.description')
+  }
+
   validateUrlWithHashObject(token.image, 'token.image')
 
   if (token.hasOwnProperty('imagePreview')) {
@@ -401,8 +412,13 @@ export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate 
 
       const attr = token.encodedAttributes[key]
 
-      if (!schema.optional && !token.encodedAttributes.hasOwnProperty(key))
-        throw new ValidationError(`${varName} should be provided, it's not optional attribute`)
+      if (!token.encodedAttributes.hasOwnProperty(key)) {
+        if (schema.optional) {
+          continue
+        } else {
+          throw new ValidationError(`${varName} should be provided, it's not optional attribute`)
+        }
+      }
 
       if (schema.isArray && !Array.isArray(attr)) {
         throw new ValidationError(`${varName} is not array, while schema requires an array`)

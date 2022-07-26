@@ -28,7 +28,9 @@ import {
 
 export * as StringUtils from './stringUtils'
 export * as algorithms from './imports'
-export * as constants from './constants'
+import * as constants from './constants'
+
+export {constants}
 
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
 
@@ -160,4 +162,17 @@ export const normalize = {
 export const compare = {
   substrateAddresses: compareSubstrateAddresses,
   ethereumAddresses: compareEthereumAddresses,
+}
+
+export const Address = {
+  constants,
+  is,
+  validate,
+  collection,
+  nesting,
+  to,
+  extract,
+  mirror,
+  normalize,
+  compare,
 }

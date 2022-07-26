@@ -1,5 +1,6 @@
 import {CrossAccountId} from "../types";
 import {getEnumValues} from "../tsUtils";
+import {bool} from "@polkadot/types";
 
 export type InfixOrUrlOrCid =
   { url: string, urlInfix?: undefined, ipfsCid?: undefined }
@@ -13,15 +14,15 @@ export type UrlTemplateString = `${string}${typeof URL_TEMPLATE_INFIX}${string}`
 
 
 export enum AttributeType {
-  integer = "integer",    // number
-  float = "float",      // number
-  boolean = "boolean",    // number
-  timestamp = "timestamp",  // number // js, milliseconds from epoch
-  string = "string",     // string
-  url = "url",        // string
-  isoDate = "isoDate",    // string // ISO Date: YYYY-MM-DD
-  time = "time",       // string // 24h time: HH:mm:ss
-  colorRgba = "colorRgba",  // string // 'rrggbbaa'
+  integer = "integer",        // number
+  float = "float",            // number
+  boolean = "boolean",        // number
+  timestamp = "timestamp",    // number // js, milliseconds from epoch
+  string = "string",          // string
+  url = "url",                // string
+  isoDate = "isoDate",        // string // ISO Date: YYYY-MM-DD
+  time = "time",              // string // 24h time: HH:mm:ss
+  colorRgba = "colorRgba",    // string // 'rrggbbaa'
 }
 
 export const NumberAttributeTypes = [
@@ -54,9 +55,14 @@ export interface AttributeSchema {
 }
 
 type EncodedEnumAttributeValue = number | Array<number>
+export type EncodedTokenAttributeValue =
+  number |
+  Array<number> |
+  LocalizedStringOrBoxedNumberWithDefault
+  | LocalizedStringOrBoxedNumberWithDefault[]
 
 export interface EncodedTokenAttributes {
-  [K: number]: EncodedEnumAttributeValue | LocalizedStringOrBoxedNumberWithDefault | LocalizedStringOrBoxedNumberWithDefault[]
+  [K: number]: EncodedTokenAttributeValue
 }
 
 export type CollectionAttributesSchema = {
@@ -138,6 +144,8 @@ export type DecodedAttributes = {
     value: LocalizedStringOrBoxedNumberWithDefault | Array<LocalizedStringOrBoxedNumberWithDefault>
     type: AttributeType
     isArray: boolean
+    rawValue: EncodedTokenAttributeValue
+    isEnum: boolean
   }
 }
 

@@ -1,6 +1,5 @@
 import {HumanizedNftToken, PropertiesArray} from '../../types'
 import {
-  AttributeType,
   DecodedAttributes,
   EncodedTokenAttributes,
   InfixOrUrlOrCidAndHash, LocalizedStringOrBoxedNumberWithDefault, LocalizedStringWithDefault,
@@ -170,7 +169,7 @@ export const decodeTokenFromProperties = async (collectionId: number, tokenId: n
 }
 
 export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collectionSchema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): DecodedAttributes => {
-  const attributes: UniqueTokenDecoded['attributes'] = {}
+  const attributes: DecodedAttributes = {}
   if (!token.encodedAttributes) return {}
 
   const entries = getEntries(token.encodedAttributes)
@@ -199,6 +198,8 @@ export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collection
       value: value as LocalizedStringOrBoxedNumberWithDefault | Array<LocalizedStringOrBoxedNumberWithDefault>,
       isArray: schema.isArray || false,
       type: schema.type,
+      rawValue,
+      isEnum: !!schema.enumValues,
     }
   }
   return attributes
