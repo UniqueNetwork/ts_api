@@ -1,8 +1,7 @@
-import * as string from "./stringUtils";
-import {keccak_256} from "./imports";
-import {COLLECTION_ADDRESS_PREFIX, NESTING_PREFIX} from "./constants";
-import {is, validate} from "./index";
-import {EthAddressObj, SubAddressObj} from "../../types";
+import * as string from "./stringUtils"
+import {keccak_256} from "./imports"
+import {COLLECTION_ADDRESS_PREFIX, NESTING_PREFIX} from "./constants"
+import {is, validate} from "./index"
 
 const unsafeNormalizeEthereumAddress = (address: string) => {
   const addr = address.toLowerCase().replace(/^0x/i, '')
@@ -23,6 +22,7 @@ export const normalizeEthereumAddress = (address: string) => {
   return unsafeNormalizeEthereumAddress(address)
 }
 
+type EthAddressObj = { Ethereum: string }
 export const compareEthereumAddresses = (address1: string | EthAddressObj | object, address2: string | EthAddressObj | object): boolean => {
   const addr1 = typeof address1 === 'string'
     ? address1

@@ -2,7 +2,7 @@ import {COLLECTION_ADDRESS_PREFIX, NESTING_PREFIX} from './constants'
 
 import {
   addressToEvm, compareSubstrateAddresses,
-  decodeSubstrateAddress,
+  decodeSubstrateAddress, encodeSubstrateAddress,
   evmToAddress,
   normalizeSubstrateAddress
 } from './substrate'
@@ -162,6 +162,12 @@ export const normalize = {
 export const compare = {
   substrateAddresses: compareSubstrateAddresses,
   ethereumAddresses: compareEthereumAddresses,
+}
+
+export const substrate = {
+  encode: encodeSubstrateAddress,
+  decode: decodeSubstrateAddress,
+  compare: compareSubstrateAddresses,
 }
 
 export const Address = {

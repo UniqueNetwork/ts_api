@@ -3,7 +3,6 @@ import {DecodeSubstrateAddressResult, validate} from './index'
 import {normalizeEthereumAddress} from './ethereum'
 import {hexToU8a, u8aToHex} from './stringUtils'
 import * as string from "./stringUtils";
-import {SubAddressObj} from "../../types";
 
 const blake2AsU8a = (u8a: Uint8Array, dkLen: 8 | 16 | 32 | 48 | 64 = 32): Uint8Array => {
   return blake2b(u8a, {dkLen})
@@ -133,6 +132,7 @@ export function decodeSubstrateAddress (address: string, ignoreChecksum?: boolea
   }
 }
 
+type SubAddressObj = { Substrate: string }
 export const compareSubstrateAddresses = (address1: string | SubAddressObj | object, address2: string | SubAddressObj | object): boolean => {
   const addr1 = typeof address1 === 'string'
     ? address1
