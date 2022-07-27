@@ -99,7 +99,8 @@ export const decodeOldSchemaCollection = async (collectionId: number, properties
       continue
     }
 
-    const options = root.lookupEnum(field.type).options
+    const options = !['string', 'number'].includes(field.type) && root.lookupEnum(field.type).options;
+
     const parsedOptions: LocalizedStringWithDefault[] = options
       ? getValues(options)
         .map(v => safeJSONParse<{en: string | undefined}>(v))
