@@ -1,6 +1,6 @@
 import {describe, test, expect} from 'vitest'
 import {decodeOldSchemaCollection} from "../../schema/tools/oldSchemaDecoder";
-import { oldCollectionProperties, oldSchemaDecoded } from './oldSchema.example';
+import {oldCollectionProperties, oldSchemaDecoded} from './oldSchema.example';
 
 
 describe(decodeOldSchemaCollection.name, () => {
