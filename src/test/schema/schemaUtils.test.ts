@@ -1,8 +1,8 @@
 import {describe, test, expect} from 'vitest'
-import {converters2Layers} from "../schema/schemaUtils";
+import {converters2Layers} from "../../schema/schemaUtils";
 
 
-describe('schema', async () => {
+describe('schemaUtils', async () => {
   const nestedObject = {
     foo: 'a',
     bar: 1,
