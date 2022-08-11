@@ -112,6 +112,8 @@ export const decodeOldSchemaCollection = async (collectionId: number, properties
           result._ = result.en || result[getKeys(result)[0]] || undefined
 
           if (typeof result._ !== 'string') return null
+
+          return result;
         })
         .filter(v => !!v)
       : []
