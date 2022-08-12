@@ -1,10 +1,15 @@
 import {describe, test, expect} from 'vitest'
-import {decodeOldSchemaCollection} from "../../schema/tools/oldSchemaDecoder";
-import {oldCollectionProperties, oldSchemaDecoded} from './oldSchema.example';
+import {decodeOldSchemaCollection, decodeOldSchemaToken} from "../../schema/tools/oldSchemaDecoder";
+import {
+    oldCollectionProperties,
+    oldSchemaDecoded,
+    oldTokenDataExample,
+    oldTokenDecodedAttributes,
+} from './oldSchema.example';
 
 
-describe(decodeOldSchemaCollection.name, () => {
-    test.concurrent('Nested object to properties', async () => {
+describe('Old schema', () => {
+    test.concurrent(decodeOldSchemaCollection.name, async () => {
         const { result } = await decodeOldSchemaCollection(
             1,
             oldCollectionProperties,
@@ -16,5 +21,19 @@ describe(decodeOldSchemaCollection.name, () => {
         expect(result!.schemaVersion).toEqual(oldSchemaDecoded.schemaVersion);
         expect(result!.attributesSchemaVersion).toEqual(oldSchemaDecoded.attributesSchemaVersion);
         expect(result!.attributesSchema).toEqual(oldSchemaDecoded.attributesSchema);
+    })
+
+    test.concurrent(decodeOldSchemaToken.name, async () => {
+        const { result, error } = await decodeOldSchemaToken(
+            1,
+            2,
+            oldTokenDataExample,
+            oldSchemaDecoded,
+            { imageUrlTemplate: '{infix}', dummyImageFullUrl: '' },
+        )
+
+        expect(error).toBeFalsy();
+        expect(result).toBeDefined();
+        expect(result!.attributes).toEqual(oldTokenDecodedAttributes);
     })
 })

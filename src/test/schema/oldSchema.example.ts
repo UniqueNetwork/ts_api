@@ -1,6 +1,6 @@
 import {CollectionProperties} from "../../substrate/extrinsics/unique/types";
-import {AttributeType, UniqueCollectionSchemaDecoded} from "../../../dist";
-import {COLLECTION_SCHEMA_NAME} from "../../schema";
+import {UniqueCollectionSchemaDecoded} from "../../../dist";
+import {AttributeType, COLLECTION_SCHEMA_NAME, DecodedAttributes} from "../../schema";
 
 const constOnChainSchema = {
     nested: {
@@ -85,9 +85,7 @@ export const oldSchemaDecoded: UniqueCollectionSchemaDecoded = {
     attributesSchema: {
         "0": {
             type: AttributeType.string,
-            name: {
-                _: "gender"
-            },
+            name: { _: "gender" },
             isArray: false,
             optional: false,
             enumValues: {
@@ -103,9 +101,7 @@ export const oldSchemaDecoded: UniqueCollectionSchemaDecoded = {
         },
         "1": {
             type: AttributeType.string,
-            name: {
-                _: "traits"
-            },
+            name: { _: "traits" },
             isArray: true,
             optional: true,
             enumValues: {
@@ -121,9 +117,7 @@ export const oldSchemaDecoded: UniqueCollectionSchemaDecoded = {
         },
         "2": {
             type: AttributeType.string,
-            name: {
-                _: "name"
-            },
+            name: { _: "name" },
             isArray: false,
             optional: false
         },
@@ -135,3 +129,54 @@ export const oldSchemaDecoded: UniqueCollectionSchemaDecoded = {
         _old_constOnChainSchema: "{\"nested\":{\"onChainMetaData\":{\"nested\":{\"NFTMeta\":{\"fields\":{\"ipfsJson\":{\"id\":1,\"rule\":\"required\",\"type\":\"string\"},\"gender\":{\"id\":2,\"rule\":\"required\",\"type\":\"Gender\"},\"traits\":{\"id\":3,\"rule\":\"repeated\",\"type\":\"PunkTrait\"},\"name\":{\"id\":4,\"rule\":\"required\",\"type\":\"string\"}}},\"Gender\":{\"options\":{\"Female\":\"{\\\"en\\\": \\\"Female\\\"}\",\"Male\":\"{\\\"en\\\": \\\"Male\\\"}\"},\"values\":{\"Female\":1,\"Male\":0}},\"PunkTrait\":{\"options\":{\"BLACK_LIPSTICK\":\"{\\\"en\\\": \\\"Black Lipstick\\\"}\",\"RED_LIPSTICK\":\"{\\\"en\\\": \\\"Red Lipstick\\\"}\"},\"values\":{\"BLACK_LIPSTICK\":0,\"RED_LIPSTICK\":1}}}}}}"
     }
 };
+
+export const oldTokenDataExample = {
+    properties: [
+        {
+            key: {
+                toHuman: () => `_old_constData`
+            },
+            value: {
+                toJSON: () => `0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10011a01002203426f62`
+            }
+        }
+    ],
+    owner: {
+        toHuman: () => ({
+            Ethereum: `0x5c03d3976ad16f50451d95113728e0229c50cab8`
+        })
+    }
+}
+
+export const oldTokenDecodedAttributes: DecodedAttributes = {
+    0: {
+        isArray: false,
+        isEnum: true,
+        name: {_: 'gender'},
+        rawValue: 'Female',
+        type: AttributeType.string,
+        value: {
+            _: 'Female',
+            en: 'Female',
+        }
+    },
+    1: {
+        isArray: true,
+        isEnum: true,
+        name: {_: 'traits'},
+        rawValue: ['BLACK_LIPSTICK'],
+        type: AttributeType.string,
+        value: [{
+            _: 'Black Lipstick',
+            en: 'Black Lipstick',
+        }]
+    },
+    2: {
+        isArray: false,
+        isEnum: false,
+        name: { _: 'name' },
+        rawValue: 'Bob',
+        type: AttributeType.string,
+        value: { _: 'Bob' }
+    },
+}

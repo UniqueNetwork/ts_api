@@ -230,6 +230,8 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
 
     if (!['string', 'number'].includes(field.type)) {
       const enumOptions = root.lookupEnum(field.type).options
+      isEnum = !!enumOptions;
+
       if (field.rule === 'repeated' && Array.isArray(rawValue)) {
         const parsedValues = rawValue
           .map((v: any) => {
@@ -246,7 +248,6 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
 
         value = parsedValues
         isArray = true
-        isEnum = true
       } else {
         value = safeJSONParse(enumOptions?.[rawValue] || rawValue)
         if (typeof value !== 'string') {
@@ -254,6 +255,8 @@ export const decodeOldSchemaToken = async (collectionId: number, tokenId: number
         }
       }
     }
+
+    if (field.type === 'string') value = {_:value}
 
     tokenAttributesResult[i++] = {
       name: {_: name},

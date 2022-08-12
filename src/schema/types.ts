@@ -144,7 +144,7 @@ export type DecodedAttributes = {
     value: LocalizedStringOrBoxedNumberWithDefault | Array<LocalizedStringOrBoxedNumberWithDefault>
     type: AttributeType
     isArray: boolean
-    rawValue: EncodedTokenAttributeValue
+    rawValue: EncodedTokenAttributeValue | string | Array<string>
     isEnum: boolean
   }
 }
