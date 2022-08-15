@@ -26,11 +26,11 @@ import {
   guessAddressAndExtractItNormalizedSafe
 } from "./crossAccountId";
 
-export * as StringUtils from './stringUtils'
-export * as algorithms from './imports'
+import * as StringUtils from './stringUtils'
+import * as algorithms from './imports'
 import * as constants from './constants'
 
-export {constants}
+export {constants, algorithms, StringUtils}
 
 const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
 
@@ -98,10 +98,10 @@ export const is = {
   },
 
   collectionId: (collectionId: number): boolean => {
-    return !(typeof collectionId !== 'number' || collectionId < 0 || collectionId > 0xffffffff)
+    return !(typeof collectionId !== 'number' || isNaN(collectionId) || collectionId < 0 || collectionId > 0xffffffff)
   },
   tokenId: (tokenId: number): boolean => {
-    return !(typeof tokenId !== 'number' || tokenId < 0 || tokenId > 0xffffffff)
+    return !(typeof tokenId !== 'number' || isNaN(tokenId) || tokenId < 0 || tokenId > 0xffffffff)
   },
 
   crossAccountId(obj: any): obj is CrossAccountId {
@@ -181,4 +181,7 @@ export const Address = {
   mirror,
   normalize,
   compare,
+  substrate,
+  algorithms,
+  StringUtils,
 }
