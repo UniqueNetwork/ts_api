@@ -5,7 +5,7 @@ import {beforeAll, describe, expect, test} from "vitest";
 import * as dotenv from "dotenv";
 import fs from "fs";
 import {Address} from "../utils";
-import {dungeonsAndHeroesSchema, assassinToken, knightToken, wizardToken} from './dungeonsAndHeroes.example';
+import {dungeonsAndHeroesSchema, assassinToken, knightToken, wizardToken} from './samples/dungeonsAndHeroes.sample';
 
 interface Context {
     chain: SubstrateUnique

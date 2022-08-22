@@ -2,8 +2,9 @@ import {
     AttributeType,
     COLLECTION_SCHEMA_NAME,
     CollectionAttributesSchema,
-    UniqueCollectionSchemaToCreate, UniqueTokenToCreate
-} from "../schema";
+    UniqueCollectionSchemaToCreate,
+    UniqueTokenToCreate,
+} from "../../schema";
 
 const dungeonsAndHeroesCollectionAttributesSchema: CollectionAttributesSchema = {
     '0': {

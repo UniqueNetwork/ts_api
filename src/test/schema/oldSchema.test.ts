@@ -5,7 +5,7 @@ import {
     oldSchemaDecoded,
     oldTokenDataExample,
     oldTokenDecodedAttributes,
-} from './oldSchema.example';
+} from '../samples/oldSchema.sample';
 
 
 describe('Old schema', () => {
