@@ -58,9 +58,11 @@ const validateAttributeKey = (num: string | number | symbol, varName: string): b
   let isOk = false
 
   if (typeof num === 'number') {
-    isOk = num === Math.round(num)
+    isOk = num === Math.round(num);
   } else if (typeof num === 'string') {
-    isOk = !isNaN(parseInt(num))
+    const parsed = parseFloat(num);
+
+    isOk = !isNaN(parsed) && parsed === Math.round(parsed);
   }
 
   if (!isOk) {
