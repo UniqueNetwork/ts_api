@@ -111,7 +111,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
       const parsed = safeJSONParse<any>(value)
       const attributeKey = parseInt(key.split('.')[1] || '')
 
-      if (!isNaN(attributeKey) && schema.attributesSchema.hasOwnProperty(attributeKey)) {
+      if (!isNaN(attributeKey) && schema.attributesSchema?.hasOwnProperty(attributeKey)) {
         attrs[attributeKey] = parsed
       }
     }
@@ -176,7 +176,7 @@ export const fullDecodeTokenAttributes = (token: UniqueTokenToCreate, collection
   for (const entry of entries) {
     const [key, rawValue] = entry
 
-    const schema = collectionSchema.attributesSchema[key]
+    const schema = collectionSchema.attributesSchema?.[key]
     if (!schema) continue
 
     let value: any = rawValue

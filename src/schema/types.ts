@@ -83,7 +83,7 @@ export interface UniqueCollectionSchemaToCreate {
   coverPicturePreview?: InfixOrUrlOrCidAndHash
 
   attributesSchemaVersion: string
-  attributesSchema: CollectionAttributesSchema
+  attributesSchema?: CollectionAttributesSchema
 
   image: {
     urlTemplate: UrlTemplateString

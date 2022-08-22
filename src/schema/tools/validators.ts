@@ -308,6 +308,8 @@ export const validateAttributesSchemaSingleAttribute = (attr: AttributeSchema, v
 }
 
 export const validateCollectionAttributesSchema = (attributes: any, varName: string): attributes is CollectionAttributesSchema => {
+  if (attributes === undefined || attributes === null) return true;
+
   isPlainObject(attributes, varName)
   for (const key in attributes) {
     validateAttributeKey(key, varName)
@@ -403,7 +405,7 @@ export const validateUniqueToken = <T, C extends UniqueCollectionSchemaToCreate 
 
   const schemaVersion = validateAndParseSemverString(collectionSchema.schemaVersion, 'collectionSchema.schemaVersion')
 
-  if (token.encodedAttributes) {
+  if (token.encodedAttributes && collectionSchema.attributesSchema) {
     isPlainObject(token.encodedAttributes, 'token.encodedAttributes')
 
     for (let key in collectionSchema.attributesSchema) {

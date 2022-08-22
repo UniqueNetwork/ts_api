@@ -23,9 +23,12 @@ describe.concurrent('validateCollectionAttributesSchema tests:', () => {
     expect(() => validateCollectionAttributesSchema(number, 'testVar')).toThrowError('is not an object')
   })
 
+  test('Collection Attributes is undefined', () => {
+    expect(() => validateCollectionAttributesSchema(undefined, 'testVar')).not.toThrowError()
+  })
+
   test('Collection Attributes is null', () => {
-    const nullVar = null
-    expect(() => validateCollectionAttributesSchema(nullVar, 'testVar')).toThrowError('is a null, should be valid object')
+    expect(() => validateCollectionAttributesSchema(null, 'testVar')).not.toThrowError()
   })
 
   test('Collection Attributes is set', () => {
