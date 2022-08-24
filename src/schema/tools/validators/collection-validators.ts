@@ -106,6 +106,26 @@ export const validateCollectionAttributesSchema = (attributes: any, varName: str
     return true
 }
 
+export const validateCollectionAttributesSchemaAndVersion = (collectionSchema: any): void => {
+    const { attributesSchemaVersion, attributesSchema } = collectionSchema;
+
+    if (!attributesSchemaVersion && !attributesSchema) return;
+    if (!(attributesSchemaVersion ^ attributesSchema)) {
+        throw new ValidationError(`"attributesSchemaVersion" and "attributesSchema" should both be filled or both empty`);
+    }
+
+    const version = validateAndParseSemverString(
+        attributesSchemaVersion,
+        'attributesSchemaVersion',
+    )
+
+    if (!version.isEqual('1.0.0')) {
+        throw new ValidationError(`collection attributes schema has unsupported type: ${attributesSchemaVersion.toString()}`)
+    }
+
+    validateCollectionAttributesSchema(collectionSchema.attributesSchema, 'attributesSchema')
+}
+
 export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaToCreate>(schema: any): schema is C => {
     isPlainObject(schema, 'Passed collection schema')
 
@@ -123,12 +143,7 @@ export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaT
         validateUrlWithHashObject(schema.coverPicturePreview, 'coverPicturePreview')
     }
 
-    const attributesSchemaVersion = validateAndParseSemverString(schema.attributesSchemaVersion, 'attributesSchemaVersion')
-    if (!schemaVersion.isEqual('1.0.0')) {
-        throw new ValidationError(`collection attributes schema has unsupported type: ${attributesSchemaVersion.toString()}`)
-    }
-
-    validateCollectionAttributesSchema(schema.attributesSchema, 'attributesSchema')
+    validateCollectionAttributesSchemaAndVersion(schema)
 
     isPlainObject(schema.image, 'image')
     validateUrlTemplateString(schema.image.urlTemplate, 'image')
