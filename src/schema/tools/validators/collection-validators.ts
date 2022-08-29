@@ -95,8 +95,6 @@ export const validateAttributesSchemaSingleAttribute = (attr: AttributeSchema, v
 }
 
 export const validateCollectionAttributesSchema = (attributes: any, varName: string): attributes is CollectionAttributesSchema => {
-    if (attributes === undefined || attributes === null) return true;
-
     isPlainObject(attributes, varName)
     for (const key in attributes) {
         validateAttributeKey(key, varName)
