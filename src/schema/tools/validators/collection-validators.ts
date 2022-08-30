@@ -121,7 +121,7 @@ export const validateUniqueCollectionSchema = <C extends UniqueCollectionSchemaT
         validateUrlWithHashObject(schema.coverPicturePreview, 'coverPicturePreview')
     }
 
-    if (schema.attributesSchemaVersion ^ schema.attributesSchema) {
+    if (!schema.attributesSchemaVersion !== !schema.attributesSchema) {
         throw new ValidationError(`"attributesSchemaVersion" and "attributesSchema" should both be filled or both empty`)
     }
 
