@@ -1,6 +1,6 @@
 {
   "name": "@unique-nft/api",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "sideEffects": false,
   "license": "MIT",
   "main": "./dist/index.js",
