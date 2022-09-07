@@ -13,6 +13,7 @@ import {ValidationError} from "../../utils/errors";
 import * as token from "./token";
 import {validateUrlTemplateStringSafe} from "./validators";
 import {safeJSONParse} from "../../tsUtils";
+import {safeJsonParseStringOrHexString} from "../../utils/address/stringUtils";
 
 const DEFAULT_IMAGE_URL_TEMPLATE: UrlTemplateString = `https://ipfs.unique.network/ipfs/{infix}`
 const DEFAULT_DUMMY_IMAGE_FULL_URL = `https://ipfs.unique.network/ipfs/QmPCqY7Lmxerm8cLKmB18kT1RxkwnpasPVksA8XLhViVT7`
@@ -39,7 +40,7 @@ const parseImageLinkOptions = (options?: DecodingImageLinkOptions): Required<Dec
 
 export const universallyDecodeCollectionSchema = async (collectionId: number, properties: PropertiesArray, options?: DecodingImageLinkOptions): Promise<DecodingResult<UniqueCollectionSchemaDecoded>> => {
   const schemaNameProp = properties.find(({key}) => key === 'schemaName')?.value || null
-  const schemaName = typeof schemaNameProp === 'string' ? safeJSONParse<string>(schemaNameProp) : null
+  const schemaName = typeof schemaNameProp === 'string' ? safeJsonParseStringOrHexString<string>(schemaNameProp) : null
   const isOldSchema = !!properties.find(({key}) => key === '_old_schemaVersion')
 
   if (isOldSchema) {

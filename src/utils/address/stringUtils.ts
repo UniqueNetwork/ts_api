@@ -1,3 +1,5 @@
+import {safeJSONParse} from "../../tsUtils";
+
 export const vec2str = (arr: Array<number | string>) => {
   return arr
     .map(x => String.fromCharCode(typeof x === 'number' ? x : parseInt(x, 10)))
@@ -26,6 +28,14 @@ export const hexStringToString = (hexString: string): string =>
     .map(el => String.fromCharCode(parseInt(el, 16)))
     .join('')
 
+
+export const safeJsonParseStringOrHexString = <T = any>(stringOrHexString: string): T | string => {
+  try {
+    return JSON.parse(stringOrHexString) as T
+  } catch {
+    return safeJSONParse<T>(hexStringToString(stringOrHexString))
+  }
+}
 
 export const parseAndCheckTheNumberIsDWORD = (n: number | string) => {
   const num: number = (typeof n === 'string') ? parseInt(n, 10) : n

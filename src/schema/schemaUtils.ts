@@ -1,11 +1,12 @@
 import {PropertiesArray} from '../types'
-import {safeJSONParse} from "../tsUtils";
+
 import {
   DecodedInfixOrUrlOrCidAndHash,
   InfixOrUrlOrCidAndHash,
   URL_TEMPLATE_INFIX,
   UrlTemplateString
 } from "./types";
+import {safeJsonParseStringOrHexString} from "../utils/address/stringUtils";
 
 const convert2LayerObjectToProperties = <T extends object>(obj: T, separator: string): PropertiesArray => {
   if (typeof obj !== "object" || obj === null) {
@@ -45,13 +46,13 @@ export const convertPropertyArrayTo2layerObject = <T extends object>(properties:
     const keyParts = key.split(separator)
     const length = keyParts.length
     if (length === 1) {
-      obj[key] = safeJSONParse(value)
+      obj[key] = safeJsonParseStringOrHexString(value)
     } else {
       const [key, innerKey] = keyParts
       if (typeof obj[key] !== 'object') {
         obj[key] = {}
       }
-      obj[key][innerKey] = safeJSONParse(value)
+      obj[key][innerKey] = safeJsonParseStringOrHexString(value)
     }
   }
   return obj as T

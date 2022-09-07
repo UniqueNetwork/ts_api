@@ -9,13 +9,14 @@ import {
   UniqueTokenToCreate
 } from '../types'
 import {validateLocalizedStringWithDefaultSafe, validateUniqueToken} from './validators'
-import {getEntries, safeJSONParse} from '../../tsUtils'
+import {getEntries} from '../../tsUtils'
 import {CollectionProperties} from '../../substrate/extrinsics/unique/types'
 import {
   decodeTokenUrlOrInfixOrCidWithHashField,
   DecodingResult
 } from "../schemaUtils";
 import {UniqueUtils} from "../../utils";
+import {safeJsonParseStringOrHexString} from "../../utils/address/stringUtils";
 
 const addUrlObjectToTokenProperties = (properties: PropertiesArray, prefix: string, source: InfixOrUrlOrCidAndHash) => {
   if (typeof source.urlInfix === 'string') {
@@ -88,12 +89,18 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
   const nameProperty = properties.find(({key}) => key === 'n')
   if (nameProperty) {
-    token.name = safeJSONParse<LocalizedStringWithDefault>(nameProperty.value) as any
+    const parsedName = safeJsonParseStringOrHexString<LocalizedStringWithDefault>(nameProperty.value)
+    if (typeof parsedName !== 'string') {
+      token.name = parsedName
+    }
   }
 
   const descriptionProperty = properties.find(({key}) => key === 'd')
   if (descriptionProperty) {
-    token.description = safeJSONParse<LocalizedStringWithDefault>(descriptionProperty.value) as any
+    const parsedDescription = safeJsonParseStringOrHexString<LocalizedStringWithDefault>(descriptionProperty.value)
+    if (typeof parsedDescription !== 'string') {
+      token.description = parsedDescription
+    }
   }
 
   fillTokenFieldByKeyPrefix(token, properties, 'i', 'image')
@@ -108,7 +115,7 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
     for (const attrProp of attributeProperties) {
       const {key, value} = attrProp
-      const parsed = safeJSONParse<any>(value)
+      const parsed = safeJsonParseStringOrHexString<any>(value)
       const attributeKey = parseInt(key.split('.')[1] || '')
 
       if (!isNaN(attributeKey) && schema.attributesSchema?.hasOwnProperty(attributeKey)) {
@@ -125,6 +132,9 @@ export const unpackEncodedTokenFromProperties = <T extends UniqueTokenToCreate>(
 
 export const decodeTokenFromProperties = async (collectionId: number, tokenId: number, rawToken: HumanizedNftToken, schema: UniqueCollectionSchemaToCreate | UniqueCollectionSchemaDecoded): Promise<DecodingResult<UniqueTokenDecoded>> => {
   const unpackedToken = unpackEncodedTokenFromProperties(rawToken.properties, schema)
+
+  console.log('UNPACKED TOKEN')
+  console.log(unpackedToken)
 
   try {
     validateUniqueToken(unpackedToken, schema)
